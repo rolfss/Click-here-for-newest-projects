@@ -54,9 +54,10 @@
         <span class="prototype-notice-mark" aria-hidden="true">!</span>
         <div>
           <p class="prototype-notice-kicker">Modell og begrensninger</p>
-          <h2 id="prototype-notice-title">GPT-5.6 Luna · kildebasert resonnering</h2>
-          <p>Tilkobling til <strong>GPT-5.6 Luna</strong>, OpenAIs kostnadseffektive resonneringsmodell i nano-klassen, med <strong>medium resonnering</strong>. Modellen skal gi svar tilpasset spørsmålet ditt, med begrunnelse, praktiske råd og kildehenvisninger. Du kan stille oppfølgingsspørsmål.</p>
+          <h2 id="prototype-notice-title">GPT-6 Luna · kildebasert resonnering</h2>
+          <p>Tilkobling til <strong>GPT-6 Luna</strong>, OpenAIs kostnadseffektive resonneringsmodell, med <strong>medium resonnering</strong>. Modellen skal gi svar tilpasset spørsmålet ditt, med begrunnelse, praktiske råd og kildehenvisninger. Du kan stille oppfølgingsspørsmål.</p>
           <p>KI kan ta feil. Grunnlaget er kuraterte sammendrag og kontrollerte formatoppføringer, ikke fulltekst eller løpende nettsøk. Nye veiledere har kontrolltidspunkt og avgrenset virkeområde. Kontroller originalkildene; dette er fagstøtte, ikke en juridisk fasit.</p>
+          <p><button type="button" class="source-maintenance-link" data-tab="sources" data-focus="design-rationale-title">Hvorfor er appen utformet slik?</button></p>
           <p id="model-status" role="status">Luna er ikke aktivert ennå. Lokalt kildesøk fungerer uansett.</p>
         </div>
       </aside>
@@ -96,14 +97,21 @@
             <label for="question">Spørsmål</label>
             <textarea id="question" name="question" rows="3" maxlength="1000" required placeholder="Eksempel: Må fagsystemet vårt integreres med en Noark-kjerne?"></textarea>
             <div class="luna-controls">
-              <label class="luna-switch"><input type="checkbox" id="use-luna" disabled> Bruk Luna til tilpassede svar og oppfølging</label>
-              <p class="message-note">Med Luna sendes spørsmålet, opptil fire tidligere meldinger og relevante kildeposter til OpenAI via en beskyttet backend. Ikke skriv personopplysninger, pasientinformasjon eller taushetsbelagt innhold. Nylige spørsmål lagres lokalt og kan slettes nedenfor.</p>
+              <label class="luna-switch"><input type="checkbox" id="use-luna" aria-describedby="ai-disclosure" disabled> <span id="ai-consent-label">Bruk Luna (OpenAI) til tilpassede svar og oppfølging</span></label>
+              <p class="message-note" id="ai-disclosure">Når du krysser av, samtykker du til at spørsmålet, opptil fire tidligere meldinger og relevante kildeposter sendes til OpenAI for å skrive svaret via en beskyttet backend. Ikke skriv personopplysninger, pasientinformasjon eller taushetsbelagt innhold. Lokalt kildesøk forlater ikke nettleseren. Nylige spørsmål lagres lokalt og kan slettes nedenfor.</p>
+              <div id="provider-choice" hidden>
+                <label for="answer-provider">Svarmodell</label>
+                <select id="answer-provider" aria-describedby="ai-disclosure" disabled>
+                  <option value="luna">Luna (Bonsai ved behov)</option>
+                  <option value="bonsai">Bonsai på eierens PC</option>
+                </select>
+              </div>
               <p class="message-note" id="quality-status" role="status">Kontrollerer om forbedringsloggen er aktiv.</p>
               <label class="luna-switch"><input type="checkbox" id="quality-consent" disabled> Jeg samtykker til at en redigert kopi av spørsmålet lagres i opptil 30 dager for å forbedre kildesøket.</label>
               <details class="relevance-help" id="review-privacy"><summary>Personvern og forbedring av kildesøket</summary>
-                <p>Samtykket er frivillig og gjelder nye spørsmål sendt med Luna. Det påvirker ikke tilgangen til svar. Uten samtykke registreres bare diagnostikk for godkjente backendforespørsler, ikke spørsmålstekst. Rene lokale søk forlater fortsatt ikke nettleseren.</p>
+                <p>Samtykket er frivillig og gjelder nye spørsmål sendt med KI, både Luna og Bonsai. Det påvirker ikke tilgangen til svar. Uten samtykke registreres bare diagnostikk for godkjente backendforespørsler, ikke spørsmålstekst. Rene lokale søk forlater fortsatt ikke nettleseren.</p>
                 <p>Med samtykke forsøker systemet å fjerne e-postadresser, numre, lenker og mulige navn; enkelte sensitive mønstre fører til at hele teksten utelates. Dette er ikke garantert anonymisering. Ikke skriv personopplysninger eller taushetsbelagt informasjon.</p>
-                <p>Loggen brukes av appens eier, Rolf Selås, til manuell gjennomgang av manglende kilder, søkeord og tester. Den er ikke offentlig og brukes ikke til automatisk trening eller som faglig kilde for Luna. Aktiv lagring utløper etter 30 dager; leverandørens gjenopprettingskopier kan ha egen levetid. Fjern avkrysningen for å stoppe tekstlagring av nye spørsmål. Sletting av nettleserhistorikk sletter ikke serverloggen.</p>
+                <p>Loggen brukes av appens eier, Rolf Selås, til manuell gjennomgang av manglende kilder, søkeord og tester. Den er ikke offentlig og brukes ikke til automatisk trening eller som faglig kilde for svarmodellen. Aktiv lagring utløper etter 30 dager; leverandørens gjenopprettingskopier kan ha egen levetid. Fjern avkrysningen for å stoppe tekstlagring av nye spørsmål. Sletting av nettleserhistorikk sletter ikke serverloggen.</p>
               </details>
               <div id="bot-check" hidden><div id="bot-widget"></div><p class="message-note">Cloudflare Turnstile beskytter det felles prøvebudsjettet mot automatisk misbruk.</p></div>
             </div>
@@ -119,7 +127,7 @@
             <div><p class="eyebrow">Dokumentasjon</p><h2 id="evidence-title">Kildegrunnlag</h2></div>
             <span class="result-count" id="result-count">Ingen søk</span>
           </div>
-          <details class="relevance-help"><summary>Hva betyr prosenttreffet?</summary><p>Et anslag på hvor relevant denne kildeposten er for spørsmålet – ikke en sannsynlighet for at svaret er riktig, og ikke hvor stor del av hele originaldokumentet som matcher. Luna vurderer innholdet når KI er aktiv; ellers brukes ord, synonymer og kravtreff. Tallene er ikke statistisk kalibrert. Det beste treffet får ikke automatisk 100 %.</p></details>
+          <details class="relevance-help"><summary>Hva betyr prosenttreffet?</summary><p>Et anslag på hvor relevant denne kildeposten er for spørsmålet – ikke en sannsynlighet for at svaret er riktig, og ikke hvor stor del av hele originaldokumentet som matcher. Modellen som skriver svaret, vurderer innholdet når KI er aktiv; ellers brukes ord, synonymer og kravtreff. Tallene er ikke statistisk kalibrert. Det beste treffet får ikke automatisk 100 %.</p></details>
           <p class="evidence-query" id="evidence-query"></p>
           <div class="evidence-empty" id="evidence-empty">
             <span aria-hidden="true">§</span>
@@ -171,9 +179,21 @@
         <div>
           <p class="eyebrow">Etterprøvbart fra start</p>
           <h1>Kilder og metode</h1>
-          <p>Faggrunnlaget kommer fra kildene nedenfor. Lokalt søk kjører i nettleseren. Når Luna er aktivert, vurderer modellen de hentede sammendragene via en sikker backend; den søker ikke fritt på nettet.</p>
+          <p>Faggrunnlaget kommer fra kildene nedenfor. Lokalt søk kjører i nettleseren. Når KI er aktivert, vurderer svarmodellen de hentede sammendragene via en sikker backend; den søker ikke fritt på nettet.</p>
         </div>
       </div>
+
+      <section class="design-rationale" aria-labelledby="design-rationale-title">
+        <h2 id="design-rationale-title" tabindex="-1">Designvalg og arkivfaglig praksis</h2>
+        <p>Appen er utformet for å støtte etterprøvbarhet, riktig kontekst og tydelig ansvar i arkivarbeidet.</p>
+        <dl>
+          <div><dt>Originalkilder som kan kontrolleres</dt><dd>Henvisninger peker til registrerte kilder, med kravnummer, seksjon eller side der det finnes. Det gjør grunnlaget for svaret mulig å ettergå.</dd></div>
+          <div><dt>Regler i riktig sammenheng</dt><dd>Kildetype, oppgitt versjon og virkeområde hjelper deg å skille lov, forskrift, standard og veiledning – og vurdere om kravet gjelder saken din.</dd></div>
+          <div><dt>Synlig KI-bruk og usikkerhet</dt><dd>JEV kan velge kilder; GPT-6 Luna eller Bonsai formulerer svaret. Appen viser hvilken modell som svarte. Relevansprosenten er et søkeanslag, ikke et mål på riktighet.</dd></div>
+          <div><dt>Faglig kontroll før bruk</dt><dd>Du kontrollerer svaret mot originalkildene. Et kopiert beslutningsnotat samler spørsmål, svar og henvisninger for videre dokumentasjon etter virksomhetens rutiner.</dd></div>
+        </dl>
+        <p class="design-basis">Dette er vår anvendelse av Nasjonalarkivets råd om <a href="https://www.nasjonalarkivet.no/veiledere/etablere-internkontroll-med-dokumentasjonsforvaltningen/" rel="noreferrer">regelverksforståelse, ansvar og kontroll ↗</a>. Appen erstatter ikke virksomhetens dokumentasjonsrutiner.</p>
+      </section>
 
       <section class="source-maintenance-notice source-maintenance-method" aria-labelledby="source-maintenance-title">
         <h2 id="source-maintenance-title" tabindex="-1">Regel for søk og oppdatering av kildene</h2>
@@ -185,12 +205,12 @@
 
       <div class="method-grid">
         <article><span>01</span><h2>Hent</h2><p>Spørsmålet normaliseres, utvides med et avgrenset norsk arkivfaglig synonymsett og rangeres mot kildepostene.</p></article>
-        <article><span>02</span><h2>Ranger</h2><p>Søkemotoren finner kandidater fra kravnummer, titler, emneord og innhold. Luna vurderer kandidatenes relevans mot spørsmålet og sorterer dem på nytt når KI er aktivert.</p></article>
-        <article><span>03</span><h2>Sett sammen</h2><p>Luna bruker kildene til å forklare hva som gjelder i situasjonen din. Henvisninger må peke til registrerte kildeposter. Hvis Luna ikke svarer, får du en tydelig feilmelding og kan prøve igjen eller velge lokalt kildesøk.</p></article>
+        <article><span>02</span><h2>Velg kilder</h2><p>Søkemotoren finner kandidater fra kravnummer, titler, emneord og innhold. Når JEV er tilgjengelig og du har samtykket, velger JEV fra TypeSafe hvilke av disse kildene svarmodellen får. Ellers brukes det vanlige kildesøket. Svarmodellen vurderer deretter kildenes relevans når den skriver svaret.</p></article>
+        <article><span>03</span><h2>Sett sammen</h2><p>Luna eller Bonsai bruker kildene til å forklare hva som gjelder i situasjonen din. Du kan velge Bonsai på appens eiers PC når forbindelsen er aktiv og du har samtykket. Bonsai kan også svare hvis Luna er utilgjengelig eller har nådd bruksgrensen. Svaret viser hvilken modell som faktisk ble brukt. Henvisninger må peke til registrerte kildeposter. Hvis ingen modell svarer, får du en tydelig feilmelding og kan velge lokalt kildesøk.</p></article>
         <article><span>04</span><h2>Kontroller</h2><p>Hver kildepost viser originalkilde, tilgjengelig plassering og et begrunnet relevansanslag. En gyldig henvisning garanterer ikke at modellens tolkning er riktig: åpne originalen.</p></article>
       </div>
 
-      <p class="message-note">Modell: <a href="https://developers.openai.com/api/docs/models/gpt-5.6-luna" target="_blank" rel="noreferrer">OpenAIs dokumentasjon for GPT-5.6 Luna ↗</a>. API-bruk er separat fra ChatGPT-abonnement. Tjenesten har et begrenset prøvebudsjett.</p>
+      <p class="message-note">Modell: <a href="https://developers.openai.com/api/docs/models/gpt-6-luna" target="_blank" rel="noreferrer">OpenAIs dokumentasjon for GPT-6 Luna ↗</a>. API-bruk er separat fra ChatGPT-abonnement. Tjenesten har et begrenset prøvebudsjett.</p>
       <div class="source-grid" id="source-grid"></div>
 
       <aside class="method-note">

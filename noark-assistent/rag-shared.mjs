@@ -1,7 +1,7 @@
 import { answerQuestion, searchRecords, findIntent, tokenize, getRecord, getSource, sourceUrl } from './engine.mjs';
 
-export const MODEL_ID = 'gpt-5.6-luna';
-export const MODEL_LABEL = 'GPT-5.6 Luna';
+export const MODEL_ID = 'gpt-6-luna';
+export const MODEL_LABEL = 'GPT-6 Luna';
 export const MAX_QUESTION = 1000;
 export const MAX_HISTORY = 4;
 export const ANSWER_LIMITS = Object.freeze({ claims: 6, claimChars: 1000, words: 650 });
@@ -67,10 +67,10 @@ export function fallbackAnswer(question, history = [], note = '') {
 // An explicitly requested AI answer must never be replaced by a canned answer.
 export function lunaFailureAnswer(question, history = [], message = '') {
   return { status: 'insufficient', query: question, mode: 'unavailable', model: null,
-    lead: 'Luna svarte ikke på spørsmålet. Du har ikke fått en KI-vurdering.', leadCitations: [], points: [],
+    lead: 'KI svarte ikke på spørsmålet. Du har ikke fått en KI-vurdering.', leadCitations: [], points: [],
     confidence: { level: 'lav', label: 'Ingen KI-vurdering', score: 0 },
     results: retrieveConversation(question, history),
-    guidance: message || 'Prøv igjen, eller slå av Luna for å bruke lokalt kildesøk.' };
+    guidance: message || 'Prøv igjen, eller slå av KI for å bruke lokalt kildesøk.' };
 }
 
 export function responseSchema(candidates) {
@@ -102,7 +102,10 @@ function safeText(value, limit) {
 }
 
 // Only server-owned corpus objects can supply links, sections and page anchors.
-export function finalizeAnswer(question, parsed, candidates) {
+export function finalizeAnswer(question, parsed, candidates, provider = { mode: 'luna', model: MODEL_ID }) {
+  if (!((provider.mode === 'luna' && provider.model === MODEL_ID) ||
+      (provider.mode === 'bonsai' && provider.model === 'Bonsai-2-27B-PQ2_0')))
+    throw new Error('Ukjent svarmodell.');
   if (!parsed || !['answered', 'insufficient'].includes(parsed.status) || !Array.isArray(parsed.relevance) ||
       parsed.relevance.length !== candidates.length || !Array.isArray(parsed.claims) || parsed.claims.length > ANSWER_LIMITS.claims)
     throw new Error('Ugyldig modellrespons.');
@@ -114,7 +117,7 @@ export function finalizeAnswer(question, parsed, candidates) {
     scores.set(item.recordId, { score: item.score, reason: safeText(item.reason, 160) });
   }
   const results = candidates.map((r) => ({ ...r, relevance: scores.get(r.record.id).score,
-    relevanceReason: scores.get(r.record.id).reason, relevanceMethod: 'luna', lexicalRelevance: r.relevance }))
+    relevanceReason: scores.get(r.record.id).reason, relevanceMethod: provider.mode, lexicalRelevance: r.relevance }))
     .sort((a, b) => b.relevance - a.relevance || b.score - a.score)
     .map((r, i) => ({ ...r, rank: i + 1 }));
   const rank = new Map(results.map((r) => [r.record.id, r.rank]));
@@ -136,7 +139,7 @@ export function finalizeAnswer(question, parsed, candidates) {
     label: top >= 80 ? 'Høy anslått kilderelevans' : top >= 50 ? 'Delvis kilderelevans' : 'Svakt kildegrunnlag', score: top };
   return {
     status: parsed.status === 'answered' ? 'ok' : 'insufficient', query: question,
-    mode: 'luna', model: MODEL_ID, confidence, results,
+    mode: provider.mode, model: provider.model, confidence, results,
     lead: claims[0]?.text ?? 'Jeg fant ikke tilstrekkelig grunnlag for et presist svar i disse kildepostene.',
     leadCitations: claims[0]?.citations ?? [], leadCitation: claims[0]?.citations[0],
     points: claims.slice(1).map((p) => ({ ...p, citation: p.citations[0] })),

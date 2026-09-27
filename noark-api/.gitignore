@@ -4,3 +4,4 @@
 .env.*
 .wrangler/
 node_modules/
+eval-results/

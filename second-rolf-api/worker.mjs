@@ -1,5 +1,13 @@
 import { cleanConversation, MODEL, PROFILE_REVISION, sourcesFor, readJsonBounded } from './protocol.mjs';
+import { WorkerEntrypoint } from 'cloudflare:workers';
 export { LocalRelay } from './relay.mjs';
+
+// This named entrypoint is callable only through an explicit service binding.
+// The default public fetch handler below exposes no NOARK generation route.
+export class NoarkBonsai extends WorkerEntrypoint {
+  async health() { return this.env.LOCAL_RELAY.getByName('rolf-workstation').noarkHealth(); }
+  async answer(data) { return this.env.LOCAL_RELAY.getByName('rolf-workstation').noark(data); }
+}
 const ORIGIN = 'https://rolfss.github.io';
 
 function json(data, status = 200, origin = '') {

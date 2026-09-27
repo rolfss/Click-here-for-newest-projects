@@ -89,7 +89,23 @@
   text-underline-offset: .15em;
 }
 
+.design-rationale {
+  margin-bottom: 2rem;
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.design-rationale h2 { margin-bottom: .5rem; color: var(--navy); font-size: 1.15rem; }
+.design-rationale > p { max-width: 76ch; font-size: .85rem; }
+.design-rationale dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem 2rem; margin: 1.25rem 0; }
+.design-rationale dt { margin-bottom: .3rem; color: var(--teal-dark); font-size: .9rem; font-weight: 750; }
+.design-rationale dd { margin: 0; color: var(--muted); font-size: .85rem; }
+.design-rationale .design-basis { margin: 0; font-size: .78rem; }
+.design-rationale a { text-underline-offset: .15em; }
+
 @media (max-width: 620px) {
+  .design-rationale dl { grid-template-columns: 1fr; }
   .prototype-notice {
     grid-template-columns: 1fr;
     gap: .65rem;

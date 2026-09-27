@@ -2,7 +2,7 @@
 
 Det skal søkes etter nye og reviderte, relevante dokumenter **hver tirsdag og torsdag kl. 09.00, Europe/Oslo**. Kunnskapsbasen oppdateres **bare når GPT-6 Astra med resonneringsnivå ultra vurderer endringen som nødvendig**. Et nytt søketreff eller en endret nettside er ikke i seg selv grunnlag for en oppdatering.
 
-Regelen gjelder vedlikehold av kildematerialet. GPT-5.6 Luna brukes fortsatt til å svare på spørsmål i appen.
+Regelen gjelder vedlikehold av kildematerialet. GPT-6 Luna brukes fortsatt til å svare på spørsmål i appen.
 
 ## Tidsstyring og drift
 

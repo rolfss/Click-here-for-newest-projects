@@ -9,7 +9,7 @@ function rewriteLunaUi() {
   const method = $('#title-method');
   const status = $('#status');
 
-  if (heading) heading.textContent = 'GPT-5.6 Luna';
+  if (heading) heading.textContent = 'GPT-6 Luna';
   if (copy) {
     copy.textContent = allButton?.hidden
       ? 'Reasoning effort: medium. Luna er ikke tilgjengelig nå; lokale metadataforslag virker fortsatt.'
@@ -32,16 +32,16 @@ function rewriteLunaUi() {
 
   if (fileStatus) {
     if (fileStatus.textContent.includes('behandles lokalt på enheten')) {
-      fileStatus.textContent = 'Et begrenset tekstutdrag og relevante metadata analyseres med GPT-5.6 Luna.';
+      fileStatus.textContent = 'Et begrenset tekstutdrag og relevante metadata analyseres med GPT-6 Luna.';
     } else if (fileStatus.textContent.includes('Fullført lokalt')) {
-      fileStatus.textContent = fileStatus.textContent.replace('Fullført lokalt', 'Fullført med GPT-5.6 Luna');
+      fileStatus.textContent = fileStatus.textContent.replace('Fullført lokalt', 'Fullført med GPT-6 Luna');
     } else if (fileStatus.textContent.includes('Analyserer lokalt')) {
-      fileStatus.textContent = fileStatus.textContent.replace('Analyserer lokalt', 'Analyserer med GPT-5.6 Luna');
+      fileStatus.textContent = fileStatus.textContent.replace('Analyserer lokalt', 'Analyserer med GPT-6 Luna');
     }
   }
-  if (method?.textContent === 'Lokal nettleser-AI') method.textContent = 'GPT-5.6 Luna · reasoning medium';
+  if (method?.textContent === 'Lokal nettleser-AI') method.textContent = 'GPT-6 Luna · reasoning medium';
   if (status?.textContent.includes('forbedret med lokal AI')) {
-    status.textContent = status.textContent.replace('forbedret med lokal AI', 'forbedret med GPT-5.6 Luna');
+    status.textContent = status.textContent.replace('forbedret med lokal AI', 'forbedret med GPT-6 Luna');
   }
 }
 

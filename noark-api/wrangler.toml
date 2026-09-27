@@ -7,9 +7,17 @@ keep_vars = true
 
 [vars]
 ALLOWED_ORIGINS = "https://rolfss.github.io"
-QUESTION_LOG_ENABLED = "true"
+# Preserve the owner's existing logging choice in the dashboard via keep_vars.
+JEV_ENABLED = "true"
+BONSAI_ENABLED = "true"
 # TURNSTILE_SITE_KEY stays in the dashboard; never put secrets here.
 # QUESTION_REVIEW_KEY is a separate, strong owner-only Worker secret for private exports.
+# TYPESAFE_API_KEY is a Worker Secret, never a text variable or frontend setting.
+
+[[services]]
+binding = "BONSAI"
+service = "second-rolf-api"
+entrypoint = "NoarkBonsai"
 
 # Preserve this binding, class and v1 migration: never reset the spending ledger.
 [[durable_objects.bindings]]

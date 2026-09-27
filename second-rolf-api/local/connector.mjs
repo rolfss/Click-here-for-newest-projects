@@ -5,6 +5,8 @@ import { promisify } from 'node:util';
 import { pathToFileURL } from 'node:url';
 import WebSocket from 'ws';
 import { MODEL, PROFILE_REVISION, modelRequest, MAX_ANSWER, readJsonBounded, parseModelAnswer, privacyReply } from '../protocol.mjs';
+import { BONSAI_PROTOCOL_REVISION, BONSAI_CORPUS_VERSION, BONSAI_LIMITS,
+  prepareBonsaiRequest, validateBonsaiAnswer } from '../../noark-api/bonsai-protocol.mjs';
 
 const LOCAL_RUNTIME = 'http://127.0.0.1:8099';
 const EXPECTED_GPU_LAYERS = 65;
@@ -121,6 +123,38 @@ export function createModelClient({ fetchImpl = (...args) => fetch(...args), bas
     const data = await readJsonBounded(response, 100_000);
     return parseModelAnswer(completionContent(data)).slice(0, MAX_ANSWER);
   }
+  async function inferNoark(input, signal) {
+    const deadline = AbortSignal.any([...(signal ? [signal] : []), AbortSignal.timeout(BONSAI_LIMITS.timeoutMs)]);
+    const localPost = async (endpoint, body, maximum = BONSAI_LIMITS.responseBytes) => {
+      const response = await fetchImpl(`${baseUrl}${endpoint}`, { method: 'POST', redirect: 'error',
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: deadline });
+      if (!response.ok) throw new Error('NOARK local request failed');
+      return readJsonBounded(response, maximum);
+    };
+    let prepared;
+    // Count the actual model template before generation. All endpoints and the
+    // system prompt are pinned locally; cloud messages supply only corpus IDs.
+    for (let count = BONSAI_LIMITS.sources; count >= 1 && !prepared; count--) {
+      for (const historyLimit of [4, 2, 0]) {
+        let proposal;
+        try { proposal = prepareBonsaiRequest(input, { sourceLimit: count, historyLimit }); }
+        catch { continue; }
+        const rendered = await localPost('/apply-template', { messages: proposal.body.messages,
+          chat_template_kwargs: proposal.body.chat_template_kwargs });
+        if (typeof rendered.prompt !== 'string' || !rendered.prompt || rendered.prompt.length > 50000) throw new Error('Invalid local template');
+        const tokenized = await localPost('/tokenize', { content: rendered.prompt, add_special: true, parse_special: true }, 160000);
+        if (!Array.isArray(tokenized.tokens) || tokenized.tokens.some(t => !Number.isInteger(t) || t < 0)) throw new Error('Invalid local token count');
+        if (tokenized.tokens.length + BONSAI_LIMITS.outputTokens + BONSAI_LIMITS.framingTokens <= BONSAI_LIMITS.contextTokens) {
+          prepared = proposal; break;
+        }
+      }
+    }
+    if (!prepared) throw new Error('NOARK context exceeds local model capacity');
+    const data = await localPost('/v1/chat/completions', prepared.body);
+    const parsed = validateBonsaiAnswer(JSON.parse(completionContent(data)), input.question, prepared.recordIds);
+    return { parsed, recordIds: prepared.recordIds, model: MODEL,
+      corpusVersion: BONSAI_CORPUS_VERSION, protocolRevision: BONSAI_PROTOCOL_REVISION };
+  }
   async function probeModel(warm = false) {
     const unavailable = { available: false, gpu: false, model: MODEL };
     const health = await fetchImpl(`${baseUrl}/health`, { signal: AbortSignal.timeout(4000) });
@@ -147,7 +181,7 @@ export function createModelClient({ fetchImpl = (...args) => fetch(...args), bas
     }
     return { available: true, gpu, model: MODEL };
   }
-  return { infer, probeModel };
+  return { infer, inferNoark, probeModel };
 }
 
 const productionClient = createModelClient();
@@ -177,7 +211,9 @@ export function connect(config, { WebSocketClient = WebSocket, logger = console,
         status = await modelClient.probeModel(true); verifiedAt = status.available ? Date.now() : 0;
       }
       const available = status.available && verifiedAt > 0;
-      send({ type: 'health', ...status, profileRevision: PROFILE_REVISION, available });
+      send({ type: 'health', ...status, profileRevision: PROFILE_REVISION, available,
+        ...(available && typeof modelClient.inferNoark === 'function' ? {
+          noarkRevision: BONSAI_PROTOCOL_REVISION, noarkCorpus: BONSAI_CORPUS_VERSION } : {}) });
       reportModelStatus(available, status.gpu);
     } catch {
       verifiedAt = 0;
@@ -207,17 +243,20 @@ export function connect(config, { WebSocketClient = WebSocket, logger = console,
         return;
       }
       if (data.type === 'cancel' && active?.id === data.id) { active.controller.abort(); return; }
-      if (data.type !== 'chat' || typeof data.id !== 'string') return;
-      if (active) { ws.send(JSON.stringify({ type: 'answer', id: data.id, error: 'busy', profileRevision: PROFILE_REVISION })); return; }
+      if (!['chat', 'noark-chat'].includes(data.type) || typeof data.id !== 'string') return;
+      const noark = data.type === 'noark-chat';
+      const answerType = noark ? 'noark-answer' : 'answer';
+      if (active || probing) { ws.send(JSON.stringify({ type: answerType, id: data.id, error: 'busy', profileRevision: PROFILE_REVISION })); return; }
       const controller = new AbortController();
       active = { id: data.id, controller };
       try {
-        const answer = await modelClient.infer(data, controller.signal);
+        const answer = noark ? await modelClient.inferNoark(data, controller.signal) : await modelClient.infer(data, controller.signal);
         verifiedAt = Date.now();
-        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'answer', id: data.id, answer, profileRevision: PROFILE_REVISION }));
+        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: answerType, id: data.id,
+          ...(noark ? { result: answer } : { answer }), profileRevision: PROFILE_REVISION }));
       } catch {
-        verifiedAt = 0;
-        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'answer', id: data.id, error: 'local_model_unavailable', profileRevision: PROFILE_REVISION }));
+        if (!noark) verifiedAt = 0;
+        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: answerType, id: data.id, error: 'local_model_unavailable', profileRevision: PROFILE_REVISION }));
       } finally { if (active?.controller === controller) active = null; }
     });
     ws.on('error', () => {}); // No credentials, prompts or answers are written to logs.

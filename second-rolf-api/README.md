@@ -67,7 +67,17 @@ node local/doctor.mjs --public-only
 
 The existing private connector config must be `RuntimeRoot\.private\config.json`; repair does not copy or replace credentials. The config has `workerUrl` set to `https://second-rolf-api.rolfsselas.workers.dev` and `key` set to the existing connector secret. Restrict the file to the Windows account and SYSTEM. The connector rejects other remote hosts and reconnects after network or Worker restarts. See [CONNECTION-REPAIR.md](./CONNECTION-REPAIR.md) for coordinated repair.
 
-The model occupies GPU memory while available. Stopping its dedicated runtime, sleeping or turning off the PC makes the public page fall back to profile mode. Avoid competing GPU-heavy processes. Other portfolio projects and their model providers are independent.
+The model occupies GPU memory while available. Stopping its dedicated runtime, sleeping or turning off the PC makes the public page fall back to profile mode. Avoid competing GPU-heavy processes. The NOARK assistant can share this GPU through the separate, bounded capability below; its prompts and sources remain independent.
+
+## NOARK fallback capability
+
+The named `NoarkBonsai` Worker entrypoint is available only through a Cloudflare service binding. The public HTTP handler exposes no NOARK generation endpoint, and the existing connector authentication, host allowlist, Second Rolf profile and privacy rules remain in place. Both applications share one active inference slot and get an explicit busy result when it is occupied.
+
+`health()` reports the independent NOARK protocol/corpus revision. `answer({question, history, recordIds, corpusVersion, protocolRevision})` accepts only bounded conversation data and canonical NOARK source IDs. The connector reconstructs the source text from its bundled public corpus; callers cannot supply a system prompt, source text, model, URL or tools. Old connectors remain compatible with Second Rolf but cannot advertise the NOARK capability.
+
+The local request uses at most six source records. It preserves the agreement and conversion records for format questions, counts the actual rendered prompt with the local tokenizer, and reserves 2,048 output tokens plus 256 framing tokens within the existing 8,192-token context. It can drop older conversation context and lower-ranked sources before generation. The response includes the exact IDs sent to the model; the NOARK Worker must validate those against its candidate set and validate the answer before presenting it. A format answer must cite its delivery conditions. Generation is attempted once, with one 85-second deadline covering local preparation and inference; the relay cancels after 90 seconds. No prompts, answers or keys are logged.
+
+Use the existing repair entrypoint to stage the allowlisted NOARK files alongside the connector. It restarts with the invoking PowerShell host and its existing execution policy; it does not invoke the legacy Start script's policy override. The current runtime and secrets are preserved if verification fails. Do not change the firewall or expose the loopback server.
 
 ## Verification
 

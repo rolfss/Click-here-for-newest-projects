@@ -21,7 +21,7 @@ const env = { ALLOWED_ORIGINS: 'https://rolfss.github.io', OPENAI_API_KEY: 'dumm
 
 test('payload fixes Luna, medium, no storage, no tools and bounded output', () => {
   const { body, reserve } = buildPayload(q, [], retrieveConversation(q));
-  assert.equal(body.model, 'gpt-5.6-luna'); assert.equal(body.reasoning.effort, 'medium');
+  assert.equal(body.model, 'gpt-6-luna'); assert.equal(body.reasoning.effort, 'medium');
   assert.equal(body.store, false); assert.equal(body.tools, undefined);
   assert.equal(body.max_output_tokens, LIMITS.outputTokens);
   assert.equal(body.service_tier, 'default'); assert.equal(body.text.format.strict, true);
@@ -43,7 +43,7 @@ test('health never leaks credentials and reports the active daily budget', async
   const res = await worker.fetch(new Request('https://test/api/health'), env);
   const body = await res.json();
   const text = JSON.stringify(body);
-  assert.doesNotMatch(text, /dummy|OPENAI_API_KEY|SECRET/); assert.match(text, /gpt-5.6-luna/);
+  assert.doesNotMatch(text, /dummy|OPENAI_API_KEY|SECRET/); assert.match(text, /gpt-6-luna/);
   assert.equal(body.dailyBudgetUsd, 2);
 });
 test('concurrent reservations cannot cross the $2 daily budget even on separate gate instances', async () => {
@@ -101,7 +101,7 @@ test('mocked end-to-end call validates Turnstile, charges usage and returns real
   let modelCalls = 0;
   t.mock.method(globalThis, 'fetch', async (url, options) => {
     if (url.includes('turnstile')) return Response.json({ success: true, action: 'noark-chat', hostname: 'rolfss.github.io' });
-    modelCalls++; const body = JSON.parse(options.body); assert.equal(body.model, 'gpt-5.6-luna');
+    modelCalls++; const body = JSON.parse(options.body); assert.equal(body.model, 'gpt-6-luna');
     return Response.json({ status: 'completed', usage: { input_tokens: 4500, output_tokens: 1500 },
       output: [{ type: 'message', content: [{ type: 'output_text', text: JSON.stringify(modelResult) }] }] });
   });

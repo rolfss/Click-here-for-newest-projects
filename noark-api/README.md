@@ -1,4 +1,15 @@
-# Aktiver Luna for Noark-assistenten
+# NOARK med JEV, Luna og Bonsai
+
+Se [driftsoppsettet](RAG_OPERATION.md) for JEV-kildevalg, eksplisitt samtykke,
+Bonsai på eierens PC, kvotereserve og sikker publisering. Eksisterende
+budsjettregister og mottakerbegrensninger beholdes.
+
+## Prøv JEV mot det eksisterende kildegrunnlaget
+
+JEV-utprøvingen har et eget [oppsett og evalueringsløp](JEV_EVALUATION.md).
+Kjør `node noark-api/evals/evaluate-jev.mjs` fra repository-roten for en lokal
+basismåling uten API-kall. Betalte JEV-kall og sammenligning med Luna må velges
+eksplisitt. Utprøvingen aktiverer ikke JEV for besøkende.
 
 ## Oppdater den eksisterende Luna-serveren
 
@@ -16,9 +27,11 @@ Etter publisering kontrolleres **den offentlige backendadressen som nettsiden fa
 
 ## Oppsett og arkitektur
 
-Bakenden bruker **GPT-5.6 Luna**, `reasoning.effort: medium`, via OpenAI Responses API. Nettleseren forblir på GitHub Pages; API-nøkkelen ligger bare som hemmelighet i en Cloudflare Worker. Én SQLite Durable Object deler budsjett og forespørselsgrenser mellom alle brukere.
+Bakenden bruker **GPT-6 Luna**, `reasoning.effort: medium`, via OpenAI Responses API. Nettleseren forblir på GitHub Pages; API-nøkkelen ligger bare som hemmelighet i en Cloudflare Worker. Én SQLite Durable Object deler budsjett og forespørselsgrenser mellom alle brukere.
 
-**Status:** implementert og enhetstestet med simulerte API-kall. Ingen nøkkel følger med, og ingen betalte API-kall eller live Cloudflare-utrulling er utført som del av implementeringen. Helseendepunktet kontrollerer konfigurasjon, ikke om API-kontoen faktisk har tilgang til modellen.
+Modellbyttet krever en koordinert publisering av Worker, Noark-assistenten og Archive Assist, som deler denne bakenden. Begge klientene kontrollerer modell-ID-en. Behold eksisterende hemmeligheter, budsjettregnskap og Bonsai-reserve. Reservasjonssatsene er fortsatt konservative (USD 0,25 per million input-token og USD 1,20 per million output-token), ikke en faktura fra OpenAI.
+
+Helseendepunktet kontrollerer konfigurasjon og lokal modellberedskap, ikke svarkvalitet eller OpenAI-kontoens modelltilgang. Verifiser faktiske svar etter utrulling. Nøkler følger aldri med kildekoden.
 
 ## Privat aktivering – anbefalt, enklest og sikkert
 
@@ -53,7 +66,7 @@ Den enkleste sikre løsningen er å deploye Worker-koden først og deretter legg
    ```
 
    Dette setter bare offentlig bakendeadresse og den tilhørende `connect-src`-regelen. Commit og push `noark-assistent/api-config.mjs` og `noark-assistent/index.html`. Den eksisterende GitHub Pages-jobben publiserer klientendringen.
-5. Kontroller `https://DIN-WORKER.workers.dev/api/health`: `configured` skal være `true`, `model` skal være `gpt-5.6-luna`, og `dailyBudgetUsd` skal være `2`. Åpne appen, slå på Luna, fullfør sikkerhetskontrollen og still ett testspørsmål. Kontroller svar, kilder, relevansprosenter og faktisk API-forbruk.
+5. Kontroller `https://DIN-WORKER.workers.dev/api/health`: `configured` skal være `true`, `model` skal være `gpt-6-luna`, og `dailyBudgetUsd` skal være `2`. Åpne appen, slå på Luna, fullfør sikkerhetskontrollen og still ett testspørsmål. Kontroller svar, kilder, relevansprosenter og faktisk API-forbruk.
 
 ### Alternativ: legg hemmelighetene inn fra terminal
 
@@ -106,7 +119,7 @@ Den publiserte serveren rapporterte kildeversjon `2026-09-02`, mens klienten had
 
 Serveroppdateringen gir situasjonstilpassede instrukser, opptil seks kildebelagte avsnitt, rom for begrunnelser og praktiske råd, bedre temaoppfølging og 8 192 tokens til resonnering og svar. Det utføres fortsatt maksimalt ett betalt modellkall per forespørsel. Dags-, måneds- og prøvebudsjettene er uendret; utdatareservasjonen per forespørsel er høyere.
 
-Publiser med `npx wrangler@4 deploy` fra `noark-api`. Behold eksisterende Worker, hemmeligheter, bindingen `LUNA_GATE`, klassen `LunaGate`, migrasjonen `v1` og objektet `noark-global-budget-v1`. Kontroller at `/api/health` viser `answerVersion: "2026-09-08-context-v2"`, `corpusVersion: "2026-09-07"`, `configured: true`, `model: "gpt-5.6-luna"`, `reasoning: "medium"` og `dailyBudgetUsd: 2`.
+Publiser med `npx wrangler@4 deploy` fra `noark-api`. Behold eksisterende Worker, hemmeligheter, bindingen `LUNA_GATE`, klassen `LunaGate`, migrasjonen `v1` og objektet `noark-global-budget-v1`. Kontroller at `/api/health` viser `answerVersion: "2026-09-27-gpt6-luna-v1"`, `corpusVersion: "2026-09-26"`, `configured: true`, `model: "gpt-6-luna"`, `reasoning: "medium"` og `dailyBudgetUsd: 2`.
 
 Regresjonstestene dekker kildeversjonskonflikten, bevaring av tema ved sjekklister og oppfølging, lengre kildebelagte svar, validering helt frem til klienten og uttrykkelige feil ved KI-svikt. Modellkallene er simulerte. En bestått test eller et konfigurert helseendepunkt dokumenterer ikke faktisk modelltilgang eller faglig kvalitet; kontroller dette med et ordinært Luna-spørsmål etter utrulling.
 
@@ -116,7 +129,7 @@ Enhetstestene bruker simulerte API-kall. De dokumenterer programatferd, ikke mod
 
 ## Offisiell dokumentasjon
 
-- [Luna-modell, priser og støttede funksjoner](https://developers.openai.com/api/docs/models/gpt-5.6-luna)
+- [Luna-modell, priser og støttede funksjoner](https://developers.openai.com/api/docs/models/gpt-6-luna)
 - [OpenAI API-nøkler: sikker bruk](https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety)
 - [OpenAI: datakontroller](https://developers.openai.com/api/docs/guides/your-data)
 - [Cloudflare Worker-hemmeligheter](https://developers.cloudflare.com/workers/configuration/secrets/)

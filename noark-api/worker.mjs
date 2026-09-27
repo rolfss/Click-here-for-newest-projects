@@ -1,6 +1,8 @@
 import { BUILD_INFO } from '../noark-assistent/data.mjs';
 import { MODEL_ID, cleanConversation, retrieveConversation, fallbackAnswer, responseSchema, finalizeAnswer } from '../noark-assistent/rag-shared.mjs';
 import { REVIEW_POLICY, LOG_LIMITS, loggingEnabled, recordQuestion, reviewEndpoint } from './question-log.mjs';
+import { RAG_CONSENT, retrievalEnabled, prepareRetrieval, runRetrieval } from './retrieval.mjs';
+import { BONSAI_PROTOCOL_REVISION } from './bonsai-protocol.mjs';
 export { QuestionLog } from './question-log.mjs';
 
 export const LIMITS = Object.freeze({ bodyBytes: 12000, promptBytes: 48000, outputTokens: 8192,
@@ -9,10 +11,44 @@ export const LIMITS = Object.freeze({ bodyBytes: 12000, promptBytes: 48000, outp
 const ARCHIVE_BODY_BYTES = 30000;
 const ARCHIVE_TEXT_CHARS = 12000;
 const ARCHIVE_OUTPUT_TOKENS = 3072;
-// Preserve the existing trial's conservative price assumptions; this is not an invoice.
+// Keep the trial's conservative reservation rates for GPT-6 Luna; this is not an invoice.
 export const estimatedCost = (input, output) => Math.ceil(input * 0.25 + output * 1.2);
 const encoder = new TextEncoder();
-export const ANSWER_VERSION = '2026-09-08-context-v2';
+export const ANSWER_VERSION = '2026-09-27-gpt6-luna-v1';
+export const BONSAI_MODEL_ID = 'Bonsai-2-27B-PQ2_0';
+export const BONSAI_CONSENT = '2026-09-26-bonsai-v1';
+const bonsaiEnabled = (env) => env.BONSAI_ENABLED === 'true' && Boolean(env.BONSAI);
+async function deadline(promise, ms) {
+  let timer;
+  try { return await Promise.race([promise, new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error('Provider deadline exceeded.')), ms);
+  })]); } finally { clearTimeout(timer); }
+}
+async function bonsaiAvailable(env) {
+  if (!bonsaiEnabled(env)) return false;
+  try {
+    const status = await deadline(env.BONSAI.health(), 3000);
+    return status.available === true && status.model === BONSAI_MODEL_ID &&
+      status.corpusVersion === BUILD_INFO.corpusVersion && status.protocolRevision === BONSAI_PROTOCOL_REVISION;
+  } catch { return false; }
+}
+
+async function bonsaiAnswer(env, question, history, candidates) {
+  const result = await deadline(env.BONSAI.answer({ question, history,
+    recordIds: candidates.map(({ record }) => record.id), corpusVersion: BUILD_INFO.corpusVersion,
+    protocolRevision: BONSAI_PROTOCOL_REVISION }), 95000);
+  if (!result || result.error || result.model !== BONSAI_MODEL_ID ||
+      result.corpusVersion !== BUILD_INFO.corpusVersion || result.protocolRevision !== BONSAI_PROTOCOL_REVISION ||
+      !Array.isArray(result.recordIds) || !result.recordIds.length || result.recordIds.length > candidates.length ||
+      new Set(result.recordIds).size !== result.recordIds.length) throw new Error('Bonsai unavailable.');
+  const known = new Map(candidates.map((candidate) => [candidate.record.id, candidate]));
+  if (result.recordIds.some((id) => !known.has(id))) throw new Error('Unknown Bonsai source.');
+  if (result.recordIds.some((id) => known.get(id).record.source === 'na-formats') &&
+      ['guide-format-agreement', 'guide-format-conversion'].some((id) => !result.recordIds.includes(id)))
+    throw new Error('Bonsai format scope is missing.');
+  return finalizeAnswer(question, result.parsed, result.recordIds.map((id) => known.get(id)),
+    { mode: 'bonsai', model: BONSAI_MODEL_ID });
+}
 const INSTRUCTIONS = `Du er Noark 5-arkivassistenten. Hjelp brukeren å løse sitt konkrete arkivfaglige problem på norsk bokmål.
 Svar direkte på det siste spørsmålet. Tilpass svaret til oppgitt virksomhet, system, situasjon og ønsket leveranse; ikke bare gjenta generelle kildesammendrag.
 Gi en kort konklusjon først, deretter forklaring og praktiske neste steg når spørsmålet krever det. Forklar kort hvorfor rådene følger av kildene, uten å gjengi intern tankegang.
@@ -68,7 +104,7 @@ export function buildPayload(question, history, candidates) {
         title: record.title, summary: record.summary, detail: record.detail,
         section: record.section, page: record.page ?? null, requirement: record.requirement ?? null,
         publisher: source.publisher, sourceTitle: source.title, sourceType: source.type,
-        scope: source.scope ?? null, verifiedAt: record.verifiedAt ?? source.verifiedAt ?? null,
+        recordScope: record.scope ?? null, scope: source.scope ?? null, verifiedAt: record.verifiedAt ?? source.verifiedAt ?? null,
         sourceStatus: source.status ?? null })) }) }],
     text: { verbosity: 'medium', format: { type: 'json_schema', name: 'noark_answer', strict: true, schema: responseSchema(candidates) } },
   };
@@ -184,6 +220,8 @@ export default {
         siteKey: env.TURNSTILE_SITE_KEY ?? '', corpusVersion: BUILD_INFO.corpusVersion,
         monthlyBudgetUsd: LIMITS.monthlyMicroUsd / 1e6, trialBudgetUsd: LIMITS.trialMicroUsd / 1e6,
         dailyBudgetUsd: LIMITS.dailyMicroUsd / 1e6,
+        retrieval: { provider: 'jev', enabled: retrievalEnabled(env) },
+        fallback: { enabled: bonsaiEnabled(env), available: await bonsaiAvailable(env), model: BONSAI_MODEL_ID },
         questionLogging: { enabled: loggingEnabled(env), policy: REVIEW_POLICY, retentionDays: LOG_LIMITS.retentionDays, text: 'opt-in' },
       }, 200, allowed ? origin : '');
     }
@@ -207,6 +245,9 @@ export default {
             typeof raw.turnstileToken !== 'string' || !raw.turnstileToken || raw.turnstileToken.length > 2048)
           throw new Error('Sikkerhetskontrollen mangler.');
         data = { ...clean, requestId: raw.requestId, turnstileToken: raw.turnstileToken,
+          ragConsent: raw.ragConsent === RAG_CONSENT ? RAG_CONSENT : '',
+          bonsaiConsent: raw.bonsaiConsent === BONSAI_CONSENT ? BONSAI_CONSENT : '',
+          providerPreference: raw.providerPreference === 'bonsai' ? 'bonsai' : 'luna',
           qualityConsent: raw.qualityConsent === REVIEW_POLICY ? REVIEW_POLICY : '' };
       } else {
         data = cleanArchiveRequest(raw);
@@ -247,9 +288,9 @@ export class LunaGate {
       if (visitor.minute !== minute) { visitor.minute = minute; visitor.count = 0; }
       if (visitor.count >= LIMITS.perMinute || visitor.daily >= LIMITS.perDay || state.count >= LIMITS.globalPerDay)
         return { ok: false, code: 'rate_limit' };
-      if (Object.values(state.requests).filter((r) => r.pending && now - r.at < 120000).length >= LIMITS.concurrent)
+      if (Object.values(state.requests).filter((r) => r.pending && now - r.at < 240000).length >= LIMITS.concurrent)
         return { ok: false, code: 'busy' };
-      if (state.trial + amount > LIMITS.trialMicroUsd || (state.months[month] ?? 0) + amount > LIMITS.monthlyMicroUsd || state.daily + amount > LIMITS.dailyMicroUsd)
+      if (amount > 0 && (state.trial + amount > LIMITS.trialMicroUsd || (state.months[month] ?? 0) + amount > LIMITS.monthlyMicroUsd || state.daily + amount > LIMITS.dailyMicroUsd))
         return { ok: false, code: 'budget' };
       state.trial += amount;
       state.months[month] = (state.months[month] ?? 0) + amount;
@@ -328,14 +369,22 @@ export class LunaGate {
     if (new URL(request.url).pathname === '/archive-assist') return this.fetchArchive(request);
     let id;
     let reserved = false;
-    let dispatched = false;
+    let charged = 0;
     let review = null;
     try {
       const data = await request.json();
       const { question, history } = cleanConversation(data.question, data.history);
       id = data.requestId;
-      const candidates = retrieveConversation(question, history);
-      const { body, reserve } = candidates.length ? buildPayload(question, history, candidates) : { body: null, reserve: 0 };
+      const plan = prepareRetrieval(question, history, this.env, data.ragConsent);
+      let candidates = plan.candidates;
+      const allowBonsai = bonsaiEnabled(this.env) && data.bonsaiConsent === BONSAI_CONSENT;
+      const preferBonsai = data.providerPreference === 'bonsai';
+      if (preferBonsai && !allowBonsai) return failure('consent', 'Bonsai krever samtykke og aktiv lokal forbindelse.', 400);
+      // Reserve before either external provider. Reranking may select longer sources.
+      const generationReserve = candidates.length && !preferBonsai ? (plan.payload
+        ? estimatedCost(LIMITS.promptBytes + 4096, LIMITS.outputTokens)
+        : buildPayload(question, history, candidates).reserve) : 0;
+      const reserve = generationReserve + plan.reserve;
       const check = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ secret: this.env.TURNSTILE_SECRET_KEY, response: data.turnstileToken, remoteip: data.ip }),
@@ -345,7 +394,13 @@ export class LunaGate {
       if (!check.ok || !verified.success || verified.action !== 'noark-chat' || verified.hostname !== new URL(data.origin).hostname)
         return failure('bot_check', 'Fullfør sikkerhetskontrollen og prøv igjen.', 403);
       // Both metered and no-source requests are authenticated and rate-limited before logging.
-      const reservation = await this.reserve(id, data.ip, reserve);
+      let reservation = await this.reserve(id, data.ip, reserve);
+      let budgetFallback = false;
+      if (!reservation.ok && reservation.code === 'budget' && allowBonsai) {
+        // Local inference costs no API tokens, but still requires all abuse controls.
+        reservation = await this.reserve(id, data.ip, 0);
+        budgetFallback = reservation.ok;
+      }
       if (!reservation.ok) return failure(reservation.code,
         reservation.code === 'budget' ? 'Appens prøve- eller periodebudsjett er nådd. Lokalt kildesøk fungerer fortsatt.' :
         reservation.code === 'duplicate' ? 'Dette spørsmålet er allerede sendt. Ingen ny modellforespørsel ble startet.' :
@@ -356,33 +411,58 @@ export class LunaGate {
         review.outcome = 'no_sources';
         return json(fallbackAnswer(question, history, 'Ingen relevante kildeposter; ingen modellkostnad.'));
       }
-      dispatched = true;
+      const finish = (answer, retrieval, fallbackReason) => {
+        review.outcome = answer.status === 'ok' ? 'answered' : 'insufficient';
+        review.results = answer.results;
+        return json({ ...answer, ...(answer.mode === 'luna' ? { reasoning: 'medium' } : {}),
+          retrieval, ...(fallbackReason ? { fallbackReason } : {}),
+          answerVersion: ANSWER_VERSION, corpusVersion: BUILD_INFO.corpusVersion });
+      };
+      if (budgetFallback) {
+        return finish(await bonsaiAnswer(this.env, question, history, candidates),
+          { method: 'lexical', status: plan.payload ? 'unavailable' : plan.status }, preferBonsai ? undefined : 'app_budget');
+      }
+      // Unknown failures retain the JEV reservation; only confirmed usage refunds it.
+      charged = plan.reserve;
+      const selection = await runRetrieval(plan, this.env);
+      charged = selection.charged;
+      candidates = selection.candidates;
+      review.candidates = candidates;
+      if (preferBonsai) return finish(await bonsaiAnswer(this.env, question, history, candidates), selection.retrieval);
+      const { body } = buildPayload(question, history, candidates);
+      charged += generationReserve;
       const response = await fetch('https://api.openai.com/v1/responses', {
-        method: 'POST', headers: { 'Authorization': `Bearer ${this.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+        // Workerd accepts manual/follow redirect modes. Return redirects without
+        // following them so provider credentials can never reach another URL.
+        method: 'POST', redirect: 'manual', headers: { 'Authorization': `Bearer ${this.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(body), signal: AbortSignal.timeout(85000),
       });
       if (!response.ok) {
+        void response.body?.cancel().catch(() => {});
+        // A rejected rate/quota request generated no answer. Do not retry Luna.
+        if (response.status === 429) charged -= generationReserve;
+        if (allowBonsai && [429, 503].includes(response.status)) {
+          return finish(await bonsaiAnswer(this.env, question, history, candidates), selection.retrieval, 'luna_capacity');
+        }
         review.outcome = 'provider_error';
         return failure('provider', 'Luna kunne ikke svare. Kontroller modelltilgang, kreditt og kapasitet i API-kontoen.', 503);
       }
       const result = await readBounded(response, 160000);
       const usage = result.usage;
       if (usage && Number.isInteger(usage.input_tokens) && usage.input_tokens >= 0 && Number.isInteger(usage.output_tokens) && usage.output_tokens >= 0)
-        await this.settle(id, estimatedCost(usage.input_tokens, usage.output_tokens));
+        charged = selection.charged + estimatedCost(usage.input_tokens, usage.output_tokens);
       if (result.status !== 'completed') {
         review.outcome = 'incomplete';
         return failure('incomplete', 'Luna fullførte ikke innen tokengrensen. Ingen automatisk betalt omkjøring.', 503);
       }
       const text = responseText(result);
       const answer = finalizeAnswer(question, JSON.parse(text), candidates);
-      review.outcome = answer.status === 'ok' ? 'answered' : 'insufficient';
-      review.results = answer.results;
-      return json({ ...answer, reasoning: 'medium', answerVersion: ANSWER_VERSION, corpusVersion: BUILD_INFO.corpusVersion });
+      return finish(answer, selection.retrieval);
     } catch {
       if (review) review.outcome = 'validation_or_network_error';
-      return failure('unavailable', 'Luna-svaret kunne ikke valideres eller forbindelsen ble brutt. Lokalt søk er tilgjengelig.', 503);
+      return failure('unavailable', 'KI-svaret kunne ikke valideres, eller en nødvendig modell er utilgjengelig. Lokalt kildesøk fungerer fortsatt.', 503);
     } finally {
-      if (reserved) { try { await this.settle(id, dispatched ? undefined : 0); } catch { /* Reservation remains charged. */ } }
+      if (reserved) { try { await this.settle(id, charged); } catch { /* Reservation remains charged. */ } }
       if (review) await recordQuestion(this.env, review);
     }
   }

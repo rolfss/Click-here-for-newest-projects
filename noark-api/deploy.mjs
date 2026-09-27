@@ -13,7 +13,7 @@ import { ANSWER_VERSION, LIMITS } from './worker.mjs';
 const directory = dirname(fileURLToPath(import.meta.url));
 const wranglerPackage = 'wrangler@4.130.0';
 
-export function assertDeploymentHealth(health) {
+export function assertDeploymentHealth(health, { requireRag = false } = {}) {
   const expected = {
     configured: true, model: MODEL_ID, reasoning: 'medium',
     corpusVersion: BUILD_INFO.corpusVersion, answerVersion: ANSWER_VERSION,
@@ -28,10 +28,14 @@ export function assertDeploymentHealth(health) {
     const fields = [...mismatches.map(([key]) => key), ...(!siteKeyPresent ? ['siteKey'] : [])];
     throw new Error(`Den aktive Luna-serveren er ikke klar. Kontroller: ${fields.join(', ')}.`);
   }
+  if (requireRag && (health.retrieval?.provider !== 'jev' || health.retrieval.enabled !== true ||
+      health.fallback?.enabled !== true || health.fallback.available !== true ||
+      health.fallback.model !== 'Bonsai-2-27B-PQ2_0'))
+    throw new Error('JEV eller Bonsai er ikke klar i den aktive appen. Kontroller hemmelighet, aktivering og lokal forbindelse.');
   return health;
 }
 
-export async function checkDeployment({ fetchImpl = fetch, attempts = 1, pause = delay } = {}) {
+export async function checkDeployment({ fetchImpl = fetch, attempts = 1, pause = delay, requireRag = false } = {}) {
   let lastError;
   for (let attempt = 0; attempt < attempts; attempt++) {
     try {
@@ -39,7 +43,7 @@ export async function checkDeployment({ fetchImpl = fetch, attempts = 1, pause =
         cache: 'no-store', signal: AbortSignal.timeout(15000),
       });
       if (!response.ok) throw new Error(`Helsekontrollen svarte HTTP ${response.status}.`);
-      return assertDeploymentHealth(await response.json());
+      return assertDeploymentHealth(await response.json(), { requireRag });
     } catch (error) {
       lastError = error;
       if (attempt + 1 < attempts) {
@@ -64,10 +68,10 @@ function wrangler(...args) {
 
 async function main() {
   const args = process.argv.slice(2);
-  if (args.length > 1 || (args.length && !['--check', '--dry-run'].includes(args[0])))
-    throw new Error('Bruk node noark-api/deploy.mjs [--check | --dry-run].');
+  if (args.length > 1 || (args.length && !['--check', '--check-rag', '--dry-run'].includes(args[0])))
+    throw new Error('Bruk node noark-api/deploy.mjs [--check | --check-rag | --dry-run].');
   if (Number(process.versions.node.split('.')[0]) < 22) throw new Error('Node.js 22 eller nyere kreves.');
-  if (args[0] !== '--check') {
+  if (!['--check', '--check-rag'].includes(args[0])) {
     console.log('Tester serveren og klienten før publisering ...');
     const testFiles = ['tests', '../noark-assistent/tests'].flatMap((folder) =>
       readdirSync(join(directory, folder)).filter((name) => name.endsWith('.test.mjs')).sort()
@@ -84,7 +88,7 @@ async function main() {
     console.log('Oppdaterer den eksisterende Luna-serveren ...');
     wrangler('deploy');
   }
-  await checkDeployment({ attempts: args[0] === '--check' ? 1 : 4 });
+  await checkDeployment({ attempts: ['--check', '--check-rag'].includes(args[0]) ? 1 : 4, requireRag: args[0] === '--check-rag' });
   console.log(`Bekreftet serverversjon: ${ANSWER_VERSION}. Kildeversjon: ${BUILD_INFO.corpusVersion}.`);
   console.log('Åpne NOARK-assistenten på nytt, aktiver Luna og spør: Hva er systemID?');
   console.log('Helsekontrollen bekrefter utrullingen. En test av et ekte modellsvar gjenstår; ingen betalte testspørsmål er sendt.');

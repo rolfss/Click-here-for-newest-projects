@@ -16,7 +16,7 @@ import {
 } from "./engine.mjs";
 import { buildDecisionNote } from "./decision-note.mjs";
 import { fallbackAnswer, lunaFailureAnswer, retrieveConversation, MAX_HISTORY as CHAT_HISTORY } from "./rag-shared.mjs";
-import { askLuna, loadLunaStatus, mountBotCheck, resetBotCheck, needsUpdatedCorpus } from "./luna-client.mjs";
+import { askLuna, loadLunaStatus, mountBotCheck, resetBotCheck, needsUpdatedCorpus, jevEnabled, bonsaiEnabled, aiDisclosure, answerModeLabel, providerNotice, retrievalNotice } from "./luna-client.mjs";
 
 const HISTORY_KEY = "noark-assistent-history-v1";
 const MAX_HISTORY = 8;
@@ -129,9 +129,13 @@ function assistantMessage(answer) {
       text: `${answer.confidence.label} · ${answer.confidence.score}/100`,
       attrs: { title: "Anslått kilderelevans, ikke sannsynlighet for at svaret er riktig. Kontroller originalkildene." },
     }),
-    element("span", { className: "answer-mode", text: answer.mode === "luna" ? "GPT-5.6 Luna · medium" : answer.mode === "unavailable" ? "Luna svarte ikke" : "Lokalt kildesøk" }),
+    element("span", { className: "answer-mode", text: answerModeLabel(answer) }),
   );
   content.append(answerHeader);
+  const generationNotice = providerNotice(answer);
+  if (generationNotice) content.append(element("p", { className: "message-note", text: generationNotice }));
+  const selectionNotice = retrievalNotice(answer);
+  if (selectionNotice) content.append(element("p", { className: "message-note", text: selectionNotice }));
 
   const lead = element("p", { className: "answer-lead" });
   appendText(lead, answer.lead);
@@ -198,7 +202,7 @@ function renderEvidence(results, query = "") {
       element("span", { className: "source-number", text: String(rank) }),
       element("span", { className: "source-kind", text: source.type }),
       element("span", { className: "relevance", text: `${relevance}% treff`, attrs: {
-        title: `${result.relevanceMethod === "luna" ? "Luna-vurdert" : "Søkebasert"} relevansanslag for denne kildeposten. Ikke en sannsynlighet for at svaret er riktig.`,
+        title: `${result.relevanceMethod === "bonsai" ? "Bonsai-vurdert" : result.relevanceMethod === "luna" ? "Luna-vurdert" : "Søkebasert"} relevansanslag for denne kildeposten. Ikke en sannsynlighet for at svaret er riktig.`,
       } }),
     );
 
@@ -218,7 +222,7 @@ function renderEvidence(results, query = "") {
     });
     footer.append(bar, link);
     const explanation = element("p", { className: "relevance-explanation", text:
-      `${result.relevanceMethod === "luna" ? "Luna-vurdering" : "Søkebasert anslag"}: ${result.relevanceReason ?? "Ord- og kravtreff."}` });
+      `${result.relevanceMethod === "bonsai" ? "Bonsai-vurdering" : result.relevanceMethod === "luna" ? "Luna-vurdering" : "Søkebasert anslag"}: ${result.relevanceReason ?? "Ord- og kravtreff."}` });
     card.append(top, heading, location, summary, explanation, sourceLine, footer);
     container.append(card);
   }
@@ -237,6 +241,11 @@ function plainTextAnswer(answer) {
     lines.push(result.url);
   }
   lines.push("", "Fagstøtte: kontroller originalkildene før beslutninger.");
+  lines.push(answerModeLabel(answer));
+  const generationNotice = providerNotice(answer);
+  if (generationNotice) lines.push(generationNotice);
+  const selectionNotice = retrievalNotice(answer);
+  if (selectionNotice) lines.push(selectionNotice);
   return lines.join("\n");
 }
 
@@ -298,8 +307,8 @@ async function runQuestion(question, { save = true, updateUrl = true, allowAI = 
   if (newTopic) state.turns = [];
   const previous = state.turns.slice(-CHAT_HISTORY);
   const needsNewSources = state.luna.configured && !state.luna.currentCorpus && needsUpdatedCorpus(clean, previous);
-  const useAI = allowAI && $("#use-luna").checked;
-  if (useAI && !state.botToken && !needsNewSources) { showToast("Fullfør sikkerhetskontrollen, eller slå av Luna for lokalt søk."); return; }
+  const useAI = state.luna.configured === true && allowAI && $("#use-luna").checked;
+  if (useAI && !state.botToken && !needsNewSources) { showToast("Fullfør sikkerhetskontrollen, eller slå av KI for lokalt søk."); return; }
   const runId = ++state.runId;
   const conversation = $("#conversation");
   state.busy = true;
@@ -307,16 +316,19 @@ async function runQuestion(question, { save = true, updateUrl = true, allowAI = 
   $("#question-form button[type=submit]").disabled = true;
   conversation.append(userMessage(clean));
   $("#question").value = "";
-  setStatus(useAI ? "Luna vurderer kildene" : "Søker lokalt", true);
+  setStatus(useAI ? "Velger kilder og skriver svar" : "Søker lokalt", true);
   let answer = useAI ? null : fallbackAnswer(clean, previous);
   renderEvidence(useAI ? retrieveConversation(clean, previous) : answer.results, clean);
   try {
     if (useAI) answer = await askLuna(clean, previous, state.botToken, state.controller.signal, {
       corpusVersion: state.luna.corpusVersion,
+      jevConsent: jevEnabled(state.luna) && $("#use-luna").checked,
+      bonsaiConsent: bonsaiEnabled(state.luna) && $("#use-luna").checked,
+      providerPreference: bonsaiEnabled(state.luna) && $("#use-luna").checked ? $("#answer-provider").value : undefined,
       qualityConsent: state.luna.questionLogging?.enabled === true && $("#quality-consent").checked,
     });
   } catch (error) {
-    answer = lunaFailureAnswer(clean, previous, error.name === "AbortError" ? "Luna-forespørselen ble avbrutt." : error.name === "TimeoutError" ? "Luna brukte for lang tid. Prøv igjen; det er ikke sendt noen automatisk ny forespørsel." : error.message);
+    answer = lunaFailureAnswer(clean, previous, error.name === "AbortError" ? "KI-forespørselen ble avbrutt." : error.name === "TimeoutError" ? "KI-svaret brukte for lang tid. Prøv igjen; nettleseren sender ikke forespørselen på nytt automatisk." : error.message);
   } finally {
     if (useAI) { state.botToken = ""; resetBotCheck(state.botWidget); }
   }
@@ -332,7 +344,7 @@ async function runQuestion(question, { save = true, updateUrl = true, allowAI = 
   state.turns = state.turns.slice(-CHAT_HISTORY);
   state.busy = false;
   $("#question-form button[type=submit]").disabled = false;
-  setStatus(answer.mode === "unavailable" ? "Luna svarte ikke" : "Klar", false);
+  setStatus(answer.mode === "unavailable" ? "KI-svar utilgjengelig" : "Klar", false);
   if (save) saveHistory(clean);
   if (updateUrl) {
     const url = new URL(window.location.href);
@@ -517,28 +529,44 @@ function bindEvents() {
   });
 }
 
+function refreshAiControls() {
+  const active = state.luna.configured === true && $("#use-luna").checked;
+  const directBonsai = bonsaiEnabled(state.luna) && $("#answer-provider").value === "bonsai";
+  $("#answer-provider").disabled = !active || !bonsaiEnabled(state.luna);
+  $("#bot-check").hidden = !active;
+  $("#model-badge").textContent = active
+    ? `${directBonsai ? "Bonsai" : "Luna"}${jevEnabled(state.luna) ? " · JEV velger kilder" : " · kildebasert svar"}`
+    : "Lokalt kildesøk";
+  $("#question-form button[type=submit]").textContent = active ? directBonsai ? "Spør Bonsai" : "Spør Luna" : "Søk i kildene";
+}
+
 async function initializeLuna() {
   state.luna = await loadLunaStatus();
+  const disclosure = aiDisclosure(state.luna);
+  $("#ai-consent-label").textContent = disclosure.label;
+  $("#ai-disclosure").textContent = disclosure.text;
+  // A restored checkbox from an earlier page must not consent to new providers.
+  $("#use-luna").checked = false;
+  $("#provider-choice").hidden = !bonsaiEnabled(state.luna);
+  $("#answer-provider").value = "luna";
+  $("#answer-provider").disabled = true;
   $("#model-status").textContent = state.luna.message;
   $("#use-luna").disabled = !state.luna.configured;
   $("#quality-consent").disabled = state.luna.questionLogging?.enabled !== true;
   $("#quality-status").textContent = state.luna.questionLogging?.enabled === true
-    ? "For godkjente Luna-forespørsler registreres dato, kilde-ID-er, treffskårer og utfall. Spørsmålstekst lagres bare med ditt separate samtykke nedenfor."
+    ? "For godkjente KI-forespørsler registreres dato, kilde-ID-er, treffskårer og utfall. Spørsmålstekst lagres bare med ditt separate samtykke nedenfor."
     : "Spørsmålsloggen er ikke aktiv på den tilkoblede bakenden. Lokale søk blir ikke sendt inn til forbedringsloggen.";
-  $("#model-badge").textContent = state.luna.configured ? "Luna-backend klar" : "Lokalt søk · Luna ikke aktivert";
+  $("#model-badge").textContent = state.luna.configured ? jevEnabled(state.luna) ? "Luna og JEV klare" : "Luna-backend klar" : "Lokalt søk · Luna ikke aktivert";
+  $("#answer-provider").addEventListener("change", refreshAiControls);
   $("#use-luna").addEventListener("change", async () => {
     const active = $("#use-luna").checked;
-    $("#bot-check").hidden = !active;
-    $("#model-badge").textContent = active ? "GPT-5.6 Luna · medium" : "Lokalt kildesøk";
-    $("#question-form button[type=submit]").textContent = active ? "Spør Luna" : "Søk i kildene";
+    refreshAiControls();
     if (active && state.botWidget === null) {
       try {
         state.botWidget = await mountBotCheck(state.luna.siteKey, $("#bot-widget"), (token) => { state.botToken = token; });
       } catch {
         $("#use-luna").checked = false;
-        $("#bot-check").hidden = true;
-        $("#model-badge").textContent = "Lokalt kildesøk";
-        $("#question-form button[type=submit]").textContent = "Søk i kildene";
+        refreshAiControls();
         showToast("Sikkerhetskontrollen kunne ikke lastes. Lokalt søk er fortsatt tilgjengelig.");
       }
     }

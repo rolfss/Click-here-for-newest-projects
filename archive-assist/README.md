@@ -4,7 +4,7 @@
 
 [Åpne den publiserte demoen](https://rolfss.github.io/Click-here-for-newest-projects/archive-assist/)
 
-Archive Assist leser dokumentinnhold lokalt, foreslår saksdokumenttittel og øvrige metadata, og lar saksbehandler eller arkivar kontrollere resultatet før videre overføring eller registrering. Brukeren kan i tillegg velge forbedring med **GPT-5.6 Luna** og **reasoning effort `medium`** via den samme sikre API-bakenden som Noark-assistenten.
+Archive Assist leser dokumentinnhold lokalt, foreslår saksdokumenttittel og øvrige metadata, og lar saksbehandler eller arkivar kontrollere resultatet før videre overføring eller registrering. Brukeren kan i tillegg velge forbedring med **GPT-6 Luna** og **reasoning effort `medium`** via den samme sikre API-bakenden som Noark-assistenten.
 
 ## Saksdokumenttittel
 
@@ -19,7 +19,7 @@ Tittelen kommer ikke lenger bare fra filnavnet. Ved innlasting prioriterer motor
 
 Forslaget settes direkte i det redigerbare tittelfeltet. Brukeren ser metode, begrunnelse, sikkerhet og kontrollstatus, og kan godkjenne forslaget eller skrive en annen tittel. En menneskeredigert tittel blir ikke overskrevet av en senere Luna-analyse.
 
-Den deterministiske innholdsanalysen virker uten API. Luna er valgfri og bruker OpenAI Responses API gjennom Cloudflare Worker-backenden. Modellen er fastsatt til `gpt-5.6-luna`, `reasoning.effort` er `medium`, `store` er `false`, og svaret må følge et strengt JSON-skjema. Bare et begrenset tekstutdrag (maks 12 000 tegn), filnavn og en tillatt delmengde metadata sendes når brukeren eksplisitt velger Luna. Selve binærfilen sendes ikke.
+Den deterministiske innholdsanalysen virker uten API. Luna er valgfri og bruker OpenAI Responses API gjennom Cloudflare Worker-backenden. Modellen er fastsatt til `gpt-6-luna`, `reasoning.effort` er `medium`, `store` er `false`, og svaret må følge et strengt JSON-skjema. Bare et begrenset tekstutdrag (maks 12 000 tegn), filnavn og en tillatt delmengde metadata sendes når brukeren eksplisitt velger Luna. Selve binærfilen sendes ikke.
 
 Se den versjonerte [prompten for saksdokumenttittel](./TITTELPROMPT.md).
 
@@ -28,7 +28,7 @@ Se den versjonerte [prompten for saksdokumenttittel](./TITTELPROMPT.md).
 - Dra inn inntil 50 filer.
 - Lokal tekstuttrekking fra tekst, Markdown, CSV, JSON, XML, HTML, EML, PDF, DOCX, PPTX, XLSX, ODT, ODS og ODP.
 - Automatisk lokalt, innholdsbasert forslag til saksdokumenttittel ved innlasting.
-- Valgfri forbedring av metadata med GPT-5.6 Luna og medium reasoning.
+- Valgfri forbedring av metadata med GPT-6 Luna og medium reasoning.
 - Forslag til dokumentdato, dokumenttype, språk, beskrivelse, emne, forfatter, organisasjonsenhet og nøkkelord når grunnlaget finnes.
 - Felles metadata for forfatter, organisasjonsenhet, sak, klassifikasjon, tilgang og livsløp.
 - Kontroll av obligatoriske felt, betingede krav og menneskelig tittelgjennomgang.

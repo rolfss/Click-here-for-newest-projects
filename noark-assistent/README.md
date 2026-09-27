@@ -6,7 +6,7 @@ Korte, kildebaserte svar og konkrete henvisninger til Noark 5 versjon 6.0, arkiv
 
 **Lokalt kildesøk** virker uten konto, server eller API-nøkkel. Appen rangerer kuraterte kildeposter og setter sammen forhåndskontrollerte sammendrag.
 
-**GPT-5.6 Luna**, med resonneringsnivå `medium`, tilpasser svarene til spørsmålet og oppgitt situasjon. Enkle spørsmål besvares kort; forklaringer, sammenligninger og sjekklister får normalt 150–350 ord med begrunnelse og kildehenvisninger. Oppfølgingsspørsmål beholder temaet fra samtalen. API-bruken er separat fra ChatGPT-abonnementet.
+**GPT-6 Luna**, med resonneringsnivå `medium`, tilpasser svarene til spørsmålet og oppgitt situasjon. Enkle spørsmål besvares kort; forklaringer, sammenligninger og sjekklister får normalt 150–350 ord med begrunnelse og kildehenvisninger. Oppfølgingsspørsmål beholder temaet fra samtalen. API-bruken er separat fra ChatGPT-abonnementet.
 
 Når Luna er valgt, erstattes ikke feil med et ferdig lokalt standardsvar. Appen viser «Luna svarte ikke», forklarer årsaken og lar spørsmålet stå klart for nytt forsøk. Brukeren kan velge lokalt søk selv. Kildeoversikten og relevansprosentene beholdes til høyre.
 
@@ -15,6 +15,12 @@ Den offentlige Worker-adressen er konfigurert i `api-config.mjs`; ingen hemmelig
 **Versjon 1.3.2:** GitHub Pages og Cloudflare må oppdateres separat med kildegrunnlaget fra 26.09.2026. En vellykket Pages-publisering alene bekrefter ikke at Luna-serveren er oppdatert. Ved versjonskonflikt viser klienten feil for spørsmål som trenger nyere kilder. Se [vedlikeholdsregelen](SOURCE_MAINTENANCE.md) og [utrulling og privat kvalitetsgjennomgang](../noark-api/GUIDANCE_AND_REVIEW.md).
 
 ## Kildegrunnlag
+
+### Designvalg og arkivfaglig praksis
+
+Grensesnittets «Kilder og metode» forklarer fire valg: kontrollerbare originalhenvisninger, kildenes virkeområde og versjon, synlig KI-bruk og usikkerhet, og brukerens faglige kontroll før svaret tas i bruk. Dette støtter etterprøvbarhet, kontekst og tydelig ansvar. Koblingen er vår anvendelse av [Nasjonalarkivets veiledning om internkontroll](https://www.nasjonalarkivet.no/veiledere/etablere-internkontroll-med-dokumentasjonsforvaltningen/), ikke en godkjenning av appen. Et kopiert beslutningsnotat må håndteres etter virksomhetens dokumentasjonsrutiner.
+
+### Innhold og vedlikehold
 
 **Fast vedlikeholdsregel:** Søk etter nye og reviderte, relevante dokumenter hver tirsdag og torsdag kl. 09.00 norsk tid. Kunnskapsbasen endres bare når **GPT-6 Astra med ultra** vurderer det nødvendig. Kontrollen kjøres via eierens Codex og krever at maskinen er på og appen kjører. Regelen vises i brukergrensesnittet. Se [fremgangsmåte, vurderingskrav og publisering](SOURCE_MAINTENANCE.md).
 
