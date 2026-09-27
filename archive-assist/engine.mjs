@@ -99,7 +99,9 @@ export function parseDateText(value = '') {
     januar: 1, februar: 2, mars: 3, april: 4, mai: 5, juni: 6,
     juli: 7, august: 8, september: 9, oktober: 10, november: 11, desember: 12,
     january: 1, february: 2, march: 3, may: 5, june: 6, july: 7,
-    october: 10, december: 12
+    october: 10, december: 12,
+    jan: 1, feb: 2, mar: 3, apr: 4, jun: 6, jul: 7, aug: 8,
+    sep: 9, sept: 9, oct: 10, nov: 11, dec: 12
   };
   match = text.toLocaleLowerCase('nb-NO').match(/\b([0-2]?\d|3[01])\.?\s+([a-zæøå]+)\s+(20\d{2}|19\d{2})\b/iu);
   if (match && months[match[2]]) return validIsoDate(match[3], months[match[2]], match[1]);
@@ -264,19 +266,27 @@ function appearsToBeTitleLine(line = '') {
   return true;
 }
 
+// A table header such as "Emne\tDato" is not a label/value metadata row.
+function isTabularHeader(line = '') {
+  const columns = line.split('\t').map(value => value.trim());
+  const columnLabel = /^(?:tittel|title|emne|subject|sak|saksnummer|saksreferanse|gjelder|regarding|forfatter|author|avsender|sender|mottaker|recipient|ansvarlig|fra|from|til|to|organisasjonsenhet|avdeling|enhet|seksjon|department|unit|dokumentdato|documentdate|dato|date|status|merknad|merknader|kommentar|beskrivelse|description|navn|name|type|dokumenttype|documenttype|id|antall|beløp|år)$/iu;
+  return columns.length > 1 && columns.every(value => columnLabel.test(value));
+}
+
 export function extractLabeledMetadata(text = '') {
   const result = { subject: '', creator: '', organizationalUnit: '', documentDate: '', explicitTitle: '' };
   const lines = String(text).replace(/\r/g, '').split('\n').map(line => line.trim()).filter(Boolean).slice(0, 160);
   for (const line of lines) {
-    let match = line.match(/^(?:tittel|title)\s*[:\-–—]\s*(.+)$/i);
+    if (isTabularHeader(line)) continue;
+    let match = line.match(/^(?:tittel|title)\s*[:\t\-–—]\s*(.+)$/i);
     if (match && !result.explicitTitle) result.explicitTitle = normalizeTitleCandidate(match[1]);
-    match = line.match(/^(?:emne|subject|sak|gjelder|regarding)\s*[:\-–—]\s*(.+)$/i);
+    match = line.match(/^(?:emne|subject|sak|gjelder|regarding)\s*[:\t\-–—]\s*(.+)$/i);
     if (match && !result.subject) result.subject = normalizeTitleCandidate(match[1]);
-    match = line.match(/^(?:forfatter|utarbeidet av|skrevet av|ansvarlig|author|prepared by|from|fra)\s*[:\-–—]\s*(.+)$/i);
+    match = line.match(/^(?:forfatter|utarbeidet av|skrevet av|ansvarlig|author|prepared by|from|fra)\s*[:\t\-–—]\s*(.+)$/i);
     if (match && !result.creator) result.creator = stripPersonalDetails(match[1]).replace(/[<>]/g, '').trim().slice(0, 160);
-    match = line.match(/^(?:organisasjonsenhet|avdeling|enhet|seksjon|department|unit)\s*[:\-–—]\s*(.+)$/i);
+    match = line.match(/^(?:organisasjonsenhet|avdeling|enhet|seksjon|department|unit)\s*[:\t\-–—]\s*(.+)$/i);
     if (match && !result.organizationalUnit) result.organizationalUnit = stripPersonalDetails(match[1]).trim().slice(0, 160);
-    match = line.match(/^(?:dokumentdato|dato|date)\s*[:\-–—]\s*(.+)$/i);
+    match = line.match(/^(?:dokumentdato|dato|date)\s*[:\t\-–—]\s*(.+)$/i);
     if (match && !result.documentDate) result.documentDate = parseDateText(match[1]);
   }
   return result;
@@ -290,7 +300,8 @@ function headingCandidate(text = '') {
       .replace(/^\s*<[^>]+>/, '')
       .replace(/<[^>]+>/g, ' ')
       .trim();
-    if (/^(?:tittel|title|emne|subject|sak|gjelder|forfatter|fra|til|dato|avdeling|enhet)\s*[:\-–—]/i.test(line)) continue;
+    if (isTabularHeader(line)) continue;
+    if (/^(?:tittel|title|emne|subject|sak|gjelder|forfatter|fra|til|dato|avdeling|enhet|teknisk opprettelsesdato)\s*[:\-–—]/i.test(line)) continue;
     if (appearsToBeTitleLine(line)) return normalizeTitleCandidate(line);
   }
   return '';
@@ -414,7 +425,7 @@ export function createMetadata(file, text = '', sha256 = '', defaults = {}, now 
   });
   const title = titleResult.title;
   const signals = detectSensitiveData(text, file.name);
-  const documentDate = extractDateFromName(file.name) || labeled.documentDate || dateFromTimestamp(file.lastModified);
+  const documentDate = labeled.documentDate || extractDateFromName(file.name) || '';
   const generatedAt = now.toISOString();
   const inferredSubject = defaults.subject || labeled.subject || deriveSubjectFromTitle(title);
   const metadata = {
@@ -461,7 +472,7 @@ export function createMetadata(file, text = '', sha256 = '', defaults = {}, now 
     contentExtractionWarnings: Array.isArray(analysis.warnings) ? analysis.warnings : [],
     suggestionBasis: [
       titleResult.usedContent ? 'saksdokumenttittel fra innhold og metadata' : 'saksdokumenttittel fra filnavn',
-      extractDateFromName(file.name) ? 'dato i filnavn' : (labeled.documentDate ? 'dato i dokumentinnhold' : 'filens sist endret-dato'),
+      labeled.documentDate ? 'dato i dokumentinnhold' : (extractDateFromName(file.name) ? 'dato i filnavn' : 'dokumentdato mangler i kilden'),
       text ? 'tekstinnhold' : 'filtype og tekniske egenskaper'
     ]
   };
@@ -477,12 +488,12 @@ export function applyAiAnalysis(metadata = {}, result = {}, now = new Date()) {
   if (!suggestedTitle) throw new Error('AI-analysen returnerte ikke en gyldig saksdokumenttittel.');
   const canReplaceTitle = next.titleReviewStatus === 'Ikke gjennomgått' && (!next.title || next.title === previousSuggestion);
   next.titleSuggestion = suggestedTitle;
-  next.titleSuggestionMethod = 'Lokal nettleser-AI';
+  next.titleSuggestionMethod = 'GPT-5.6 Luna (medium)';
   next.titleSuggestionConfidence = normalizeConfidence(result.confidence);
-  next.titleSuggestionReason = normalizeTitleCandidate(result.rationale || result.reason || 'Lokal AI vurderte dokumentinnhold og tilgjengelige metadata.');
+  next.titleSuggestionReason = normalizeTitleCandidate(result.rationale || result.reason || 'GPT-5.6 Luna vurderte dokumentinnhold og tilgjengelige metadata.');
   next.titleSuggestionGeneratedAt = now.toISOString();
   next.titlePromptVersion = TITLE_PROMPT_VERSION;
-  next.aiAnalysisStatus = 'Fullført lokalt';
+  next.aiAnalysisStatus = 'Fullført med GPT-5.6 Luna (medium)';
   if (canReplaceTitle) next.title = suggestedTitle;
 
   if ((!next.documentType || next.documentType === 'Dokument' || next.documentType === 'PDF-dokument') && result.documentType) {
@@ -514,6 +525,7 @@ function normalizeConfidence(value) {
 
 export function calculateDisposalYear(documentDate = '', decision = '', years = '') {
   if (decision !== 'Kasseres etter angitt tid') return '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(documentDate)) || parseDateText(documentDate) !== documentDate) return '';
   const year = Number(String(documentDate).slice(0, 4));
   const duration = Number(years);
   return Number.isInteger(year) && Number.isFinite(duration) && duration > 0 ? String(year + duration) : '';

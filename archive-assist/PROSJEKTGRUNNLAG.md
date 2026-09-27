@@ -16,10 +16,10 @@ Archive Assist realiserer den opprinnelige Arkivklar-ideen om et enkelt verktøy
 ## Viktige designvalg
 
 - **Innhold før filnavn:** emne, uttrykkelig tittel, overskrift og meningsbærende innhold prioriteres. Filnavnet er reserve.
-- **To analysetrinn:** en forklarbar lokal motor virker i alle moderne nettlesere; lokal generativ AI kan forbedre resultatet der nettleseren støtter det.
+- **To analysetrinn:** en forklarbar lokal motor lager første forslag; valgfri GPT-5.6 Luna kan forbedre resultatet etter en eksplisitt brukerhandling. Luna sender et begrenset tekstutdrag og utvalgte metadata via ekstern backend til OpenAI.
 - **Versjonert prompt:** reglene for saksdokumenttittel ligger i `TITTELPROMPT.md` og kildekoden.
 - **Menneskelig kontroll:** forslag settes i et redigerbart felt, og eksporten varsler når tittelen ikke er kontrollert.
-- **Lokal behandling:** gir en testbar offentlig demo uten at dokumenter sendes til en ekstern analyseplattform.
+- **Lokal behandling som standard:** gir en testbar offentlig demo uten ekstern dokumentanalyse. Sky-AI er et separat valg med synlig forklaring av dataflyten.
 - **Sidecar fremfor binær omskriving:** unngår å korrumpere PDF-, Office- og bildefiler og gir samme modell på tvers av formater.
 - **Flyttbart resultat:** JSON, CSV og ZIP gjør veien videre mot import eller integrasjon konkret.
 

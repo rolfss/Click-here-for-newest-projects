@@ -47,7 +47,7 @@ Dette er den versjonerte prompten som brukes når nettleseren har en lokal språ
 ## Kontrollregler i applikasjonen
 
 1. Et lokalt, deterministisk forslag lages alltid først. Emnefelt, uttrykkelig tittel, overskrift og meningsbærende innhold prioriteres i den rekkefølgen. Filnavnet brukes bare som reserve.
-2. Lokal generativ AI kan forbedre forslaget når nettleseren støtter Prompt API og enheten har en lokal modell.
+2. Valgfri GPT-5.6 Luna (medium) kan forbedre forslaget når brukeren aktivt velger det. Et tekstutdrag på inntil 12 000 tegn, filnavn og utvalgte metadata sendes da via ekstern backend til OpenAI. Import starter aldri denne behandlingen.
 3. En menneskeredigert eller godkjent tittel overskrives ikke av en senere AI-analyse.
 4. Metode, sikkerhet, begrunnelse, promptversjon og kontrollstatus følger metadataene.
 5. Eksport varsler når en tittel fortsatt står som «Ikke gjennomgått».

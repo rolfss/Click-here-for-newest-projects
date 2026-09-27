@@ -1,0 +1,39 @@
+name: Archive Assist nettleserkontroll
+
+on:
+  pull_request:
+    paths:
+      - "archive-assist/**"
+      - ".github/workflows/archive-assist-browser.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: archive-assist/package-lock.json
+      - name: Installer testverktøy
+        working-directory: archive-assist
+        run: npm ci && npx playwright install --with-deps chromium
+      - name: Test og bygg klienten
+        working-directory: archive-assist
+        run: npm test && npm run build
+      - name: Test desktop og mobil med syntetiske data og mock-AI
+        working-directory: archive-assist
+        env:
+          ARCHIVE_ASSIST_QA_DIR: qa-output
+        run: npm run test:browser
+      - name: Behold testresultater og skjermbilder
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: archive-assist-browser
+          path: archive-assist/qa-output
+          if-no-files-found: warn

@@ -1,0 +1,17 @@
+From: Testarkiv <arkiv@example.invalid>
+To: mottak@example.invalid
+Date: Sat, 19 Sep 2026 10:00:00 +0200
+Subject: Avklaring av vedlegg til avlevering
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="syntetisk"
+
+--syntetisk
+Content-Type: text/plain; charset=utf-8
+
+
+--syntetisk
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+<html><body><p>SYNTETISK TESTDOKUMENT</p><p>Vedlegg V-03 mangler i pakke TEST-P02.</p><p>Send vedlegget innen 25.09.2026.</p></body></html>
+--syntetisk--

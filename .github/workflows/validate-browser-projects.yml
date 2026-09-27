@@ -31,7 +31,7 @@ jobs:
 
       - name: Kjør tester for Archive Assist
         working-directory: ./archive-assist
-        run: npm test && npm run check
+        run: npm test && npm run build
 
       - name: Kjør tester for MetaReady
         working-directory: ./metaready

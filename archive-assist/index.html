@@ -4,12 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Archive Assist leser dokumentinnhold, foreslår saksdokumenttittel og metadata, og lar saksbehandler eller arkivar kontrollere alt før eksport.">
-  <meta name="theme-color" content="#10243a">
+  <meta name="theme-color" content="#173f40">
   <title>Archive Assist – innholdsbasert saksdokumenttittel og metadata</title>
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./luna.css">
+  <link rel="stylesheet" href="./workspace.css">
 </head>
 <body>
+  <a class="skip-link" href="#load-heading">Hopp til utprøving</a>
   <header class="topbar">
     <a class="brand" href="./" aria-label="Archive Assist, startside"><span>AA</span><strong>Archive Assist</strong></a>
     <nav aria-label="Prosjektnavigasjon">
@@ -19,42 +21,60 @@
   </header>
 
   <main>
+    <noscript><p class="status" data-kind="error">Slå på JavaScript for å lese dokumenter og lage forslag lokalt i nettleseren.</p></noscript>
     <section class="hero">
       <div>
-        <p class="eyebrow">Metadatahjelp for dokumentasjonsforvaltning</p>
-        <h1>Les dokumentet. Foreslå en bedre saksdokumenttittel.</h1>
-        <p class="lead">Filer og tekstuttrekk behandles lokalt. Når du velger Luna-forbedring, sendes bare et begrenset tekstutdrag og relevante metadata via den sikre API-bakenden for analyse.</p>
-        <div class="trust-row" aria-label="Tekniske egenskaper">
-          <span>Lokal filbehandling</span><span>GPT-5.6 Luna</span><span>Reasoning: medium</span><span>Ingen API-nøkkel i nettleseren</span>
-        </div>
+        <p class="eyebrow">Fra dokument til ryddige metadata</p>
+        <h1>En god tittel begynner med innholdet.</h1>
+        <p class="lead">Prøv en tekstfil. Få forslag til saksdokumenttittel, dato og beskrivelse — og kontroller dem mot teksten før du tar dem videre.</p>
+        <div class="trust-row"><span>Lokalt først</span><span>Du har siste ord</span><span>Originalfilen endres ikke</span></div>
       </div>
       <aside class="hero-note">
-        <strong>Forslag, ikke automatisk vedtak</strong>
-        <p>Archive Assist setter et redigerbart forslag til saksdokumenttittel. Kontrollstatus, metode, sikkerhet og begrunnelse følger metadataene videre.</p>
+        <p class="eyebrow">Hva er Archive Assist?</p>
+        <strong>En arbeidsflate for dokumentkontroll.</strong>
+        <p>For deg som vil gjøre dokumenter lettere å forstå og finne igjen før registrering eller overføring. Dette er metadatahjelp, ikke et sak-/arkivsystem.</p>
+        <a href="#usage-guide">Slik bruker du appen ↓</a>
       </aside>
     </section>
+    <ol class="journey" aria-label="Slik virker det">
+      <li><span>01</span><div><strong>Prøv</strong><small>Fil, innlimt tekst eller et eksempel</small></div></li>
+      <li><span>02</span><div><strong>Kontroller</strong><small>Sammenlign forslag med kilden</small></div></li>
+      <li><span>03</span><div><strong>Eksporter</strong><small>Last ned metadata og kontrollrapport</small></div></li>
+    </ol>
 
     <section class="panel ingest-panel" aria-labelledby="load-heading">
       <div class="section-heading">
-        <div><span class="step">1</span><div><p class="eyebrow">Velg materiale</p><h2 id="load-heading">Legg til filer</h2></div></div>
+        <div><span class="step">1</span><div><p class="eyebrow">Velg materiale</p><h2 id="load-heading" tabindex="-1">Prøv med et dokument</h2></div></div>
         <button id="clear-button" class="text-button danger" type="button" hidden>Tøm arbeidsflaten</button>
       </div>
+      <div class="intake-grid">
+      <div>
       <label id="dropzone" class="dropzone" tabindex="0" for="file-input">
-        <input id="file-input" type="file" multiple>
+        <input id="file-input" type="file" multiple tabindex="-1">
         <span class="drop-icon" aria-hidden="true">⇧</span>
-        <strong>Slipp filer her, eller velg fra maskinen</strong>
-        <small>Inntil 50 filer, 100 MB per fil og 300 MB samlet. Lokal innholdslesing støtter blant annet PDF, DOCX, PPTX, XLSX, ODF, e-post og tekstformater.</small>
+        <strong>Velg filer eller slipp dem her</strong>
+        <small>Start med TXT, Markdown eller CSV. Også Word, Excel, e-post og tekstbasert PDF støttes. Maks 50 filer, 100 MB per fil og 300 MB samlet.</small>
       </label>
       <div class="sample-row">
-        <span>Vil du bare se hvordan tittelforslagene virker?</span>
-        <button id="sample-button" class="button button-secondary" type="button">Bruk tre eksempelfiler</button>
+        <span>Ingen fil klar? Bruk syntetiske testdata.</span>
+        <button id="sample-button" class="button button-secondary" type="button">Prøv tre eksempler</button>
       </div>
+      </div>
+      <form id="paste-form" class="paste-panel">
+        <label for="paste-text">Eller lim inn dokumenttekst</label>
+        <p id="paste-help">Ta med overskrift, dato og avsender hvis det finnes i dokumentet. Ikke fyll inn opplysninger du mangler.</p>
+        <textarea id="paste-text" name="documentText" rows="6" maxlength="100000" placeholder="Emne: Vedlikehold av kommunale bygg&#10;Dato: 27.09.2026&#10;&#10;Lim inn teksten du vil teste …" aria-describedby="paste-help" required></textarea>
+        <div class="paste-actions"><small>Behandles som en TXT-fil. Maks 100 000 tegn.</small><button id="analyze-text" class="button button-primary" type="submit">Lag lokale forslag →</button></div>
+      </form>
+      </div>
+      <p class="privacy-note">Fil og innlimt tekst analyseres lokalt. Arbeidet beholdes ikke når siden lukkes eller lastes på nytt. Valgfri sky-AI sender et tekstutdrag bare når du velger den.</p>
       <p id="status" class="status" role="status" aria-live="polite" hidden></p>
     </section>
 
-    <section class="panel defaults-panel" aria-labelledby="defaults-heading">
+    <details class="panel defaults-panel">
+      <summary>Felles metadata <span>Valgfritt · for flere dokumenter i samme sak</span></summary>
       <div class="section-heading">
-        <div><span class="step">2</span><div><p class="eyebrow">Felles kontekst</p><h2 id="defaults-heading">Metadata som gjelder flere filer</h2></div></div>
+        <div><div><p class="eyebrow">Felles kontekst</p><h2 id="defaults-heading">Metadata som gjelder flere filer</h2></div></div>
       </div>
       <form id="defaults-form" class="defaults-grid">
         <label>Dokumentansvarlig eller forfatter<input name="creator" autocomplete="organization-title" placeholder="Eksempel: Kari Nordmann"></label>
@@ -73,14 +93,15 @@
         <label class="checkbox"><input id="overwrite-defaults" type="checkbox"> Overskriv også felt som allerede har en verdi</label>
         <button id="apply-defaults" class="button button-primary" type="button">Bruk på alle filer</button>
       </div>
-    </section>
+    </details>
 
     <section id="empty-state" class="empty-state">
-      <span>3</span><h2>Gjennomgang og eksport åpnes når du har lagt til filer.</h2>
-      <p>Du kan bruke egne dokumenter eller eksempelfilene over.</p>
+      <h2>Her blir innhold til forslag du kan kontrollere.</h2>
+      <p>Legg til en fil eller lim inn tekst. Du får se kildegrunnlaget, begrunnelsen og feltene du kan rette.</p>
     </section>
 
     <section id="workspace" hidden>
+      <p class="workspace-intro"><strong>Kontroller før du tar resultatet videre.</strong> Utfylling viser hvor mange metadatafelt som er fylt inn, ikke om opplysningene er riktige.</p>
       <div class="summary-grid" aria-label="Status for arbeidsflaten">
         <article><span>Filer</span><strong id="file-count">0</strong></article>
         <article><span>Gjennomsnittlig utfylling</span><strong id="average-score">0 %</strong></article>
@@ -89,6 +110,7 @@
         <article class="control-summary"><span>Overføringsstatus</span><strong id="control-status">Tom arbeidsflate</strong><small id="control-status-detail">Legg til filer for kontroll</small></article>
       </div>
 
+      <details id="ai-options" class="optional-ai"><summary>Valgfri AI-forbedring <span>Sender et tekstutdrag til ekstern tjeneste</span></summary>
       <section id="ai-banner" class="ai-banner" aria-live="polite">
         <div>
           <p class="eyebrow">Valgfri resonnering</p>
@@ -97,26 +119,37 @@
         </div>
         <div class="luna-actions">
           <div id="luna-bot-widget" aria-label="Sikkerhetskontroll"></div>
+          <button id="run-file-ai" class="button button-secondary" type="button" hidden>Forbedre valgt dokument med Luna</button>
           <button id="run-all-ai" class="button button-primary" type="button" hidden>Forbedre alle med Luna</button>
         </div>
       </section>
-
+      <p class="ai-scope">Velg dokument i listen før du forbedrer ett dokument. Luna mottar inntil 12 000 tegn fra hvert valgt dokument og utvalgte metadata. Resultatet må fortsatt kontrolleres mot kilden.</p>
+      <p id="ai-file-status" class="ai-file-status" role="status" aria-live="polite"></p>
+      </details>
       <div class="workspace-grid">
         <section class="panel file-panel" aria-labelledby="review-heading">
           <div class="section-heading compact">
-            <div><span class="step">3</span><div><p class="eyebrow">Gjennomgang</p><h2 id="review-heading">Filer og kvalitet</h2></div></div>
+            <div><span class="step">2</span><div><p class="eyebrow">Gjennomgang</p><h2 id="review-heading" tabindex="-1">Dine dokumenter</h2></div></div>
           </div>
-          <div id="file-list" class="file-list" role="list"></div>
+          <div id="file-list" class="file-list" role="group" aria-labelledby="review-heading"></div>
         </section>
 
         <section class="panel editor-panel">
           <div id="editor-empty" class="editor-empty"><p>Velg en fil for å kontrollere metadata.</p></div>
           <div id="metadata-editor" hidden>
             <div class="editor-head">
-              <div><p class="eyebrow">Valgt fil</p><h2 id="editor-heading"></h2><code id="editor-filename"></code></div>
-              <span id="editor-score" class="score-badge">0 %</span>
+              <div><p class="eyebrow">Valgt fil</p><h2 id="editor-heading" tabindex="-1"></h2><code id="editor-filename"></code></div>
+              <span id="editor-score" class="score-badge" title="Metadatautfylling, ikke en vurdering av riktighet">0 %</span>
             </div>
 
+            <p class="review-instruction">Les kildeutdraget og vurder om tittelen beskriver dokumentet presist. Rett ved behov. En godkjent tittel betyr ikke at resten av metadataene er kontrollert.</p>
+            <div class="comparison-grid">
+            <section class="source-panel" aria-labelledby="source-heading">
+              <div class="source-heading"><h3 id="source-heading">Teksten som er lest</h3><span id="source-count"></span></div>
+              <p>Uttrekket kan mangle layout. Kontroller originalfilen ved tvil.</p>
+              <pre id="source-text" tabindex="0" aria-label="Uthentet dokumenttekst"></pre>
+            </section>
+            <div class="review-column">
             <section class="title-suggestion" aria-labelledby="title-suggestion-heading">
               <div class="suggestion-head">
                 <div><p class="eyebrow">Automatisk forslag</p><h3 id="title-suggestion-heading">Foreslått saksdokumenttittel</h3></div>
@@ -128,20 +161,21 @@
               <div class="suggestion-actions">
                 <button id="use-title-suggestion" class="button button-primary" type="button">Bruk og godkjenn forslaget</button>
                 <button id="approve-title" class="button button-secondary" type="button">Godkjenn gjeldende tittel</button>
-                <button id="run-file-ai" class="button button-secondary" type="button" hidden>Forbedre med Luna</button>
+
               </div>
-              <small id="ai-file-status" class="ai-file-status"></small>
+
             </section>
 
             <form id="editor-form" class="editor-form">
-              <fieldset><legend>Beskrivelse</legend>
-                <label class="wide">Saksdokumenttittel<input name="title" required maxlength="120"><small>Forslaget kan redigeres fritt. En endring markeres som menneskeredigert.</small></label>
+              <fieldset><legend>Kontroller og rediger</legend>
+                <label class="wide">Saksdokumenttittel<input name="title" required maxlength="120"><small>Forslaget kan redigeres fritt. Endringer lagres i arbeidsflaten. Godkjenn tittelen når du har kontrollert den.</small></label>
                 <label class="wide">Beskrivelse<textarea name="description" rows="3"></textarea></label>
                 <label>Dokumenttype<input name="documentType"></label>
                 <label>Dokumentdato<input name="documentDate" type="date"></label>
                 <label>Språk<select name="language"><option value="nb">Norsk bokmål</option><option value="nn">Norsk nynorsk</option><option value="en">Engelsk</option><option value="und">Ikke bestemt</option></select></label>
                 <label>Nøkkelord<input name="keywords" placeholder="skill med komma"></label>
               </fieldset>
+              <details class="metadata-details"><summary>Mer metadata og kontroll <span>Ansvar, sak, tilgang og tekniske opplysninger</span></summary>
               <fieldset><legend>Ansvar og sammenheng</legend>
                 <label>Dokumentansvarlig<input name="creator"></label>
                 <label>Organisasjonsenhet<input name="organizationalUnit"></label>
@@ -165,7 +199,10 @@
                 <label class="wide">SHA-256<input name="sha256" readonly class="monospace"></label>
                 <label class="wide">Merknader<textarea name="notes" rows="2"></textarea></label>
               </fieldset>
+              </details>
             </form>
+            </div>
+            </div>
             <div class="review-box">
               <div><h3>Punkter til kontroll</h3><ul id="findings"></ul></div>
               <div><h3>Mulige personopplysningssignaler</h3><ul id="signal-list"></ul><small>Automatisk mønstergjenkjenning er bare en indikasjon.</small></div>
@@ -181,8 +218,8 @@
 
       <section class="panel export-panel" aria-labelledby="export-heading">
         <div>
-          <p class="eyebrow">Resultat</p><h2 id="export-heading">Last ned metadata og dokumentpakke</h2>
-          <p id="export-note"></p>
+          <p class="eyebrow">03 · Ta resultatet videre</p><h2 id="export-heading">Last ned metadata og dokumentpakke</h2>
+          <p id="export-note"></p><p class="export-help">CSV passer til regneark, JSON til videre integrasjon. Kontrollrapporten viser hva som gjenstår. Nedlasting registrerer ikke dokumentene i et arkivsystem.</p>
         </div>
         <div class="export-actions">
           <button id="download-json" class="button button-secondary" type="button">JSON-manifest</button>
@@ -193,16 +230,21 @@
       </section>
     </section>
 
-    <section class="explanation-grid">
-      <article><span>01</span><h2>Innhold før filnavn</h2><p>Saksdokumenttittelen bygges først fra emnefelt, overskrift, dokumenttype og meningsbærende innhold. Filnavnet brukes bare som reserve.</p></article>
-      <article><span>02</span><h2>Menneskelig kontroll</h2><p>Forslag, metode, begrunnelse og sikkerhet vises tydelig. Saksbehandler eller arkivar godkjenner eller redigerer tittelen før videre bruk.</p></article>
-      <article><span>03</span><h2>Flyttbart resultat</h2><p>Kontrollstatus og forslagsgrunnlag følger med i JSON, CSV og sidecar-metadata sammen med resten av arkivkonteksten.</p></article>
-      <article><span>04</span><h2>Kontrollspor</h2><p>En egen kontrollrapport oppsummerer tittelgjennomgang, obligatoriske mangler, duplikater og SHA-256 før videre overføring.</p></article>
+    <section id="usage-guide" class="usage-guide" aria-labelledby="guide-heading">
+      <p class="eyebrow">Kort bruksveiledning</p><h2 id="guide-heading">Du kjenner saken. Appen hjelper deg å rydde.</h2>
+      <div class="guide-grid">
+        <article><span>01 / LEGG TIL</span><h3>Start med én tekstfil</h3><p>Last inn en fil, lim inn tekst eller velg eksemplene. Appen leser innholdet og foreslår en beskrivende tittel og metadata. Samme lokale analyse brukes for alle tre måtene.</p></article>
+        <article><span>02 / KONTROLLER</span><h3>Sammenlign med kilden</h3><p>Velg dokumentet i listen. Les uttrekket og begrunnelsen. Rett tittel, dato og beskrivelse. Velg «Godkjenn gjeldende tittel» når den er riktig. Kontroller også mangler og personopplysningssignaler.</p></article>
+        <article><span>03 / EKSPORTER</span><h3>Ta med kontrollsporet</h3><p>Last ned metadata eller en ZIP med dokumentkopier og metadatafiler. Uavklarte felt følger med som kontrollpunkter. Originalfilene på maskinen din endres ikke.</p></article>
+      </div>
+      <details class="guide-faq"><summary>Hva betyr prosentene og kontrollstatusen?</summary><p>Utfyllingsprosenten viser hvor mye metadata som er fylt inn, ikke hvor riktig innholdet er. Forslagsstyrken er motorens anslag, ikke en garanti. «Godkjent» gjelder tittelen; overføringsstatusen gjelder demonstrasjonens kontrollregler, ikke juridisk godkjenning.</p></details>
+      <details class="guide-faq"><summary>Hva gjør jeg når teksten mangler eller forslaget er feil?</summary><p>Kontroller originalfilen. Skannede sider trenger OCR, som ikke er inkludert her. Du kan teste ved å lime inn lesbar tekst, men dette erstatter ikke kontroll av originalen. Rett feil manuelt; ikke gjett dato, avsender eller hjemmel.</p></details>
+      <details class="guide-faq"><summary>Hva er lokalt, og hva sendes til AI?</summary><p>Innlasting, tekstuttrekk og de første forslagene skjer i nettleseren. Den valgfrie Luna-funksjonen sender inntil 12 000 tegn og utvalgte metadata til ekstern AI via backend. Du trenger ikke AI for å teste appen. Bruk syntetisk eller offentlig materiale i demoen.</p></details>
+      <p class="guide-limit">Archive Assist er en demonstrasjon, ikke et Noark-godkjent arkivsystem. Du må selv vurdere tilgang, personvern, arkivverdi og bevaring. Last ned det du vil beholde før du lukker eller laster siden på nytt.</p>
     </section>
   </main>
 
   <footer><span>Archive Assist</span><span>En åpen demonstrasjon av Rolf Selås</span><a href="https://github.com/rolfss">GitHub</a></footer>
   <script type="module" src="./app.mjs"></script>
-  <script type="module" src="./luna-ui.mjs"></script>
 </body>
 </html>

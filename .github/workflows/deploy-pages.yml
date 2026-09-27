@@ -52,7 +52,7 @@ jobs:
 
       - name: Kjør tester for Archive Assist
         working-directory: ./archive-assist
-        run: npm test && npm run check
+        run: npm test && npm run build
 
       - name: Kjør tester for MetaReady
         working-directory: ./metaready
@@ -97,7 +97,7 @@ jobs:
           rm -rf _site
           mkdir -p _site
           cp -R site/. _site/
-          cp -R archive-assist _site/archive-assist
+          cp -R archive-assist/dist _site/archive-assist
           cp -R metaready _site/metaready
           cp -R lumen-relay _site/lumen-relay
           cp -R brukerstottejakten _site/brukerstottejakten
@@ -106,7 +106,6 @@ jobs:
           cp -R arkivmuseet/dist _site/arkivmuseet
           # Unpublished from Pages only; the original project files are retained.
           rm -rf _site/fjordsprint _site/fjordsprint-card.css
-          rm -rf _site/archive-assist/tests _site/archive-assist/package.json _site/archive-assist/README.md _site/archive-assist/ARKITEKTUR.md _site/archive-assist/PROSJEKTGRUNNLAG.md _site/archive-assist/SECURITY.md _site/archive-assist/LICENSE
           rm -rf _site/metaready/tests _site/metaready/package.json _site/metaready/README.md
           rm -rf _site/lumen-relay/tests _site/lumen-relay/package.json _site/lumen-relay/README.md _site/lumen-relay/DESIGN.md _site/lumen-relay/LICENSE
           rm -rf _site/brukerstottejakten/tests _site/brukerstottejakten/package.json _site/brukerstottejakten/README.md
