@@ -92,6 +92,11 @@ try{
  await page.locator('#leader-extras>summary').click();await page.locator('[data-choice="0"]').focus();await page.keyboard.press('Space');await expect(page.locator('[data-choice="0"]')).toHaveAttribute('aria-pressed','true');
  await page.locator('#leader-next').focus();await page.keyboard.press('Enter');await expect(page.locator('#leader-scenario-title')).toBeFocused();await expect(page.locator('.scenario>.eyebrow')).toContainText('VALG 2');
  pass('Reopened profiles focus their heading at the top and keyboard scenario navigation focuses the next question');
+ await page.locator('.scenario .case-context>summary').click();await page.locator('#extra-source').click();
+ await expect(page.locator('#dialog')).toBeVisible();assert.ok(await page.locator('#dialog .source').count()>1,'The leader source dialog renders multiple primary sources');
+ const duplicateIds=await page.evaluate(()=>{const seen=new Set(),duplicates=new Set();for(const element of document.querySelectorAll('[id]')){if(seen.has(element.id))duplicates.add(element.id);seen.add(element.id);}return [...duplicates];});
+ assert.deepEqual(duplicateIds,[],'Opening source references must not introduce duplicate IDs');await closeDialog(page);
+ pass('Leader source references render multiple primary sources without duplicate document IDs');
  await page.locator('#leader-plan').click();await page.locator(`[data-plan="${first.id}"]`).check();await page.locator(`[data-owner="${first.id}"]`).fill('Systemeier');await page.locator(`[data-due="${first.id}"]`).fill('2026-10-15');
  await page.locator(`[data-plan="${missions.at(-1).id}"]`).check();
  const order=await download(page,page.locator('#download-plan'));assert.ok(order.includes(first.action)&&order.includes(first.proof));assert.ok(order.includes('Systemeier')&&order.includes('2026-10-15'));assert.ok(!order.includes(missions[1].action));
