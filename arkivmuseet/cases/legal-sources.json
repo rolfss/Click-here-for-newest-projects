@@ -7,7 +7,8 @@
     "url": "https://lovdata.no/dokument/NL/lov/2025-06-20-96",
     "locator": "§§ 5 og 8",
     "excerpt": "",
-    "type": "primary"
+    "type": "primary",
+    "sourceCheckedDate": "2026-09-27"
   },
   {
     "id": "reg26",
@@ -17,7 +18,8 @@
     "url": "https://lovdata.no/dokument/SF/forskrift/2025-12-17-2647",
     "locator": "§§ 5–7, 13–15",
     "excerpt": "",
-    "type": "primary"
+    "type": "primary",
+    "sourceCheckedDate": "2026-09-27"
   },
   {
     "id": "annual24",
@@ -27,6 +29,29 @@
     "url": "https://www.nasjonalarkivet.no/content/uploads/2025/11/Arsrapport-for-tilsyn-2024-1.pdf",
     "locator": "Side 2 og 5",
     "excerpt": "Innbyggere får ikke innsyn i viktig rettighetsdokumentasjon om seg selv.",
-    "type": "primary"
+    "type": "primary",
+    "sourceCheckedDate": "2026-09-27"
+  },
+  {
+    "id": "offl06",
+    "title": "Lov om rett til innsyn i dokument i offentleg verksemd (offentleglova)",
+    "institution": "Lovdata",
+    "date": "2006-05-19",
+    "url": "https://lovdata.no/dokument/NL/lov/2006-05-19-16",
+    "locator": "§§ 3, 11–13, 16, 28–29 og 31–32",
+    "excerpt": "",
+    "type": "primary",
+    "sourceCheckedDate": "2026-09-27"
+  },
+  {
+    "id": "fvl67",
+    "title": "Lov om behandlingsmåten i forvaltningssaker (forvaltningsloven)",
+    "institution": "Lovdata",
+    "date": "1967-02-10",
+    "url": "https://lovdata.no/dokument/NL/lov/1967-02-10",
+    "locator": "§ 13 første ledd nr. 1–2",
+    "excerpt": "",
+    "type": "primary",
+    "sourceCheckedDate": "2026-09-27"
   }
 ]

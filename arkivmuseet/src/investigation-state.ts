@@ -31,7 +31,7 @@ export function restoreCase(raw: string | null): CaseState {
     }
     if (object(value.redactions)) for (const id of ['a2', 'a4']) state.redactions[id] = value.redactions[id] === true;
     if (Array.isArray(value.crisis)) state.crisis = Array.from({length: 6}, (_, i) => value.crisis instanceof Array && (value.crisis[i] === 0 || value.crisis[i] === 1) ? value.crisis[i] : null);
-    if (value.reconstruction === 0 || value.reconstruction === 1 || value.reconstruction === 2) state.reconstruction = value.reconstruction;
+    if (state.found.length === evidenceIds.length && (value.reconstruction === 0 || value.reconstruction === 1 || value.reconstruction === 2)) state.reconstruction = value.reconstruction;
   } catch { /* Unusable or unavailable storage never blocks entry. */ }
   return state;
 }
@@ -49,14 +49,20 @@ export function workSummary(state: CaseState, triage: AnswerCard[], access: Answ
   const disclosed = access.filter(t => state.access[t.id] === t.answer && (t.answer !== 'redact' || state.redactions[t.id] === true)).length;
   const decisions = state.crisis.filter(v => v !== null).length;
   const protectedDecisions = state.crisis.filter(v => v === 1).length;
-  return {classified, disclosed, decisions, protectedDecisions,
-    complete: state.found.length === 10 && classified === triage.length && disclosed === access.length && decisions === 6 && state.reconstruction === 1};
+  const complete = state.found.length === 10 && classified === triage.length && disclosed === access.length && decisions === 6 && state.reconstruction === 1;
+  const leadershipQuality:'unassessed'|'needs-follow-up'|'protected' = decisions === 0 ? 'unassessed' : protectedDecisions === 6 ? 'protected' : 'needs-follow-up';
+  return {classified, disclosed, decisions, protectedDecisions,complete,leadershipQuality,
+    unresolvedDecisions:decisions-protectedDecisions,unansweredDecisions:6-decisions,
+    responsibleOutcome:complete&&protectedDecisions===6};
 }
 export function caseReport(state: CaseState, summary: ReturnType<typeof workSummary>): string {
   return ['ARKIVMUSEET — DET MANGLENDE GRUNNLAGET', 'Fiktiv øvelse. Ikke en vurdering av en virkelig virksomhet.', '',
     `Spor samlet: ${state.found.length}/10`, `Dokumentflyt avklart: ${summary.classified}/6`,
-    `Innsynsoppgaver avklart: ${summary.disclosed}/4`, `Ledervalg undersøkt: ${summary.decisions}/6`, '',
-    state.reconstruction === 1 ? 'Konklusjon: Overleveringen er dokumentert, men sporene bekrefter ikke utført sluttkontroll.' : 'Konklusjonen er ikke ferdig avklart.', '',
+    `Innsynsoppgaver avklart: ${summary.disclosed}/4`, `Ledervalg undersøkt: ${summary.decisions}/6`,
+    `Ledervalg som sikrer grunnlaget: ${summary.decisions ? `${summary.protectedDecisions}/${summary.decisions} prøvde valg` : 'Ikke vurdert'}`,
+    `Prøvde valg med uavklart oppfølging: ${summary.unresolvedDecisions}`, `Ledervalg som ikke er undersøkt: ${summary.unansweredDecisions}`,
+    summary.complete ? 'Alle deler av øvelsen er undersøkt. Gjennomføring er ikke det samme som gode ledervalg.' : 'Deler av øvelsen gjenstår.', '',
+    state.found.length === evidenceIds.length && state.reconstruction === 1 ? 'Konklusjon: Overleveringen er dokumentert, men sporene bekrefter ikke utført sluttkontroll.' : 'Konklusjonen er ikke ferdig avklart.', '',
     'Ta med videre:', '1. Hvem eier dokumentasjonen og oppfølgingen?',
     '2. Kan grunnlaget faktisk finnes, åpnes og forstås?',
     '3. Hva vet vi, og hva må fortsatt undersøkes?', '',

@@ -1,86 +1,94 @@
 [
   {
-    "title": "Prosjektet er ferdig. Samhandlingsrommet skal stenges.",
-    "context": "Beslutninger ligger i Teams, e-post og prosjektverktøy. Prosjektlederen slutter om en måned.",
+    "title": "Prosjektrommet stenges når prosjektlederen slutter",
+    "sourceCaseId": "tokke",
+    "historicalBoundary": "Tokke-tilsynet omtaler behov for rutiner som fanger dokumentasjon fra samhandlingsløsninger. Fristen, prosjektlederen og valgene her er fiktive.",
+    "context": "Du er prosjekteier. Prosjektlederen slutter om en måned, og samhandlingsrommet skal stenges. Beslutninger ligger i Teams, e-post og prosjektverktøy. En kopi kan tas raskt, men dere må også vite hva etterfølgeren trenger.",
     "choices": [
-      "Steng rommet når prosjektet er levert.",
-      "Avklar eierskap og prøv gjenfinning før rommet stenges."
+      "Ta en samlet kopi med innholdsliste og navngitt forvalter.",
+      "Avklar dokumentasjonsbehovet, sikre materialet og la etterfølgeren prøve en beslutning."
     ],
     "effects": [
       [
-        "Rommet lukkes",
-        "Beslutningsgrunnlag kan bli utilgjengelig",
-        "En fremtidig forklaring må bygges fra hukommelsen"
+        "En kopi og en forvalter gir et konkret utgangspunkt.",
+        "Hvis beslutninger og versjoner ikke er knyttet sammen, kan kopien fortsatt være vanskelig å bruke.",
+        "Før stenging gjenstår en prøve av hva en ny medarbeider faktisk kan finne og forstå."
       ],
       [
-        "Ansvar og materiale kartlegges",
-        "Beslutninger og sammenheng sikres",
-        "En ny medarbeider kan følge begrunnelsen"
+        "Prosjektleder, fag og arkiv avklarer hva som må følge virksomheten videre.",
+        "Etterfølgeren forsøker å finne beslutning, grunnlag og godkjent versjon; mangler får eier og frist.",
+        "Et dokumentert resultat kan støtte beslutningen om stenging, samtidig som åpne begrensninger blir synlige."
       ]
     ],
-    "reflection": "Et lagringssted er ikke en bevaringsplan. Hvem bekrefter at sporene følger virksomheten videre?"
+    "reflection": "En kopi er et nyttig sikringstiltak. Hvilken konkret beslutning skal etterfølgeren kunne forklare før rommet stenges?"
   },
   {
-    "title": "Det gamle fagsystemet skal erstattes.",
-    "context": "Leverandøren foreslår å beholde en sikkerhetskopi. Den nye løsningen tas i bruk om seks uker.",
+    "title": "Leverandørens test er grønn. Kan avtalen avsluttes?",
+    "sourceCaseId": "tokke",
+    "historicalBoundary": "Tokke-saken motiverer kontroll av bevaring og lesbarhet. Leverandørtesten og kontraktsvalget er oppdiktet og sier ikke at dokumentasjon i Tokke gikk endelig tapt.",
+    "context": "Du er systemeier. Leverandøren har bestått testen for eksport og filantall. Det gamle systemet kan driftes i seks uker til mot betaling. Fagenheten har ennå ikke prøvd en hel sak i mottaksløsningen.",
     "choices": [
-      "Stol på at sikkerhetskopien er nok.",
-      "Prøv uttrekk, metadata og lesbarhet før avvikling."
+      "Bruk leverandørtesten som grunnlag og behold en midlertidig reservekopi.",
+      "Bestill en faglig brukstest og avklar behovet for midlertidig videre drift."
     ],
     "effects": [
       [
-        "En kopi blir liggende",
-        "Programvare og kompetanse kan forsvinne",
-        "Gjenfinning blir usikker"
+        "Den tekniske leveransen er prøvd, og reservekopien kan hjelpe ved feil.",
+        "Sammenheng mellom sak, dokument og vedlegg er fortsatt uprøvd for brukeren.",
+        "Hvis koblinger mangler, kan gjenfinning kreve gammelt miljø selv om filantallet stemmer."
       ],
       [
-        "Uttrekk prøves i mottaksløsningen",
-        "Opphav og sammenheng kontrolleres",
-        "Dokumentasjonen kan brukes etter systemskiftet"
+        "Fag, IT og arkiv følger representative saker og dokumenterer resultatet.",
+        "Avvik får ansvarlig, frist og betydning for godkjenningen. Behovet for forlengelse vurderes konkret.",
+        "Avslutning eller forlengelse kan begrunnes i et prøvd resultat, uten å love at ingen ukjente feil finnes."
       ]
     ],
-    "reflection": "Bevaring må prøves før kunnskap og systemtilgang forsvinner. Hvilket bevis trenger du på at overføringen virker?"
+    "reflection": "Når er en teknisk test tilstrekkelig, og hva må en fagbruker i tillegg kunne vise? Formuler ett akseptansekriterium før du bestemmer avviklingsdatoen."
   },
   {
-    "title": "En KI-oppsummering blir brukt i en beslutning.",
-    "context": "En oppsummering trekker sammen e-poster, chat og dokumenter. Et viktig forbehold er ikke med.",
+    "title": "Oppsummeringen utelater et viktig forbehold",
+    "sourceCaseId": "innsyn",
+    "historicalBoundary": "Sivilombudets sak handler om sporbar behandling av innsynsklager, ikke KI. Øvelsen overfører spørsmålet om etterprøvbart grunnlag til en fiktiv beslutning der KI er brukt.",
+    "context": "Du leder en enhet som skal godkjenne et tiltak. En KI-oppsummering trekker sammen e-post, chat og dokumenter, men utelater et forbehold fra fagansvarlig. Møtet begynner om en time.",
     "choices": [
-      "Behold bare den ferdige oppsummeringen.",
-      "Bevar relevant grunnlag, vurdering og endelig beslutning."
+      "Rett oppsummeringen og la fagansvarlig godkjenne teksten.",
+      "Rett teksten, knytt relevant kildegrunnlag til vurderingen og dokumenter beslutningen."
     ],
     "effects": [
       [
-        "Kortversjonen blir eneste spor",
-        "Forbehold og opphav kan gå tapt",
-        "Beslutningen blir vanskeligere å etterprøve"
+        "Fagansvarlig kan gjeninnføre forbeholdet og gjøre teksten mer presis.",
+        "En godkjent kortversjon viser ikke nødvendigvis hvilke kilder eller avveininger den bygger på.",
+        "En senere kontroll kan derfor trenge et dokumentert spor tilbake til underlaget."
       ],
       [
-        "Kildene knyttes til vurderingen",
-        "Det fremgår hva et menneske godkjente",
-        "Senere kontroll kan følge beslutningen"
+        "Det utelatte forbeholdet blir synlig og knyttet til relevant kilde.",
+        "Det fremgår hva som ble vurdert, hva mennesket godkjente og hva ledelsen besluttet.",
+        "En etterfølger får et bedre grunnlag for å kontrollere beslutningen, også hvis KI-verktøyet senere byttes."
       ]
     ],
-    "reflection": "Det er beslutningens dokumentasjonsbehov som teller. Ikke alt KI-innhold må bevares; vurder hva som dokumenterer arbeidet."
+    "reflection": "Hvilke kilder og vurderinger trengs for å forstå akkurat denne beslutningen? Ikke alt KI-innhold må bevares; vurder dokumentasjonsbehovet konkret."
   },
   {
-    "title": "Ansvar er fordelt. Men følges det opp?",
-    "context": "IT drifter systemene. Fagenhetene lager dokumentene. Arkivtjenesten følger opp journalen.",
+    "title": "Alle har levert sin status. Hvem følger overgangen?",
+    "sourceCaseId": "osen",
+    "historicalBoundary": "Osen-tilsynet viste svakheter i overgangen fra ferdigstilt dokument til journalføring. Den tverrfaglige statusrapporteringen her er et fiktivt ledervalg inspirert av dette.",
+    "context": "Du er virksomhetsleder. IT melder stabil drift, fagenheten melder ferdige dokumenter, og arkivtjenesten melder journalrestanse. Det er uklart hvor oppfølgingen stanser. Du vil bruke neste ledermøte til å bestille en konkret kontroll.",
     "choices": [
-      "La hver enhet følge sine egne rutiner.",
-      "Be om en samlet risikovurdering og prøv en sak på tvers."
+      "Be hver enhet dokumentere sine avvik og oppfølgingsfrister.",
+      "La enhetene følge én sak sammen og fordele ansvar for avvik i overgangene."
     ],
     "effects": [
       [
-        "Hver enhet ser sin del",
-        "Overganger kan falle mellom ansvarsområder",
-        "Ledelsen kan mangle oversikt"
+        "Lokale avvik og frister blir synlige for ledelsen.",
+        "Hver rapport kan være riktig selv om et dokument stopper mellom to enheter.",
+        "En samlet vurdering må derfor undersøke mer enn om hver enkelt enhet har levert sin status."
       ],
       [
-        "Arbeidsprosessen følges ende til ende",
-        "Manglende ansvar blir synlig",
-        "Tiltak kan få eier, frist og oppfølging"
+        "IT, fag og arkiv følger dokumentet fra tilblivelse til registrering og gjenfinning.",
+        "Det blir mulig å peke på hvilket arbeidstrinn som mangler, og hvem som følger det opp.",
+        "Neste kontroll kan prøve om tiltaket virker på tvers, med ansvar og frist for det som fortsatt gjenstår."
       ]
     ],
-    "reflection": "Ledelse → systemer → arbeidsprosesser → dokumentasjon → etterrettelighet → tillit."
+    "reflection": "Beskriv overgangen som skal prøves, hvem som deltar, og hvilket resultat du ber om å få se. En statusrapport er et utgangspunkt for kontroll, ikke kontrollen alene."
   }
 ]

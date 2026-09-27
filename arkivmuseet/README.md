@@ -8,6 +8,12 @@ Fem kildebelagte utstillinger: Osen kommune, Tokke kommune, Sivilombudsmannens s
 
 ## Besøket
 
+Oppgavene er redaksjonelt gjennomgått 27. september 2026. Hver lederøvelse viser læringsmål og forklarer forbindelsen til den virkelige saken. Tiltak som bare løser en del av problemet, får begrunnet delskår og et konkret råd om videre oppfølging. Historiske funn, dagens regler og tenkte følger holdes atskilt; se [redaksjonelt grunnlag](./EDITORIAL-NOTES.md).
+
+Læringsskåren vurderer **kildegrunnlag, ledergrep og etterprøvbar oppfølging**, med 0–2 poeng per kriterium. Maksimum er 6 per oppgave og 30 for alle fem. Profilen viser hvor mange oppgaver som er vurdert, første gjennomgang og nyeste gjennomgang. Første sporvalg inngår i første skår; siste skår bruker det gjennomgåtte forsøket. Ny prøve erstatter skåren, uten å legge til poeng. Læringsmerker beholdes når du sammenligner og prøver igjen. Eldre lagret fremdrift gir ingen oppdiktet førstegangsskår. Fart og ferdigheter i 3D gir ingen poeng. Skåren er tilbakemelding i en øvelse, ikke en test av lederevne eller virksomhetens etterlevelse.
+
+Aurora-etterforskningen har en egen datert tidslinje. Oppsummert gjennomføring og kvaliteten på ledervalgene vises separat, også i den nedlastede rapporten. Alle deloppgaver kan være gjennomgått mens konkrete ledergrep fortsatt mangler.
+
 - **Gå inn i museet:** besøket starter i den store hovedhallen med fri bevegelse, også når du har lagret fremdrift. Gå gjennom portalene eller velg et rom fra romoversikten. Åpne utstillingen når du er klar til å lese og prøve et oppdrag. Omvisning velges inne i museet.
 - **Utforsk rommene:** fem oppdrag med 20 undersøkbare sporkort og 15 ulike handlingsforløp. Konsekvensene er tydelig merket som tenkte; historiske funn og forbehold finnes ved siden av.
 - **Prøv valgene:** hvert forløp har tre tidspunkt. Spol frem, sammenlign med et alternativ og gå tilbake. Ingen tidsfrist eller poeng for fart.
@@ -58,4 +64,6 @@ Store skjermer med presis peker får GTAO-kontaktskygger og fireprøvers MSAA, m
 
 Automatisk maskinvaremåling og nettleseremulering er ikke en garanti for alle telefoner. Kontrollene kjøres i Chromium med berørings- og skjermemulering; fysisk iOS/Safari må prøves separat. Full tekst gir et varig alternativ ved manglende grafikkstøtte.
 
-Se [SOURCES.md](./SOURCES.md), [LEGAL-NOTES.md](./LEGAL-NOTES.md), [CREDITS.md](./CREDITS.md) og [VALIDATION.md](./VALIDATION.md).
+`pnpm test:learning` kontrollerer hele lederøvelsen i nettleseren, delskår, gjentakelse, gjenoppretting, mobilvisning og eksport. Den kjøres også i GitHub Actions. Tekstversjonene viser de samme vurderingskriteriene og forklaringene uten JavaScript.
+
+Se [SOURCES.md](./SOURCES.md), [LEGAL-NOTES.md](./LEGAL-NOTES.md), [EDITORIAL-NOTES.md](./EDITORIAL-NOTES.md), [CREDITS.md](./CREDITS.md) og [VALIDATION.md](./VALIDATION.md).

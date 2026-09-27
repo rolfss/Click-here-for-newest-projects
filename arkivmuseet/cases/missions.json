@@ -2,106 +2,641 @@
   {
     "id": "osen",
     "badge": "Gjør sporene synlige",
-    "title": "Journalisten finner ingenting",
-    "brief": "Du leder en fiktiv kommune. En journalist spør etter grunnlaget for et politisk vedtak. Saksbehandleren sier at dokumentet er ferdig. Hvor stopper sporet?",
-    "task": "Undersøk kortene. Velg de to sporene som forklarer hvorfor journalen kan være ufullstendig.",
+    "title": "Journalisten trenger grunnlaget i dag",
+    "brief": "Du er kommunalsjef i en fiktiv kommune. En journalist ber i dag om grunnlaget for en sak til neste politiske møte. Saksfremlegget finnes i saksmappen, men ikke i journaluttrekket. Arkivtjenesten melder også om en restanse: dokumenter som venter på kvalitetssikring og journalføring. Du må følge opp både henvendelsen og arbeidsflyten.",
+    "task": "Velg de to sporene som viser hvor dokumentene kan falle ut av journalføringsløpet.",
     "clues": [
-      {"id":"status","title":"Kontroll av status","detail":"Saksfremlegget er ferdigstilt, men venter fortsatt på kvalitetssikring og journalføring.","relevant":true,"feedback":"Ferdigstilt er et steg i arbeidsflyten. Du må også kontrollere at journalføringen faktisk er fulgt opp."},
-      {"id":"backup","title":"Grønn sikkerhetskopi","detail":"IT bekrefter at nattens sikkerhetskopiering lyktes.","relevant":false,"feedback":"En sikkerhetskopi sier noe om kopieringen. Den viser ikke at dokumentet er registrert riktig i journalen."},
-      {"id":"type","title":"Brev fra en ekstern aktør","detail":"Et mottatt høringsbrev ligger som internt x-notat i samme sak.","relevant":true,"feedback":"Feil dokumenttype kan føre dokumentet utenom riktig arbeidsflyt. Innhold og opprinnelse må vurderes."},
-      {"id":"logo","title":"Godkjent dokumentmal","detail":"Dokumentet har riktig logo, skrift og signaturfelt.","relevant":false,"feedback":"Riktig mal gjør ikke journalen fullstendig. Se etter registrering og oppfølging."}
+      {
+        "id": "status",
+        "title": "Saksfremlegget venter",
+        "detail": "Saksfremlegget til det folkevalgte organet er ferdigstilt. Ingen er tildelt oppgaven med å kvalitetssikre og journalføre det.",
+        "relevant": true,
+        "feedback": "Statusen viser et uavsluttet arbeidstrinn uten eier. At saksfremlegget er ferdig, bekrefter ikke at journalføringen er gjort."
+      },
+      {
+        "id": "backup",
+        "title": "Dokumentet finnes i saksmappen",
+        "detail": "En medarbeider finner saksfremlegget med fulltekstsøk og kan åpne det.",
+        "relevant": false,
+        "feedback": "Gjenfinning hjelper dere å behandle innsynskravet nå. Den forklarer ikke hvorfor journaluttrekket mangler dokumentet."
+      },
+      {
+        "id": "type",
+        "title": "Et mottatt brev har intern dokumenttype",
+        "detail": "Et høringsbrev fra en ekstern aktør er registrert som internt x-notat i samme sak.",
+        "relevant": true,
+        "feedback": "Kontroller dokumentets opphav, innhold og registrering. Feil type kan føre det utenom riktig arbeidsflyt."
+      },
+      {
+        "id": "logo",
+        "title": "Møtevedleggene er publisert",
+        "detail": "Sekretariatet har kontrollert at vedleggene på den publiserte sakslisten kan åpnes.",
+        "relevant": false,
+        "feedback": "Dette er en nyttig publiseringskontroll. Den omfatter ikke nødvendigvis alle mottatte og sendte dokumenter som hører til saken."
+      }
     ],
-    "decision":"Hva bestiller du før neste politiske møte?",
-    "options":[
-      {"title":"Be alle ferdigstille dokumentene sine","tradeoff":"Rask beskjed. Bruker dagens rutine.","protected":false,"timeline":[{"when":"I dag","title":"Alle får en påminnelse","text":"Dokumentene ferdigstilles. Overgangen til journalføring har fortsatt ingen tydelig oppfølging."},{"when":"Neste uke","title":"Journalen kan fortsatt ha hull","text":"Journalisten må kjenne til dokumentet på forhånd for å spørre etter det."},{"when":"Ved neste kontroll","title":"Samme flaskehals","text":"Ledelsen har fått bekreftet aktivitet, men har ikke kontrollert resultatet."}]},
-      {"title":"Gi kontrollen en eier og følg opp restansen","tradeoff":"Krever tid fra fagenhet og arkivtjeneste.","protected":true,"timeline":[{"when":"I dag","title":"Flaskehalsen får en ansvarlig","text":"Fagenheten og arkivtjenesten avklarer oppgaver, dokumenttyper og frist."},{"when":"Neste uke","title":"Prøv veien helt frem","text":"En konkret sak kontrolleres fra mottak til korrekt journalpost. Skjermingsbehov vurderes."},{"when":"Ved neste kontroll","title":"Du kan vise resultatet","text":"Restanser og avvik følges opp. En ny person kan finne saken og relevante spor."}]},
-      {"title":"Publiser en PDF med saksfremlegget","tradeoff":"Hjelper journalisten nå. Løser én henvendelse.","protected":false,"timeline":[{"when":"I dag","title":"Ett dokument blir lettere å finne","text":"Publisering kan hjelpe i denne saken, etter nødvendig innsyns- og skjermingsvurdering."},{"when":"Neste uke","title":"Brevene er fortsatt et spørsmål","text":"Mottatte dokumenter med feil type blir ikke rettet av at saksfremlegget legges ut."},{"when":"Ved neste kontroll","title":"Rutinen er like sårbar","text":"En enkeltsak er hjulpet. Restansen og ansvaret for kvalitetssikring må fortsatt håndteres."}]}
+    "decision": "Hva bestiller du nå, mens innsynshenvendelsen behandles?",
+    "options": [
+      {
+        "title": "La saksansvarlig finne og vurdere dokumentene nå",
+        "tradeoff": "Gir journalisten et konkret svar. Oppfølging av journalrestansen bestilles ikke.",
+        "protected": false,
+        "assessment": {
+          "decision": 1,
+          "followUp": 0,
+          "reason": "Tiltaket tar henvendelsen på alvor, men etterlater den påviste svikten i journalføringsløpet uten eier eller kontroll.",
+          "nextStep": "Gi fagenhet og arkivtjeneste ansvar for restansen, og be om et dokumentert gjenfinningsforsøk."
+        },
+        "timeline": [
+          {
+            "when": "I dag",
+            "title": "Den konkrete henvendelsen følges opp",
+            "text": "Saksansvarlig kan finne relevante dokumenter og behandle innsynskravet. Vurderinger av innsyn og skjerming må fortsatt gjøres."
+          },
+          {
+            "when": "Neste uke",
+            "title": "Journalen er fortsatt et eget arbeid",
+            "text": "Hvis ingen følger restansen, kan journaluttrekket fortsatt mangle dokumenter selv om journalisten fikk svar."
+          },
+          {
+            "when": "Ved neste kontroll",
+            "title": "Resultatet kan ikke vises samlet",
+            "text": "En ny henvendelse kan kreve samme personavhengige leting. En ufullstendig journal gjør det vanskeligere å oppdage og be om dokumentene."
+          }
+        ]
+      },
+      {
+        "title": "Følg opp innsyn nå og gi journalrestansen en eier",
+        "tradeoff": "Saksansvarlig håndterer henvendelsen. Fagenhet og arkivtjeneste får tid til kontroll av registreringen.",
+        "protected": true,
+        "assessment": {
+          "decision": 2,
+          "followUp": 2,
+          "reason": "Bestillingen dekker både det umiddelbare behovet og de to påviste svakhetene: overgangen til journalføring og feil dokumenttype.",
+          "nextStep": "Be om en kontrollert sak, avvik med ansvarlig og frist, og en ny kontroll av restansen."
+        },
+        "timeline": [
+          {
+            "when": "I dag",
+            "title": "To oppgaver får tydelig ansvar",
+            "text": "Innsynskravet følges opp uten å vente på neste møte. Fagenhet og arkivtjeneste avklarer hvem som undersøker status, dokumenttyper og restanse."
+          },
+          {
+            "when": "Neste uke",
+            "title": "Prøv hele registreringsløpet",
+            "text": "En konkret sak følges fra mottak eller ferdigstillelse til korrekt journalpost og gjenfinning. Innsyns- og skjermingsbehov vurderes."
+          },
+          {
+            "when": "Ved neste kontroll",
+            "title": "Ledelsen kan se hva som er rettet",
+            "text": "En dokumentert prøve og en oppdatert restanseoversikt kan vise resultatet. Åpne avvik har eier, frist og avtalt oppfølging."
+          }
+        ]
+      },
+      {
+        "title": "Kontroller møtevedleggene og rett publiserte feil",
+        "tradeoff": "Sekretariatet kan raskt kontrollere det som ligger ute. Resten av saksforløpet blir ikke prøvd.",
+        "protected": false,
+        "assessment": {
+          "decision": 1,
+          "followUp": 1,
+          "reason": "Publiseringskontrollen er relevant for tilgjengelighet, men er en avgrenset prøve. Den undersøker ikke restansen eller det mottatte brevets dokumenttype.",
+          "nextStep": "Utvid prøven til journalføringsløpet og sakens mottatte og sendte dokumenter. Følg også opp selve innsynskravet."
+        },
+        "timeline": [
+          {
+            "when": "I dag",
+            "title": "Publiseringen blir kontrollert",
+            "text": "Feil eller manglende møtevedlegg kan oppdages. Innsynskravet må behandles selv om noen dokumenter allerede er publisert."
+          },
+          {
+            "when": "Neste uke",
+            "title": "Saksliste og journal dekker ulikt",
+            "text": "Det mottatte brevet kan fortsatt være feilregistrert. En komplett publisert saksliste bekrefter ikke at hele journalføringsløpet virker."
+          },
+          {
+            "when": "Ved neste kontroll",
+            "title": "En nyttig prøve må utvides",
+            "text": "Kontrollen gir kunnskap om møtevedleggene. Ledelsen trenger i tillegg en ansvarlig for journalrestansen og en prøve av sakens øvrige dokumenter."
+          }
+        ]
+      }
     ],
-    "action":"Be om en oversikt over ferdigstilte, ikke journalførte dokumenter. Avklar eier for oppfølgingen og prøv gjenfinning i én sak.",
-    "proof":"En kontrollert sak og en restanseoversikt med ansvarlig og oppfølgingsdato."
+    "action": "Følg opp en aktuell innsynshenvendelse, og prøv samtidig én sak fra mottak eller ferdigstillelse til korrekt journalpost. Gi journalrestansen en eier.",
+    "proof": "En dokumentert gjenfinningsprøve og en restanseoversikt med avvik, ansvarlig og oppfølgingsdato.",
+    "learningGoal": "Skille mellom å besvare én innsynshenvendelse og å sikre en fullstendig, gjenfinnbar journal.",
+    "historicalBoundary": "Tilsynet med Osen viste svikt i overgangen til journalføring og feil dokumenttyper. Journalisten, møtet og valgene her er oppdiktet; øvelsen gjengir ikke en bestemt innsynssak i kommunen."
   },
   {
-    "id":"tokke",
-    "badge":"Bevar før du slår av",
-    "title":"Du har én uke før systemet stenges",
-    "brief":"Et gammelt elevsystem skal avvikles i din fiktive virksomhet. Leverandøren har sendt en kopi. En tidligere elev trenger dokumentasjon om tilrettelegging. Kan noen finne den etter systemskiftet?",
-    "task":"Finn de to kontrollene som prøver om informasjonen faktisk kan brukes etter avviklingen.",
-    "clues":[
-      {"id":"invoice","title":"Kvittering for eksport","detail":"Fakturaen sier: «Data eksportert». Ingen har åpnet resultatet.","relevant":false,"feedback":"Kvitteringen dokumenterer en leveranse, ikke at den er komplett eller lesbar."},
-      {"id":"read","title":"Prøve i mottaksløsningen","detail":"En saksbehandler åpner et utvalg elevsaker uten å bruke det gamle systemet.","relevant":true,"feedback":"En praktisk prøve kan avdekke at filer, metadata eller nødvendig programvare mangler."},
-      {"id":"count","title":"Avstemming av innhold","detail":"Fagenheten sammenligner uttrekket med systemoversikten: saker, vedlegg, datoer og koblinger.","relevant":true,"feedback":"Lesbare filer er ikke nok hvis viktige sammenhenger eller deler av innholdet mangler."},
-      {"id":"zip","title":"ZIP-fil på fellesområdet","detail":"En stor fil heter backup_final.zip. Den er kopiert til to disker.","relevant":false,"feedback":"Flere kopier reduserer én risiko. De beviser ikke lesbarhet eller at innholdet er fullstendig."}
+    "id": "tokke",
+    "badge": "Bevar før du slår av",
+    "title": "Systemet skal stenges om én uke",
+    "brief": "Du er systemeier for et fiktivt elevsystem. Avtalen utløper om én uke, og leverandøren har levert et uttrekk. En tidligere elev venter på dokumentasjon om tilrettelegging. Fagenheten kan fortsatt bruke det gamle systemet, men mottaksløsningen er ikke godkjent.",
+    "task": "Velg de to kontrollene som viser om dokumentasjon kan finnes og forstås uten det gamle systemet.",
+    "clues": [
+      {
+        "id": "invoice",
+        "title": "Leveransen er kvittert ut",
+        "detail": "Leverandøren har levert en filliste og bekreftet at eksportjobben ble fullført uten tekniske feil.",
+        "relevant": false,
+        "feedback": "Dette er relevant leveransekontroll, men viser ikke alene at saker, vedlegg og sammenhenger kan brukes i mottaksløsningen."
+      },
+      {
+        "id": "read",
+        "title": "En elevsak prøves i mottaksløsningen",
+        "detail": "En autorisert saksbehandler finner og åpner et utvalg elevsaker uten tilgang til det gamle systemet.",
+        "relevant": true,
+        "feedback": "En brukstest undersøker mer enn om en eksportjobb gikk gjennom. Den kan avdekke manglende filer, metadata eller programvarestøtte."
+      },
+      {
+        "id": "count",
+        "title": "Innhold og koblinger avstemmes",
+        "detail": "Fag, IT og arkiv sammenholder uttrekket med systemoversikten: saker, dokumenter, vedlegg, datoer og tilhørighet.",
+        "relevant": true,
+        "feedback": "Avstemmingen prøver om det som kan åpnes, også er komplett og knyttet til riktig sak og person."
+      },
+      {
+        "id": "zip",
+        "title": "Kopiene er kontrollert",
+        "detail": "To lagrede kopier har like kontrollsummer, og lagringsstedene er dokumentert.",
+        "relevant": false,
+        "feedback": "Like kontrollsummer gir en nyttig integritetskontroll. To identiske kopier kan likevel mangle samme vedlegg eller nødvendig sammenheng."
+      }
     ],
-    "decision":"Leverandøren vil stenge på fredag. Hva gjør du?",
-    "options":[
-      {"title":"Bestill én ekstra sikkerhetskopi","tradeoff":"Lav innsats nå. Ingen brukstest.","protected":false,"timeline":[{"when":"Fredag","title":"To kopier, ett ubesvart spørsmål","text":"Dere har flere kopier, men vet fortsatt ikke om elevsaken kan hentes frem."},{"when":"Ett år senere","title":"Kompetansen kan være borte","text":"Den tidligere systemansvarlige har sluttet. Ingen vet hvilket verktøy som åpner dataene."},{"when":"Når eleven spør","title":"Svaret må vente","text":"Virksomheten må forsøke gjenfinning før den kan forklare hva som faktisk ble dokumentert."}]},
-      {"title":"La IT bekrefte at filene åpner","tradeoff":"En teknisk test. Faglig innhold er ikke kontrollert.","protected":false,"timeline":[{"when":"Fredag","title":"Filene lar seg åpne","text":"En teknisk kontroll passerer. Ingen har fulgt en hel elevsak."},{"when":"Ett år senere","title":"Vedlegget mangler kobling","text":"Et dokument kan være lesbart uten at man vet hvilken sak eller person det hører til."},{"when":"Når eleven spør","title":"Sammenhengen må rekonstrueres","text":"Fagenheten må lete på tvers av filer. Tilgang alene var et for snevert godkjenningskriterium."}]},
-      {"title":"Krev godkjent brukstest før avvikling","tradeoff":"Kan kreve utsatt stenging og avsatt arbeidstid.","protected":true,"timeline":[{"when":"Før fredag","title":"Avviklingen får en kontrollport","text":"IT, fag og arkiv avtaler hva som må være prøvd og hvem som godkjenner resultatet."},{"when":"Før stenging","title":"Lesbarhet og sammenheng prøves","text":"Utvalgte saker gjenfinnes i mottaksløsningen, og innholdet avstemmes. Avvik håndteres."},{"when":"Når eleven spør","title":"En ny medarbeider kan finne sporene","text":"Virksomheten har et dokumentert utgangspunkt for å hente frem saken etter systemskiftet."}]}
+    "decision": "Hvordan håndterer du elevhenvendelsen og stengefristen?",
+    "options": [
+      {
+        "title": "Forleng lesetilgangen og sikre uttrekket",
+        "tradeoff": "Gir fagenheten tid til å svare eleven. Mottaksløsningen blir ikke prøvd før neste avtalefrist.",
+        "protected": false,
+        "assessment": {
+          "decision": 1,
+          "followUp": 0,
+          "reason": "Midlertidig lesetilgang reduserer den akutte risikoen. Uten bestilt brukstest er det fortsatt uklart hva som må være på plass før neste stenging.",
+          "nextStep": "Knytt forlengelsen til en prøveplan med ansvarlige, akseptansekriterier og dato før ny avviklingsfrist."
+        },
+        "timeline": [
+          {
+            "when": "Denne uken",
+            "title": "Tilgang kjøper nødvendig tid",
+            "text": "Fagenheten kan behandle elevens henvendelse i det gamle systemet mens uttrekket sikres."
+          },
+          {
+            "when": "Før ny avtalefrist",
+            "title": "Den samme avklaringen gjenstår",
+            "text": "Hvis ingen har bestilt en brukstest, er dere fortsatt avhengige av gammel løsning og kompetanse."
+          },
+          {
+            "when": "Ved neste forespørsel",
+            "title": "Reserveveien er ikke varig bevaring",
+            "text": "En forlengelse kan hjelpe midlertidig. Den viser ikke om en etterfølger kan finne saken når systemet faktisk avvikles."
+          }
+        ]
+      },
+      {
+        "title": "Godkjenn etter teknisk åpningstest og filavstemming",
+        "tradeoff": "IT kan kontrollere overføringen raskt. Ingen har fulgt en hel elevsak med fagenheten.",
+        "protected": false,
+        "assessment": {
+          "decision": 1,
+          "followUp": 1,
+          "reason": "Teknisk lesbarhet og avstemming er nødvendige delkontroller, men prøver ikke alene om sakens innhold og koblinger er forståelige for brukeren.",
+          "nextStep": "La fag, IT og arkiv følge utvalgte hele saker og dokumentere mangler før endelig godkjenning."
+        },
+        "timeline": [
+          {
+            "when": "Denne uken",
+            "title": "Den tekniske overføringen prøves",
+            "text": "IT kan oppdage skadde filer eller forskjeller i antall. Fagenheten må fortsatt følge opp elevens henvendelse."
+          },
+          {
+            "when": "Før stenging",
+            "title": "Sammenhengen kan være uprøvd",
+            "text": "En fil kan åpnes selv om koblingen til elev eller sak mangler. Den tekniske testen kan derfor ikke alene avslutte kontrollen."
+          },
+          {
+            "when": "Ved neste forespørsel",
+            "title": "Gjenfinning kan kreve ny kartlegging",
+            "text": "Dersom koblinger ikke ble prøvd, kan en ny saksbehandler måtte rekonstruere dem før dokumentasjonen kan brukes."
+          }
+        ]
+      },
+      {
+        "title": "Svar eleven og krev en dokumentert brukstest før stenging",
+        "tradeoff": "Fag, IT og arkiv får en felles prøveplan. Avtalen må forlenges hvis nødvendige avklaringer gjenstår.",
+        "protected": true,
+        "assessment": {
+          "decision": 2,
+          "followUp": 2,
+          "reason": "Tiltaket bruker eksisterende tilgang til den aktuelle henvendelsen og gjør avviklingen avhengig av en relevant, dokumentert kontroll.",
+          "nextStep": "Be systemeier legge frem prøveprotokoll, åpne avvik med eier og frist, og begrunnet beslutning om stenging eller forlengelse."
+        },
+        "timeline": [
+          {
+            "when": "Denne uken",
+            "title": "Henvendelse og avvikling får hver sin oppfølging",
+            "text": "Fagenheten håndterer elevens behov. Systemeier avtaler sammen med fag, IT og arkiv hvilke saker og koblinger som skal prøves."
+          },
+          {
+            "when": "Før stenging",
+            "title": "Gjenfinning, innhold og lesbarhet prøves",
+            "text": "Utvalgte hele saker brukes i mottaksløsningen og avstemmes mot originalsystemet. Avvik dokumenteres og håndteres før godkjenning."
+          },
+          {
+            "when": "Ved neste forespørsel",
+            "title": "Etterfølgeren har et prøvd utgangspunkt",
+            "text": "Prøveprotokollen viser hva som virket og hvilke begrensninger som ble håndtert. En stikkprøve garanterer ikke at hver enkelt fil er feilfri."
+          }
+        ]
+      }
     ],
-    "action":"Velg ett system som skal avvikles. Bestill en dokumentert prøve av gjenfinning, fullstendighet og lesbarhet før stenging.",
-    "proof":"Godkjent prøveprotokoll fra fag, IT og arkiv, med åpne avvik og ansvarlige."
+    "action": "Velg ett system som skal avvikles. Avtal brukstest med fag, IT og arkiv og et begrunnet godkjenningspunkt før tilgangen stenges.",
+    "proof": "En prøveprotokoll for gjenfinning, fullstendighet og lesbarhet, med avvik, ansvarlige og begrunnet beslutning om avvikling.",
+    "learningGoal": "Skille mellom en teknisk kopi og dokumentasjon som kan gjenfinnes, forstås og brukes etter et systemskifte.",
+    "historicalBoundary": "Tokke-saken viser behovet for å avklare bevaring og lesbarhet ved systemendringer. Elevhenvendelsen og stengefristen her er fiktive. Uavklart lesbarhet i kildesaken er ikke bevis for endelig tap."
   },
   {
-    "id":"innsyn",
-    "badge":"Gjør avgjørelsen etterprøvbar",
-    "title":"Klagen lander på ditt bord",
-    "brief":"I en fiktiv innsynssak har en søker klaget på et avslag. Saksbehandleren er borte. Du skal sørge for at klagebehandlingen kan følge vurderingene. Hva trenger dere?",
-    "task":"Velg de to sporene som gjør det mulig å forstå og kontrollere behandlingen av klagen.",
-    "clues":[
-      {"id":"memory","title":"Muntlig forklaring","detail":"En kollega husker at avslaget «sikkert ble vurdert grundig».","relevant":false,"feedback":"Hukommelse kan hjelpe letingen, men erstatter ikke et dokumentert vurderingsgrunnlag."},
-      {"id":"reason","title":"Avgjørelse med begrunnelse","detail":"Det finnes et datert avslag med vurdering, relevant hjemmel og kobling til dokumentene.","relevant":true,"feedback":"Sammenhengen mellom dokumenter, vurdering og avgjørelse gjør avslaget mulig å kontrollere."},
-      {"id":"chain","title":"Klage med saksforløp","detail":"Klagen, eventuell nærmere begrunnelse og oversendelse er knyttet til samme saksforløp.","relevant":true,"feedback":"En klageinstans trenger å følge både hva som er avgjort, og hvordan saken er behandlet."},
-      {"id":"template","title":"Mal for standardavslag","detail":"Avdelingen har en oppdatert mal, men den konkrete vurderingen er ikke lagret i saken.","relevant":false,"feedback":"En god mal viser ikke hva som ble vurdert i den konkrete saken."}
+    "id": "innsyn",
+    "badge": "Gjør avgjørelsen etterprøvbar",
+    "title": "Klagen må kunne følges uten saksbehandleren",
+    "brief": "Du leder en fiktiv saksenhet. En klage på avslag om innsyn skal følges opp, og dere planlegger oversendelse torsdag. Saksbehandleren er borte. Du har avslaget, men må avklare om klagebehandleren kan følge både vurderingen og saksforløpet uten muntlig hjelp.",
+    "task": "Velg de to sporene som gir klagebehandleren et dokumentert grunnlag for å forstå avgjørelsen og behandlingen.",
+    "clues": [
+      {
+        "id": "memory",
+        "title": "Kollegaens notat fra i dag",
+        "detail": "En kollega skriver ned hva hun husker fra samtalen om avslaget. Notatet er tydelig datert i dag.",
+        "relevant": false,
+        "feedback": "Et merket ettertidsnotat kan hjelpe undersøkelsen. Det er ikke i seg selv dokumentasjon av hva som faktisk ble vurdert da avslaget ble gitt."
+      },
+      {
+        "id": "reason",
+        "title": "Avgjørelsen peker til grunnlaget",
+        "detail": "Avslaget har dato, begrunnelse og hjemmel, og viser hvilke dokumenter vurderingen gjelder.",
+        "relevant": true,
+        "feedback": "Koblingen mellom dokumentene, vurderingen og avgjørelsen gjør det mulig å kontrollere hva avslaget bygger på."
+      },
+      {
+        "id": "chain",
+        "title": "Klage og oppfølging henger sammen",
+        "detail": "Klagen, eventuell nærmere begrunnelse og oversendelsen er knyttet til samme saksforløp med datoer og dokumentreferanser.",
+        "relevant": true,
+        "feedback": "Klagebehandleren kan følge hva som er påklaget, og hvordan virksomheten har fulgt opp saken."
+      },
+      {
+        "id": "template",
+        "title": "Rutinen er oppdatert",
+        "detail": "Avdelingen har en godkjent rutine og en sjekkliste for innsynsklager. Utfylt liste for denne saken er ikke funnet.",
+        "relevant": false,
+        "feedback": "Rutinen viser hva som skulle gjøres. Du må også undersøke hva som faktisk er dokumentert i den konkrete saken."
+      }
     ],
-    "decision":"Hvordan sørger du for at klagebehandlingen får et brukbart grunnlag?",
-    "options":[
-      {"title":"Samle sporene og dokumenter det som mangler","tradeoff":"Krever en konkret gjennomgang av saken.","protected":true,"timeline":[{"when":"I dag","title":"Saksforløpet settes sammen","text":"Avgjørelse, vurderinger og klage kobles. Journalførings- og arkivbehov vurderes etter gjeldende regler."},{"when":"Ved oversendelse","title":"Hullene blir synlige","text":"Det fremgår hva som finnes, hva som mangler og hvilke opplysninger som må innhentes."},{"when":"Ved neste klage","title":"Rutinen kan prøves","text":"En kollega som ikke deltok, kan følge saksbehandlingen og forstå begrunnelsen."}]},
-      {"title":"Be en kollega gjenfortelle vurderingen","tradeoff":"Raskt, men bygger på hva noen husker.","protected":false,"timeline":[{"when":"I dag","title":"Du får en forklaring","text":"Kollegaen gir sin erindring. Den er ikke det samme som en samtidig dokumentert vurdering."},{"when":"Ved oversendelse","title":"Et viktig forbehold er uklart","text":"Det er vanskelig å skille hva som var vurdert da, fra hva man mener nå."},{"when":"Ved neste klage","title":"Personavhengigheten består","text":"Virksomheten har ikke sikret en rutine som gjør saksforløpet etterprøvbart."}]},
-      {"title":"Send bare det endelige avslaget","tradeoff":"Dokumenterer utfallet. Kan mangle saksforløpet.","protected":false,"timeline":[{"when":"I dag","title":"Utfallet er kjent","text":"Klagebehandlingen får selve avslaget."},{"when":"Ved oversendelse","title":"Grunnlaget må etterspørres","text":"Uten relevante dokumenter og vurderinger kan det være nødvendig med mer innhenting."},{"when":"Ved neste klage","title":"Samme letearbeid","text":"Virksomheten har fortsatt ingen samlet fremstilling av sakens spor."}]}
+    "decision": "Hva skal ligge til grunn for oversendelsen?",
+    "options": [
+      {
+        "title": "Kontroller saksforløpet og gjør manglene synlige",
+        "tradeoff": "En saksansvarlig samler grunnlaget og følger opp mangler uten å vente på at alt blir perfekt.",
+        "protected": true,
+        "assessment": {
+          "decision": 2,
+          "followUp": 2,
+          "reason": "Bestillingen knytter avgjørelse og klage til dokumentene, skiller kjente opplysninger fra mangler og gir etterkontrollen en ansvarlig.",
+          "nextStep": "La en kollega prøve å følge saken uten muntlig hjelp. Oppgi hvem som avklarer hvert manglende spor og når det følges opp."
+        },
+        "timeline": [
+          {
+            "when": "I dag",
+            "title": "Avklar hva som finnes",
+            "text": "Saksansvarlig finner avgjørelse, vurderinger, klage og relevante dokumenter. Nye forklaringer merkes med kilde og tidspunkt."
+          },
+          {
+            "when": "Ved oversendelse",
+            "title": "Mangler blir synlige for mottakeren",
+            "text": "Oversikten viser hva som følger med og hva som fortsatt undersøkes. Ansvarlig og videre oppfølging avklares; saken må ikke bli liggende uten grunn."
+          },
+          {
+            "when": "Ved neste klage",
+            "title": "Rutinen kan prøves på en konkret sak",
+            "text": "En kollega kan teste om både avgjørelse og saksbehandling lar seg følge. Avvik fra prøven får eier og oppfølging."
+          }
+        ]
+      },
+      {
+        "title": "Legg ved kollegaens daterte forklaring",
+        "tradeoff": "Gir raskt mer sammenheng enn avslaget alene. Det opprinnelige vurderingsgrunnlaget er ikke kontrollert.",
+        "protected": false,
+        "assessment": {
+          "decision": 1,
+          "followUp": 1,
+          "reason": "En åpent merket ettertidsforklaring kan være nyttig. Den kan ikke alene erstatte kontroll av de opprinnelige dokumentene og vurderingene.",
+          "nextStep": "Bruk forklaringen som et spor til videre søk, og skill den fra samtidige vurderinger i oversendelsen."
+        },
+        "timeline": [
+          {
+            "when": "I dag",
+            "title": "Erindringen tas vare på",
+            "text": "Kollegaens forklaring dokumenteres som en forklaring gitt nå, med hvem som ga den og hva vedkommende er usikker på."
+          },
+          {
+            "when": "Ved oversendelse",
+            "title": "Belegget må fortsatt avklares",
+            "text": "Klagebehandleren kan se hva kollegaen husker. Uten underlaget er det fortsatt vanskelig å kontrollere om det var begrunnelsen for avslaget."
+          },
+          {
+            "when": "Ved neste klage",
+            "title": "Ettertid kan bli en tilbakevendende oppgave",
+            "text": "Hvis arbeidsflyten ikke endres, kan nye saker igjen kreve rekonstruksjon i stedet for et dokumentert saksforløp."
+          }
+        ]
+      },
+      {
+        "title": "Send avslag og klage med en kontrollert vedleggsliste",
+        "tradeoff": "Sikrer at to sentrale dokumenter kommer frem. Dokumentene de viser til, er ikke gjennomgått.",
+        "protected": false,
+        "assessment": {
+          "decision": 1,
+          "followUp": 1,
+          "reason": "En kontrollert vedleggsliste hindrer en ren forsendelsesfeil, men viser ikke at klagebehandleren har hele det relevante vurderingsgrunnlaget.",
+          "nextStep": "Følg referansene fra avslag og klage. Kontroller relevante underlag og oppgi eksplisitt hva som mangler."
+        },
+        "timeline": [
+          {
+            "when": "I dag",
+            "title": "Kjernedokumentene blir kontrollert",
+            "text": "Avslag og klage finnes, og mottakeren får vite nøyaktig hvilke dokumenter som sendes."
+          },
+          {
+            "when": "Ved oversendelse",
+            "title": "Referansene kan lede til et tomrom",
+            "text": "Hvis begrunnelsen peker til underlag som ikke følger med, må mottakeren etterspørre det eller få mangelen forklart."
+          },
+          {
+            "when": "Ved neste klage",
+            "title": "Forsendelsen er sikret, ikke hele forløpet",
+            "text": "En vedleggskontroll kan gjentas. Virksomheten trenger også en prøve på at vurderingen lar seg forstå og kontrollere."
+          }
+        ]
+      }
     ],
-    "action":"Ta én avsluttet innsynsklage. Be en kollega følge avgjørelse, begrunnelse, klage og oversendelse uten muntlig hjelp.",
-    "proof":"Et dokumentert gjenfinningsforsøk og en avklart rutine for sakstypens arkivering og journalføring."
+    "action": "La en kollega følge én innsynsklage fra avgjørelse og begrunnelse til klage og oversendelse, uten muntlig hjelp.",
+    "proof": "En dokumentert prøve av saksforløpet som skiller originale vurderinger, ettertidsforklaringer og mangler med ansvarlig for oppfølging.",
+    "learningGoal": "Sette sammen et etterprøvbart saksforløp og skille samtidige vurderinger fra forklaringer gitt i ettertid.",
+    "historicalBoundary": "Sivilombudets sak belyser dokumentasjon ved behandling av innsynsklager. Fraværet, dokumentene og oversendelsen i denne øvelsen er fiktive; de beskriver ikke saksbehandlingen hos en bestemt virksomhet."
   },
   {
-    "id":"hanekleiv",
-    "badge":"Krev bevis ved overlevering",
-    "title":"Anlegget er ferdig. Er leveransen det?",
-    "brief":"Du leder et fiktivt byggeprosjekt. Entreprenøren melder ferdig. Drift spør hvor den utførte sikringen er dokumentert. Anlegget ser i orden ut. Hva må du få se?",
-    "task":"Finn de to sporene som gjør utført arbeid mulig å kontrollere og vedlikeholde.",
-    "clues":[
-      {"id":"drawing","title":"Dokumentasjon av utført arbeid","detail":"Tegninger og registreringer viser plassering og omfang av sikringen slik den faktisk ble utført.","relevant":true,"feedback":"En plan beskriver intensjonen. Drift trenger også kunnskap om hva som faktisk ble bygget."},
-      {"id":"photo","title":"Bilde av ferdig overflate","detail":"Bildet viser et ryddig anlegg. Skjulte konstruksjoner er ikke synlige.","relevant":false,"feedback":"Et overflatebilde kan være nyttig, men dokumenterer ikke alene skjult sikring."},
-      {"id":"promise","title":"Entreprenørens bekreftelse","detail":"En e-post sier at «alt er utført etter avtale», uten kobling til underlaget.","relevant":false,"feedback":"En generell bekreftelse gir ikke drift nok grunnlag til å lokalisere og kontrollere arbeidet."},
-      {"id":"handover","title":"Kontrollert overlevering til drift","detail":"Driftsansvarlig finner underlag, avvik og kontroller fra en bestemt del av anlegget.","relevant":true,"feedback":"En praktisk kontroll av overleveringen viser om kunnskapen følger anlegget videre."}
+    "id": "hanekleiv",
+    "badge": "Krev bevis ved overlevering",
+    "title": "Drift skal overta mer enn nøklene",
+    "brief": "Du er prosjekteier for et fiktivt kommunalt bygg. Entreprenøren melder klart for overlevering. Driftslederen skal overta neste uke, men finner både planlagte og reviderte tegninger i leveransen. Du må avklare hvilket underlag som viser utført arbeid, og hvem som lukker eventuelle mangler.",
+    "task": "Velg de to sporene som viser hva som faktisk er utført, og om drift kan bruke dokumentasjonen.",
+    "clues": [
+      {
+        "id": "drawing",
+        "title": "Tegning med dokumentert status",
+        "detail": "Tegninger og registreringer har versjon og status og viser plassering og omfang av arbeid slik det faktisk ble utført.",
+        "relevant": true,
+        "feedback": "Drift trenger å kunne skille planlagt løsning fra utført arbeid. Status, versjon og tilknytning gjør opplysningene mulige å kontrollere."
+      },
+      {
+        "id": "photo",
+        "title": "Bilder fra befaringen",
+        "detail": "Befaringsbildene viser ferdige overflater og enkelte synlige komponenter, men ikke de skjulte konstruksjonene.",
+        "relevant": false,
+        "feedback": "Bildene kan dokumentere det de faktisk viser. De er ikke alene grunnlag for å fastslå utførelsen av skjulte konstruksjoner."
+      },
+      {
+        "id": "promise",
+        "title": "Signert leveranseliste",
+        "detail": "Entreprenøren har signert at dokumentpakken er sendt. Listen angir filnavn, men ikke hvilke revisjoner som viser utført arbeid.",
+        "relevant": false,
+        "feedback": "Listen er et nyttig mottaksspor. Den bekrefter ikke at hver fil har riktig status eller at dokumentasjonen er tilstrekkelig for drift."
+      },
+      {
+        "id": "handover",
+        "title": "Drift prøver en konkret bygningsdel",
+        "detail": "Driftsansvarlig finner tegning, kontrollspor og avvik for en valgt del av bygget, sammen med relevant fagperson.",
+        "relevant": true,
+        "feedback": "En felles brukstest viser om dokumentasjonen kan gjenfinnes og forstås der den skal brukes. Fagpersonen må vurdere innholdet."
+      }
     ],
-    "decision":"Hva krever du ved overleveringen?",
-    "options":[
-      {"title":"Avtal at dokumentene ettersendes","tradeoff":"Holder milepælen. Utsetter dokumentasjonsarbeidet.","protected":false,"timeline":[{"when":"Ved overlevering","title":"Drift overtar et åpent spørsmål","text":"Noe underlag mangler. Ansvar for restansene må fortsatt avklares."},{"when":"Et halvt år senere","title":"Prosjektgruppen er oppløst","text":"Det kan bli vanskeligere å få tak i underlaget og dem som kjenner arbeidet."},{"when":"Ved vedlikehold","title":"Drift må undersøke på nytt","text":"Manglende underlag kan kreve nye undersøkelser før fagfolk kan gjøre en forsvarlig vurdering."}]},
-      {"title":"Prøv dokumentasjonen sammen med drift","tradeoff":"Bruker tid ved overlevering. Synliggjør avvik.","protected":true,"timeline":[{"when":"Ved overlevering","title":"Velg en konkret del av anlegget","text":"Drift forsøker å finne utført arbeid, kontrollspor og avvik. Relevant fagkompetanse vurderer innholdet."},{"when":"Før prosjektet lukkes","title":"Mangler får eier og frist","text":"Leveransen og åpne avvik dokumenteres. Sikkerhetsvurderinger gjøres av ansvarlige fagfolk."},{"when":"Ved vedlikehold","title":"Kunnskapen kan brukes videre","text":"Drift har et bedre grunnlag for kontroll. Dokumentasjon alene garanterer ikke et sikkert anlegg."}]},
-      {"title":"Legg alle prosjektfilene i én mappe","tradeoff":"Samler materialet. Ingen kontroll av sammenheng.","protected":false,"timeline":[{"when":"Ved overlevering","title":"Mange filer er levert","text":"Det er fortsatt uklart hvilke versjoner som viser utført arbeid."},{"when":"Et halvt år senere","title":"Plan og utført arbeid blandes","text":"En ny medarbeider kan ikke uten videre vite hvilken tegning som gjelder."},{"when":"Ved vedlikehold","title":"Volum blir letearbeid","text":"Drift må rydde og verifisere underlaget før det kan brukes."}]}
+    "decision": "Hva bestiller du før prosjektet avsluttes?",
+    "options": [
+      {
+        "title": "Avtal ettersending med navngitt ansvarlig og frist",
+        "tradeoff": "Holder overleveringsdatoen. Det er ikke prøvd om mangellisten dekker det drift trenger.",
+        "protected": false,
+        "assessment": {
+          "decision": 1,
+          "followUp": 1,
+          "reason": "Ansvar og frist gjør restansene synlige, men uten en prøve med drift kan både omfang og betydning av manglene være uavklart.",
+          "nextStep": "La drift og relevant fagperson kontrollere et utvalg. Avklar betydningen av manglene før dere godkjenner overleveringen."
+        },
+        "timeline": [
+          {
+            "when": "Ved overlevering",
+            "title": "Restansene får navn og dato",
+            "text": "Entreprenørens åpne punkter listes med ansvarlig og frist. Det må fortsatt avklares om noe vesentlig mangler i selve listen."
+          },
+          {
+            "when": "Før prosjektet lukkes",
+            "title": "Levering er ikke det samme som kontroll",
+            "text": "Filer kan komme innen fristen uten at drift har bekreftet hvilken versjon som gjelder eller om underlaget dekker utført arbeid."
+          },
+          {
+            "when": "Ved vedlikehold",
+            "title": "En uprøvd mangel kan dukke opp",
+            "text": "Hvis nødvendig underlag ikke var med i kontrollen, kan drift måtte bestille nye undersøkelser. En frist alene sikrer ikke innholdet."
+          }
+        ]
+      },
+      {
+        "title": "Prøv underlaget med drift og avklar avvik før godkjenning",
+        "tradeoff": "Krever tid fra entreprenør, drift og fagperson. Vesentlige mangler kan påvirke overleveringen.",
+        "protected": true,
+        "assessment": {
+          "decision": 2,
+          "followUp": 2,
+          "reason": "Bestillingen prøver dokumentasjonens innhold og bruk, og knytter godkjenning til en faglig vurdering og sporbar håndtering av avvik.",
+          "nextStep": "Be om prøveprotokoll, hvilke avvik som er vurdert, og hvem som følger dem til lukking. Ansvarlige fagfolk vurderer sikkerheten."
+        },
+        "timeline": [
+          {
+            "when": "Ved overlevering",
+            "title": "Prøv én konkret del av bygget",
+            "text": "Drift finner utført arbeid, versjoner, kontrollspor og avvik. Relevant fagkompetanse vurderer hva dokumentene faktisk underbygger."
+          },
+          {
+            "when": "Før prosjektet lukkes",
+            "title": "Godkjenningen får et begrunnet grunnlag",
+            "text": "Mangler vurderes og får ansvarlig, frist og kriterium for lukking. Det dokumenteres hva som kan godkjennes, og hva som må avklares først."
+          },
+          {
+            "when": "Ved vedlikehold",
+            "title": "Drift har et bedre utgangspunkt",
+            "text": "Prøvd og forståelig underlag kan gjøre senere kontroll enklere. Dokumentasjon alene garanterer ikke at anlegget er sikkert."
+          }
+        ]
+      },
+      {
+        "title": "Ordne leveransen med versjonsliste og tydelig arkivplass",
+        "tradeoff": "Gjør filene enklere å finne. Ingen har sammenholdt underlaget med en konkret del av bygget.",
+        "protected": false,
+        "assessment": {
+          "decision": 1,
+          "followUp": 1,
+          "reason": "Struktur og versjonsoversikt reduserer letearbeid. De prøver ikke alene om dokumentene viser utført arbeid eller dekker driftsbehovet.",
+          "nextStep": "Bruk oversikten som startpunkt for en dokumentert prøve med drift og relevant fagperson."
+        },
+        "timeline": [
+          {
+            "when": "Ved overlevering",
+            "title": "Leveransen blir søkbar",
+            "text": "Et avtalt lagringssted og en versjonsliste kan gjøre filene enklere å finne og skille fra hverandre."
+          },
+          {
+            "when": "Før prosjektet lukkes",
+            "title": "Status må kontrolleres mot innhold",
+            "text": "En etikett som sier «endelig» er ikke nok. Fagfolk må vurdere om underlaget viser den utførte løsningen."
+          },
+          {
+            "when": "Ved vedlikehold",
+            "title": "En ryddig mappe kan fortsatt være ufullstendig",
+            "text": "Hvis bruken ikke ble prøvd, kan drift finne en fil raskt uten å få svar på det konkrete spørsmålet."
+          }
+        ]
+      }
     ],
-    "action":"Gjør dokumentasjon til et akseptansekriterium ved overlevering. La drift prøve å finne underlaget for én konkret del av leveransen.",
-    "proof":"En overleveringsprotokoll med kontrollert underlag, avvik, eier og frist."
+    "action": "Gjør brukbar dokumentasjon til et akseptansekriterium ved overlevering. La drift og relevant fagperson prøve underlaget for én konkret del av leveransen.",
+    "proof": "En prøve- og overleveringsprotokoll som viser kontrollert underlag, vurderte avvik, ansvarlig, frist og kriterium for lukking.",
+    "learningGoal": "Kontrollere at overleveringen dokumenterer utført arbeid og gir drift et brukbart grunnlag, uten å forveksle dokumentasjon med en sikkerhetsgaranti.",
+    "historicalBoundary": "Granskingen av Hanekleivtunnelen omtaler mangler i dokumentasjonen av utført sikring. Bygget, kontrakten og overleveringen her er fiktive. Øvelsen beregner ikke sikkerhet eller årsaker til raset."
   },
   {
-    "id":"npe",
-    "badge":"Kontroller sammenhengen",
-    "title":"Tre datoer. Hvilken forteller hva?",
-    "brief":"Du leder en fiktiv saksenhet. En kollega skal rekonstruere et saksforløp, men flere journalposter mangler dokumentdato. Filene finnes. Hvordan undersøker dere kvaliteten?",
-    "task":"Velg de to sporene som gir et bedre grunnlag for å finne og rette metadatafeilen.",
-    "clues":[
-      {"id":"original","title":"Dato på originaldokumentet","detail":"Brevet er datert 4. mars, mottatt 6. mars og registrert 7. mars.","relevant":true,"feedback":"Datoene beskriver ulike hendelser. De må ikke blandes sammen uten en konkret vurdering."},
-      {"id":"today","title":"Dagens dato","detail":"Du kan fylle alle tomme felt med datoen da feilene ble oppdaget.","relevant":false,"feedback":"Det kan gi en ryddig tabell, men en uriktig fremstilling av når dokumentene ble til."},
-      {"id":"sample","title":"Utvalg og konsekvensvurdering","detail":"Fag og arkiv undersøker et utvalg poster, årsaken til manglene og hva de betyr for gjenfinning.","relevant":true,"feedback":"Undersøk faktisk betydning og årsak før dere bestemmer omfang og metode for retting."},
-      {"id":"total","title":"Antall lagrede PDF-er","detail":"Antall filer er det samme før og etter systemoppgraderingen.","relevant":false,"feedback":"Riktig antall filer beviser ikke at datoer og koblinger er korrekte."}
+    "id": "npe",
+    "badge": "Kontroller sammenhengen",
+    "title": "Datoene finnes, men betyr de det samme?",
+    "brief": "Du leder en fiktiv saksenhet. Etter en systemoppgradering viser en rapport tomme dokumentdatofelt. Andre felt inneholder sendt-, mottatt- og registreringstidspunkt. En kollega trenger en pålitelig tidslinje i én sak. Dere har tid til en stikkprøve nå, men ikke til å rette hele bestanden ukritisk.",
+    "task": "Velg de to kontrollene som kan vise hva datoene betyr, og om manglene krever tiltak.",
+    "clues": [
+      {
+        "id": "original",
+        "title": "Tre datoer i én sak",
+        "detail": "Brevet er datert 4. mars, mottatt 6. mars og registrert 7. mars. Originalen og de tilhørende feltene kan sammenholdes.",
+        "relevant": true,
+        "feedback": "Datoene beskriver ulike hendelser. Dokumentets dato eller sendt-/mottattdato må ha riktig betydning; registreringstidspunkt er en egen opplysning."
+      },
+      {
+        "id": "today",
+        "title": "Forslag til automatisk utfylling",
+        "detail": "Leverandøren kan kopiere registreringstidspunktet til alle tomme dokumentdatofelt og lagre en endringslogg.",
+        "relevant": false,
+        "feedback": "En endringslogg gir sporbarhet, men gjør ikke ulike datobegreper like. Forslaget er ikke belegg for at verdiene blir riktige."
+      },
+      {
+        "id": "sample",
+        "title": "Et begrunnet utvalg",
+        "detail": "Fag og arkiv undersøker ulike sakstyper, feltdefinisjoner, årsaken til tomme felt og betydningen for gjenfinning og saksforløp.",
+        "relevant": true,
+        "feedback": "En stikkprøve må gi grunnlag for å vurdere både konsekvens og omfang. Den kan vise hvor retting er nødvendig, og hvor en annen løsning er begrunnet."
+      },
+      {
+        "id": "total",
+        "title": "Filene er avstemt",
+        "detail": "Antall PDF-er og kontrollsummer er like før og etter oppgraderingen.",
+        "relevant": false,
+        "feedback": "Dette støtter at filene er overført uendret. Det avgjør ikke om datofelt har riktig betydning eller er koblet riktig til dokumentene."
+      }
     ],
-    "decision":"Hvordan følger du opp de tomme datofeltene?",
-    "options":[
-      {"title":"Fyll alle tomme felt med registreringsdato","tradeoff":"Rask opprydding. Kan blande ulike datoer.","protected":false,"timeline":[{"when":"I dag","title":"Kontrollrapporten blir grønn","text":"Ingen felt er tomme. Det er fortsatt uklart om datoene betyr det de skal."},{"when":"Neste måned","title":"Tidslinjen kan villede","text":"En kollega kan tolke registreringsdato som dokumentets dato uten å kjenne endringen."},{"when":"Ved neste kontroll","title":"En ny feil må undersøkes","text":"Virksomheten må dokumentere endringen og kontrollere om metadataene er blitt misvisende."}]},
-      {"title":"La feltene stå fordi filene finnes","tradeoff":"Ingen innsats nå. Årsak og betydning forblir uklare.","protected":false,"timeline":[{"when":"I dag","title":"Sakene kan fortsatt ha verdi","text":"Et tomt datofelt betyr ikke at dokumentet er tapt eller at avgjørelsen er feil."},{"when":"Neste måned","title":"Feilen kan fortsette","text":"Uten å undersøke årsaken kan nye poster få samme mangel."},{"when":"Ved neste kontroll","title":"Du mangler en begrunnet vurdering","text":"Ledelsen vet fortsatt ikke hvilke tiltak som er nødvendige eller hensiktsmessige."}]},
-      {"title":"Undersøk utvalget og rett med sporbar metode","tradeoff":"Krever faglig vurdering og prioritering.","protected":true,"timeline":[{"when":"I dag","title":"Start med faktiske dokumenter","text":"Et utvalg sammenholdes med originalene og relevante metadata. Årsaken undersøkes."},{"when":"Neste måned","title":"Prioriter og begrunn tiltakene","text":"Behovet for etterregistrering vurderes konkret. Metode og endringer dokumenteres."},{"when":"Ved neste kontroll","title":"Prøv om feilen er stoppet","text":"Nye poster kontrolleres. Resultatet viser om rutinene og systemoppsettet virker."}]}
+    "decision": "Hvordan får dere en pålitelig tidslinje og en begrunnet plan videre?",
+    "options": [
+      {
+        "title": "Rett datoene i den aktuelle saken med endringslogg",
+        "tradeoff": "Hjelper kollegaen nå. Årsaken til manglene og omfanget i andre saker blir ikke undersøkt.",
+        "protected": false,
+        "assessment": {
+          "decision": 1,
+          "followUp": 1,
+          "reason": "Kildebasert retting med logg er en relevant lokal kontroll. Den viser ikke om flere saker er berørt, eller om feilen fortsetter i nye registreringer.",
+          "nextStep": "Avklar feltdefinisjon og årsak, og undersøk et begrunnet utvalg før dere velger videre tiltak."
+        },
+        "timeline": [
+          {
+            "when": "I dag",
+            "title": "Den aktuelle saken får en kontroll",
+            "text": "Datoer sammenholdes med dokumentene, og retting begrunnes og loggføres. Kollegaen kan få et bedre grunnlag for tidslinjen."
+          },
+          {
+            "when": "Neste måned",
+            "title": "Andre saker kan ha samme spørsmål",
+            "text": "Hvis årsaken ikke er undersøkt, kan flere poster fortsatt ha tomme eller misvisende felt."
+          },
+          {
+            "when": "Ved neste kontroll",
+            "title": "Enkeltsaken svarer ikke for bestanden",
+            "text": "Ledelsen kan vise den lokale rettingen, men trenger en vurdering av omfang og betydning før videre prioritering."
+          }
+        ]
+      },
+      {
+        "title": "Avklar feltdefinisjonene før automatisk retting",
+        "tradeoff": "Hindrer en ubegrunnet masseendring. Ingen konkrete dokumenter er foreløpig prøvd mot feltene.",
+        "protected": false,
+        "assessment": {
+          "decision": 1,
+          "followUp": 1,
+          "reason": "Å avklare datobegrepene er et forsvarlig første grep. Feltbeskrivelsen alene viser ikke hvordan opplysningene faktisk er registrert eller hvilke følger manglene har.",
+          "nextStep": "Prøv definisjonene på et utvalg originaldokumenter, inkludert den saken kollegaen trenger nå."
+        },
+        "timeline": [
+          {
+            "when": "I dag",
+            "title": "En mulig ny feil blir holdt tilbake",
+            "text": "Dere unngår foreløpig å fylle dokumentdato med registreringstidspunkt uten begrunnelse og undersøker hvordan feltene er definert."
+          },
+          {
+            "when": "Neste måned",
+            "title": "Definisjon og praksis kan avvike",
+            "text": "Systembeskrivelsen kan være riktig selv om enkelte registreringer eller overføringer er feil. Det må prøves mot dokumentene."
+          },
+          {
+            "when": "Ved neste kontroll",
+            "title": "Behovet for retting er fortsatt åpent",
+            "text": "En teknisk forklaring er nyttig, men gir ikke alene en vurdering av hvilke saker som bør rettes og hvorfor."
+          }
+        ]
+      },
+      {
+        "title": "Prøv utvalget og rett der undersøkelsen begrunner det",
+        "tradeoff": "Fag og arkiv avklarer betydning og prioritering; systemansvarlig undersøker årsaken.",
+        "protected": true,
+        "assessment": {
+          "decision": 2,
+          "followUp": 2,
+          "reason": "Tiltaket kobler kildebasert kontroll til datobegreper, konsekvens, årsak og sporbar oppfølging. Det forutsetter ikke at alle tomme felt skal fylles.",
+          "nextStep": "Dokumenter begrunnet omfang og metode, hvem som følger avvik, og en prøve av nye registreringer etter tiltak."
+        },
+        "timeline": [
+          {
+            "when": "I dag",
+            "title": "Start med saken og et begrunnet utvalg",
+            "text": "Originaler, datofelt og definisjoner sammenholdes. Dokumentdato, sendt-/mottattdato og registreringstidspunkt holdes fra hverandre."
+          },
+          {
+            "when": "Neste måned",
+            "title": "Tiltak velges ut fra betydningen",
+            "text": "Behov for etterregistrering eller andre tiltak vurderes konkret. Omfang, metode, endringer og beslutning om å la være begrunnes."
+          },
+          {
+            "when": "Ved neste kontroll",
+            "title": "Undersøk om årsaken er håndtert",
+            "text": "Nye poster og gjennomførte tiltak prøves. Avvik har ansvarlig og videre oppfølging, slik at ledelsen kan se hva som virker og hva som gjenstår."
+          }
+        ]
+      }
     ],
-    "action":"Bestill en stikkprøve av datoer, dokumenttyper og sakskoblinger. Avklar årsak, betydning og sporbar metode før masseretting.",
-    "proof":"En begrunnet kvalitetsvurdering og kontroll av at nye poster registreres riktig."
+    "action": "Bestill en stikkprøve av datoenes betydning og sakskobling. Avklar årsak, konsekvens og begrunnet omfang før eventuell etterregistrering.",
+    "proof": "En dokumentert kvalitetsvurdering med metode og ansvar, begrunnet valg av tiltak og en prøve av nye registreringer.",
+    "learningGoal": "Skille dokumentdato, sendt- eller mottattdato og registreringstidspunkt, og begrunne retting ut fra faktisk betydning og kildegrunnlag.",
+    "historicalBoundary": "NPE-saken gjelder journalposter uten dokumentdato. Pålegget for daterte dokumenter ble nyansert etter en konkret vurdering av etterregistrering. Utvalget og oppgraderingen her er fiktive. Et tomt dokumentdatofelt betyr ikke automatisk tap eller lovbrudd; dokumentets dato eller sendt-/mottattdato må vurderes etter relevante krav."
   }
 ]

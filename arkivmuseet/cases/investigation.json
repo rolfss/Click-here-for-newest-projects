@@ -3,46 +3,46 @@
   "title": "Det manglende grunnlaget",
   "subtitle": "Det ordner vi senere.",
   "fiction": "Fiktiv øvelse · Ikke en rekonstruksjon av de virkelige sakene",
-  "brief": "Aurora er overlevert. Seks måneder senere ber noen om grunnlaget. Ti spor ligger spredt i museet. Finn dem, prøv dokumentarbeidet og skill det du vet fra det du bare antar.",
+  "brief": "Aurora er et fiktivt kommunalt byggprosjekt, overlevert til drift 14. mars 2026. Et halvt år senere ber en journalist om hvem som godkjente overleveringen, og hva godkjenningen bygget på. Du leder undersøkelsen 25. september. Finn ti daterte spor, prøv dokumentarbeidet og skill bekreftede opplysninger fra det som fortsatt må avklares.",
   "rooms": [
     {
       "id": "osen",
-      "title": "Det første hullet",
-      "question": "Når ble avviket en oppgave ingen eide?",
+      "title": "Et avvik uten avklart oppfølging",
+      "question": "Hvem skulle samle grunnlaget, og hvem skulle bekrefte kontrollen?",
       "role": "Arkivar",
-      "voice": "Jeg kan finne det som er fanget opp. Jeg kan ikke journalføre en beslutning jeg aldri får vite om.",
+      "voice": "Jeg finner e-posten om manglende sluttkontroll. Nå trenger vi å vite hvem som fikk oppgaven, og hva som ble gjort.",
       "prop": "journal"
     },
     {
       "id": "tokke",
       "title": "Grønt er ikke det samme som lesbart",
-      "question": "Hva har den grønne driftsmeldingen egentlig bevist?",
+      "question": "Hva viser kopieringsloggen, og hva må en brukstest avklare?",
       "role": "Systemforvalter",
-      "voice": "Flyttingen er ferdig. Men hvem har prøvd å åpne dokumentene etterpå?",
+      "voice": "Kopieringen var uten feil. Det sier ikke om vedlegget kan leses i den nye løsningen. Vi må prøve det eldre miljøet.",
       "prop": "server"
     },
     {
       "id": "innsyn",
-      "title": "Mappen med et tomrom",
-      "question": "Har den som skal behandle saken fått hele grunnlaget?",
+      "title": "Vedlegget som ikke fulgte klagen",
+      "question": "Kan klagebehandleren følge saken med dokumentene som er oversendt?",
       "role": "Journalist",
-      "voice": "Jeg spør ikke bare hva dere bestemte. Jeg spør hva beslutningen bygget på.",
+      "voice": "Jeg har bedt om grunnlaget og klaget på avslaget. Nå spør jeg om den som vurderer klagen har fått dokumentene det vises til.",
       "prop": "folder"
     },
     {
       "id": "hanekleiv",
-      "title": "Signaturen som mangler",
-      "question": "Har noen dokumentert at kontrollen faktisk skjedde?",
+      "title": "Et utkast er ikke en bekreftelse",
+      "question": "Hvilke spor kan bekrefte utført kontroll, utover et tomt signaturfelt?",
       "role": "Kontrollør",
-      "voice": "Utkastet viser hva vi skulle gjøre. Hvor er sporet av det som ble gjort?",
+      "voice": "Utkastet beskriver kontrollen som var planlagt. Finnes det en godkjent rapport, en registrering eller et annet spor etter utførelsen?",
       "prop": "clipboard"
     },
     {
       "id": "npe",
       "title": "Det ordner vi senere",
-      "question": "Hva står igjen når senere er blitt seks måneder?",
+      "question": "Hva kan en etterfølger faktisk forklare et halvt år etter overleveringen?",
       "role": "Innbygger",
-      "voice": "Jeg trenger ikke alle systemene deres. Jeg trenger et svar som kan forklares.",
+      "voice": "Jeg trenger å vite hva dere kan bekrefte, hva dere fortsatt undersøker, og hvem som følger opp.",
       "prop": "phone"
     }
   ],
@@ -50,102 +50,112 @@
     {
       "id": "e1",
       "room": "osen",
-      "time": "09.02",
-      "title": "E-posten som kom først",
+      "time": "13.03.2026 · 09.02",
+      "title": "E-posten før overleveringen",
       "kind": "E-POST · MOTTATT",
-      "body": "Fra: prosjektleder\nTil: saksansvarlig\nEmne: Aurora – avvik før overlevering\n\nVi har ikke mottatt signert sluttkontroll. Kan dere bekrefte hvem som følger dette opp?",
-      "meaning": "Et avvik er meldt. Meldingen viser ikke at avviket senere ble lukket.",
-      "short": "Avvik meldt"
+      "body": "Fra: leverandørens prosjektleder\nTil: kommunens prosjektleder\nDato: 13. mars 2026\nEmne: Aurora – avvik før overlevering\n\nVi har ikke mottatt signert sluttkontroll. Du samler grunnlaget. Hvem skal bekrefte at kontrollen er utført, og følge opp denne mangelen?",
+      "meaning": "E-posten dokumenterer at leverandøren etterspurte en bekreftelse. Den viser ikke om kontrollen var utført, eller hvordan meldingen senere ble fulgt opp.",
+      "short": "Bekreftelse etterspurt",
+      "chronologicalOrder": 2
     },
     {
       "id": "e2",
       "room": "osen",
-      "time": "09.14",
-      "title": "Den tomme journalraden",
+      "time": "25.09.2026 · 09.14",
+      "title": "Henvisningen uten treff",
       "kind": "JOURNAL · UTTREKK",
-      "body": "Sak: 17 / Aurora\nDokument 04: Bestilling\nDokument 05: [ingen registrering]\nDokument 06: Møteinnkalling",
-      "meaning": "Uttrekket gir et hull å undersøke, ikke bevis for at et bestemt dokument aldri har eksistert.",
-      "short": "Hull i oversikten"
+      "body": "Journaluttrekk kontrollert 25. september 2026\nSak: 17 / Aurora\nDokument 01: Bestilling og tidsplan\nDokument 06: Saksnotat – viser til «vedlegg 05»\nSøk etter registrering av vedlegg 05: ingen treff i dette uttrekket",
+      "meaning": "Det finnes en henvisning, men ikke et tilsvarende treff i dette uttrekket. Det er et konkret søkespor, ikke bevis for at vedlegget aldri ble registrert eller aldri har eksistert.",
+      "short": "Henvisning uten treff",
+      "chronologicalOrder": 10
     },
     {
       "id": "e3",
       "room": "tokke",
-      "time": "10.08",
+      "time": "31.08.2026 · 10.08",
       "title": "En grønn melding",
       "kind": "DRIFTSLOGG · KOPIERING",
-      "body": "JOBB 418: Fullført\nFiler kopiert: 124\nFeil ved kopiering: 0\nLesbarhetskontroll: Ikke kjørt",
-      "meaning": "En vellykket kopiering er ikke en prøve på at filene kan leses og forstås.",
-      "short": "Kopiert, ikke prøvd"
+      "body": "Driftslogg 31. august 2026\nAurora – flytting til ny løsning\nJOBB 418: Fullført\nFiler kopiert: 124\nFeil ved kopiering: 0\nLesbarhetskontroll: Ikke kjørt",
+      "meaning": "Loggen dokumenterer en fullført kopieringsjobb. Den bekrefter ikke at alle dokumentene kan åpnes og forstås i mottaksløsningen.",
+      "short": "Kopiert, ikke prøvd",
+      "chronologicalOrder": 6
     },
     {
       "id": "e4",
       "room": "tokke",
-      "time": "10.19",
-      "title": "Filen ingen har åpnet",
+      "time": "23.09.2026 · 10.19",
+      "title": "Vedlegget som ikke åpner her",
       "kind": "TESTNOTAT · GJENFINNING",
-      "body": "Vedlegg 05 kan ikke åpnes i den nye løsningen.\nEldre miljø er fortsatt tilgjengelig.\nNy test og avklaring er bestilt.",
-      "meaning": "Lesbarheten er uavklart. Det er ikke dokumentert at innholdet er endelig tapt.",
-      "short": "Lesbarhet uavklart"
+      "body": "Testnotat 23. september 2026\nFil med navn «vedlegg_05» kan ikke åpnes i den nye løsningen.\nInnhold og dokumentstatus er derfor ikke bekreftet.\nEldre miljø er fortsatt tilgjengelig.\nSystemforvalter skal avtale ny test med fagansvarlig.",
+      "meaning": "Testen viser et problem i den nye løsningen. Filnavnet beviser ikke innholdet, og en mislykket åpning her beviser ikke endelig tap.",
+      "short": "Videre lesbarhetstest trengs",
+      "chronologicalOrder": 8
     },
     {
       "id": "e5",
       "room": "innsyn",
-      "time": "11.03",
+      "time": "15.09.2026 · 11.03",
       "title": "Et avgrenset spørsmål",
       "kind": "INNSYNSKRAV · FIKTIVT",
-      "body": "Jeg ber om dokumentene som viser hvem som godkjente overleveringen av Aurora, og hvilke kontroller godkjenningen bygget på.",
-      "meaning": "Forespørselen retter søket mot godkjenning og kontrollgrunnlag, ikke bare prosjektets tittel.",
-      "short": "Grunnlaget etterspørres"
+      "body": "Innsynskrav mottatt 15. september 2026\nFra: journalist\n\nJeg ber om dokumentene som viser hvem som godkjente overleveringen av Aurora 14. mars, og hvilke kontroller godkjenningen bygget på.",
+      "meaning": "Kravet gjelder en bestemt overlevering og dens grunnlag. Undersøkelsen må derfor følge både godkjenningen og dokumentene den viser til.",
+      "short": "Grunnlaget etterspørres",
+      "chronologicalOrder": 7
     },
     {
       "id": "e6",
       "room": "innsyn",
-      "time": "11.26",
+      "time": "24.09.2026 · 11.26",
       "title": "Vedlegget som ikke fulgte med",
       "kind": "OVERSENDELSE · KONTROLLISTE",
-      "body": "Til klagebehandler: Saksnotat vedlagt.\nOmtalt i notatet: «Se vedlegg 05».\nVedleggslisten: Saksnotat.pdf",
-      "meaning": "Saksnotatet viser til et vedlegg som ikke følger oversendelsen. Innholdet må finnes eller mangelen forklares.",
-      "short": "Oversendelsen er ufullstendig"
+      "body": "Oversendelse til klagebehandler 24. september 2026\nInnsynskrav: 15. september\nAvslag: 18. september\nKlage mottatt: 21. september\n\nVedlagt: Innsynskrav.pdf, Avslag.pdf, Klage.pdf, Saksnotat.pdf\nOmtalt i saksnotatet: «Se vedlegg 05».\nVedlegg 05 følger ikke oversendelsen.",
+      "meaning": "Krav, avslag og klage gir et saksforløp å følge. Henvisningen til et utelatt vedlegg må i tillegg undersøkes; mottakeren må få underlaget eller en forklaring på mangelen.",
+      "short": "Klagen mangler omtalt underlag",
+      "chronologicalOrder": 9
     },
     {
       "id": "e7",
       "room": "hanekleiv",
-      "time": "13.10",
+      "time": "13.03.2026 · 08.30",
       "title": "Versjon tre",
       "kind": "TEKNISK NOTAT · UTKAST",
-      "body": "Aurora – sluttkontroll v3\nStatus: UTKAST\nKontroll utført av: [ikke fylt ut]\nSignatur: [ikke fylt ut]\n\nNeste steg: avklare hvem som kontrollerer.",
-      "meaning": "Et utkast med tomt kontrollfelt dokumenterer ikke at kontrollen ble gjennomført.",
-      "short": "Kontroll ikke bekreftet"
+      "body": "Aurora – sluttkontroll v3\nUtkast datert 13. mars 2026\nStatus: UTKAST\nKontroll utført av: [ikke fylt ut]\nSignatur: [ikke fylt ut]\n\nNeste steg: avklare kontrollør og hente bekreftelse på utførelsen.\nKobling til omtalt «vedlegg 05»: ikke avklart.",
+      "meaning": "Utkastet dokumenterer planlagt kontroll, men bekrefter ikke utførelsen. Et annet kontrollspor kan finnes; tomme felt alene beviser ikke at arbeidet aldri ble gjort.",
+      "short": "Utkast uten bekreftet utførelse",
+      "chronologicalOrder": 1
     },
     {
       "id": "e8",
       "room": "hanekleiv",
-      "time": "13.42",
+      "time": "13.03.2026 · 13.42",
       "title": "Det korte referatet",
       "kind": "MØTENOTAT · FIKTIVT",
-      "body": "Aurora kan overleveres når kontrollgrunnlaget er bekreftet.\nAnsvar for oppfølging: avklares.\nNeste møte: ikke avtalt.",
-      "meaning": "En betingelse og en oppgave står igjen, men notatet navngir ingen ansvarlig.",
-      "short": "Ansvar ikke avklart"
+      "body": "Møtenotat 13. mars 2026\nAurora kan overleveres når kontrollgrunnlaget er bekreftet.\nProsjektleder samler dokumentene, som avtalt i bestillingen.\nHvem som bekrefter utført sluttkontroll og lukker mangelen: ikke avklart.\nFrist for denne avklaringen: ikke satt.",
+      "meaning": "Prosjektleder har ansvar for å samle dokumenter. Det er en annen oppgave enn å bekrefte kontrollen og lukke avviket; notatet plasserer ikke dette ansvaret.",
+      "short": "Samleoppgave er ikke kontrollansvar",
+      "chronologicalOrder": 3
     },
     {
       "id": "e9",
       "room": "npe",
-      "time": "14.07",
+      "time": "14.03.2026 · 14.07",
       "title": "En liten setning i chatten",
       "kind": "SAMHANDLING · FIKTIVT",
-      "body": "Prosjektleder: Fikk vi sluttkontrollen?\nKollega: Den ligger sikkert i e-posten.\nProsjektleder: Det ordner vi senere.",
-      "meaning": "En antakelse om hvor dokumentasjon finnes er ikke en bekreftet gjenfinning.",
-      "short": "Oppfølging utsatt"
+      "body": "Prosjektchat 14. mars 2026\nProsjektleder: Fikk vi bekreftet sluttkontroll før overleveringen?\nKollega: Den ligger sikkert i e-posten.\nProsjektleder: Det ordner vi senere.",
+      "meaning": "Chatten viser at spørsmålet ble stilt og oppfølgingen utsatt. Antakelsen om e-posten er ikke en bekreftet gjenfinning.",
+      "short": "Oppfølging utsatt",
+      "chronologicalOrder": 4
     },
     {
       "id": "e10",
       "room": "npe",
-      "time": "16.31",
+      "time": "14.03.2026 · 16.31",
       "title": "Den siste overleveringen",
       "kind": "OVERLEVERINGSNOTAT · FIKTIVT",
-      "body": "Aurora er overlevert.\nBeslutningsgrunnlag: «Som avtalt».\nReferanse til sluttkontroll: ikke oppgitt.\nÅpne punkter: ikke omtalt.",
-      "meaning": "Overleveringen er dokumentert. Disse ti sporene bekrefter ikke at sluttkontrollen ble utført.",
-      "short": "Overlevert uten vist grunnlag"
+      "body": "Overleveringsnotat 14. mars 2026\nAurora er overlevert til drift.\nNotatet er sendt av: prosjektleder.\nGodkjent av: ikke oppgitt.\nBeslutningsgrunnlag: «Som avtalt».\nReferanse til sluttkontroll: ikke oppgitt.\nÅpne punkter: ikke omtalt.",
+      "meaning": "Notatet dokumenterer overleveringen og hvem som sendte notatet. Det oppgir ikke hvem som godkjente kontrollgrunnlaget. Disse ti sporene bekrefter ikke utført sluttkontroll.",
+      "short": "Overlevering uten vist kontrollgrunnlag",
+      "chronologicalOrder": 5
     }
   ],
   "triage": [
@@ -153,49 +163,49 @@
       "id": "t1",
       "kind": "MOTTATT E-POST",
       "title": "Avvik før overlevering",
-      "body": "En ekstern part melder at signert sluttkontroll mangler. Meldingen skal behandles i Aurora-saken.",
+      "body": "Leverandørens prosjektleder sender e-posten 13. mars om manglende bekreftelse på sluttkontroll. Den ligger i innboksen og er ikke knyttet til Aurora-saken.",
       "answer": "capture",
-      "explanation": "Fang opp meldingen med sammenheng og ansvarlig. Den må inn i dokumentasjonsflyten; journalføringsplikten vurderes konkret."
+      "explanation": "Fang opp meldingen med avsender, tidspunkt og sakstilknytning, og avklar hvem som følger den opp. Journalføringsplikten vurderes konkret; det er ikke e-postformatet alene som avgjør."
     },
     {
       "id": "t2",
       "kind": "CHAT",
       "title": "En endret beslutning",
-      "body": "Prosjektgruppen bestemmer i chatten at overleveringen likevel skal skje fredag. Endringen finnes ikke i saksnotatet.",
+      "body": "Prosjektgruppen avtaler i chatten at overleveringen skal gjennomføres 14. mars. Avgjørelsen er ikke tatt inn i saksnotatet og er ikke dokumentert andre steder.",
       "answer": "capture",
-      "explanation": "Beslutningen må ikke bare bli liggende i en løs chat. Sikre innhold, tidspunkt og sammenheng i riktig dokumentasjonsflyt."
+      "explanation": "Sikre beslutningens innhold, tidspunkt, deltakere og sammenheng i riktig dokumentasjonsflyt. En beslutning blir ikke mindre relevant fordi den er tatt i chat."
     },
     {
       "id": "t3",
       "kind": "KOPI",
       "title": "Den samme innkallingen",
-      "body": "En identisk kopi av en møteinnkalling er allerede fanget opp og kontrollert i saken. Kopien har ingen merknader.",
+      "body": "En identisk kopi av en møteinnkalling ligger i innboksen. Den bevarte kopien i Aurora-saken er kontrollert og komplett. Innbokskopien har ingen merknader eller annet tilleggsinnhold.",
       "answer": "duplicate",
-      "explanation": "Kontroller at den bevarte kopien faktisk er komplett. Denne øvelsen krever ikke en ny registrering av samme informasjon; det gir ingen generell tillatelse til kassasjon."
+      "explanation": "Kopien tilfører ikke ny informasjon i denne øvelsen. Dette er en avklaring av dokumentflyten, ikke en generell tillatelse til sletting eller kassasjon."
     },
     {
       "id": "t4",
       "kind": "UTKAST",
       "title": "Sluttkontroll v3",
-      "body": "Dokumentet er merket utkast, har tomme signaturfelt og omtales som grunnlag for overleveringen.",
+      "body": "Utkastet «Sluttkontroll v3» er allerede fanget opp i Aurora-saken med opprinnelig status. Det omtales som mulig kontrollgrunnlag, men hvem som utførte og godkjente kontrollen er ikke avklart.",
       "answer": "review",
-      "explanation": "Avklar status og om det finnes en godkjent kontroll. Ikke oppgrader et utkast til bevis på utført arbeid, og ikke slett det fordi det heter utkast."
+      "explanation": "Neste oppgave er å avklare status, innhold og eventuell godkjent kontroll. Ikke registrer utkastet som en bekreftelse, og ikke forkast det bare fordi det heter utkast."
     },
     {
       "id": "t5",
       "kind": "PRIVAT BESKJED",
-      "title": "Lunsj klokken tolv?",
-      "body": "En kollega spør om du vil spise lunsj. Beskjeden inneholder ingen informasjon om arbeid eller saksbehandling.",
+      "title": "Praktisk beskjed uten saksinnhold",
+      "body": "En kollega sender deg en privat invitasjon til lunsj. Beskjeden inneholder ingen avtale, vurdering eller annen opplysning om Aurora eller virksomhetens arbeid.",
       "answer": "outside",
-      "explanation": "Slik situasjonen er beskrevet, faller denne beskjeden utenfor dokumentasjonen av Aurora. Innhold og sammenheng er det avgjørende."
+      "explanation": "Slik innholdet er beskrevet, hører beskjeden ikke til Aurora-saken. Vurder innhold og sammenheng; samme kommunikasjonskanal kan også inneholde beslutninger som må fanges opp."
     },
     {
       "id": "t6",
       "kind": "VEDLEGG",
       "title": "Et filnavn uten innhold",
-      "body": "Et vedlegg omtales som endelig kontrollgrunnlag, men lar seg ikke åpne. Det eldre systemet finnes fortsatt.",
+      "body": "Filen «vedlegg_05» er allerede sikret med opphav og sakstilknytning. Den lar seg ikke åpne i den nye løsningen. Det eldre miljøet finnes fortsatt, og innholdet er ikke bekreftet.",
       "answer": "review",
-      "explanation": "Sikre filen og avklar lesbarheten i riktig miljø. «Finnes som fil» er ikke nok; «kan ikke åpnes her» er heller ikke bevis på endelig tap."
+      "explanation": "Filen er sikret; neste oppgave er en dokumentert lesbarhetstest med riktig fagkompetanse og miljø. Filnavn bekrefter ikke innhold, og «kan ikke åpnes her» beviser ikke endelig tap."
     }
   ],
   "access": [
@@ -203,58 +213,58 @@
       "id": "a1",
       "title": "Bestilling og tidsplan",
       "meta": "DOKUMENT 01 · ENDELIG",
-      "body": "Aurora skal overleveres fredag. Bestiller er Virksomhet A. Prosjektleder har ansvar for å samle kontrollgrunnlaget.",
+      "body": "Bestilling datert 2. mars 2026. Aurora skal overleveres 14. mars. Kommunen er bestiller. Prosjektleder skal samle dokumentasjonen; faglig ansvar for sluttkontroll avklares særskilt.",
       "sensitive": [],
       "answer": "release",
-      "explanation": "I øvelsen er dette ordinære prosjektopplysninger uten oppgitte unntaksgrunner. Utlever dokumentet, ikke et tomt sammendrag."
+      "explanation": "I øvelsen finnes ingen oppgitt unntaksgrunn for dette dokumentet. Bestillingen viser en samleoppgave, men bekrefter ikke hvem som senere utførte eller godkjente kontrollen."
     },
     {
       "id": "a2",
       "title": "Svar på en individuell henvendelse",
       "meta": "DOKUMENT 02 · FIKTIVE PERSONOPPLYSNINGER",
-      "body": "Saksbehandler bekrefter at dokumentasjonen skal undersøkes. Personen beskriver [et privat helseforhold]. Videre oppfølging avtales skriftlig.",
+      "body": "En innbygger spør om tilgjengeligheten i Aurora-bygget og beskriver [et privat helseforhold]. Saksbehandleren svarer at den tekniske dokumentasjonen skal undersøkes, og avtaler skriftlig oppfølging.",
       "sensitive": [
         "et privat helseforhold"
       ],
       "answer": "redact",
-      "explanation": "Øvelsen forutsetter at den markerte helseopplysningen er taushetsbelagt og at resten kan gis ut. Skjerm den opplysningen, og la resten være synlig. En virkelig avgjørelse krever konkret hjemmel og vurdering."
+      "explanation": "Øvelsen forutsetter taushetsplikt for den markerte helseopplysningen og at resten kan gis ut. Skjerm denne opplysningen og behold den øvrige saksinformasjonen. I en virkelig sak må både hjemmel og om resten kan gis ut vurderes konkret."
     },
     {
       "id": "a3",
       "title": "Prisvedlegget",
       "meta": "DOKUMENT 03 · UAVKLART GRUNNLAG",
-      "body": "Leverandøren har merket et prisvedlegg «konfidensielt». Du har ingen forklaring på hvilke opplysninger som eventuelt må skjermes eller hvorfor.",
+      "body": "Et prisvedlegg til Aurora er merket «konfidensielt» av leverandøren. Det følger ingen forklaring på hvilke opplysninger som eventuelt trenger vern, eller hvilken skade offentliggjøring kan gi.",
       "sensitive": [],
       "answer": "review",
-      "explanation": "En merkelapp avgjør ikke innsynsretten. Be om et konkret grunnlag, vurder det selv og følg opp uten unødig opphold. Ikke avslå eller utlever ukritisk."
+      "explanation": "Merkelappen avgjør ikke innsynsretten. Avklar det konkrete grunnlaget og gjør en selvstendig vurdering uten ugrunnet opphold. Ikke la leverandøren bestemme utfallet, og ikke bruk uavklart grunnlag som et varig avslag."
     },
     {
       "id": "a4",
       "title": "Kontrollnotat med privat opplysning",
       "meta": "DOKUMENT 04 · FIKTIVE PERSONOPPLYSNINGER",
-      "body": "Kontrollen ble utsatt fordi [en ansatt hadde et privat helseproblem]. Ny kontroll er avtalt torsdag. Faglig ansvarlig er varslet.",
+      "body": "Kontrollnotat 12. mars 2026. En planlagt kontroll ble utsatt fordi [en ansatt hadde et privat helseproblem]. Ny kontroll var planlagt 13. mars. Notatet bekrefter ikke at den ble gjennomført.",
       "sensitive": [
         "en ansatt hadde et privat helseproblem"
       ],
       "answer": "redact",
-      "explanation": "Øvelsen forutsetter taushetsplikt for den markerte private opplysningen, ikke for datoen eller oppfølgingen. En smal sladding lar leseren se hva virksomheten faktisk gjorde."
+      "explanation": "Øvelsen forutsetter taushetsplikt for den markerte private opplysningen og at resten kan gis ut. Planlagt tidspunkt og uavklart utførelse skal fortsatt kunne leses. Den nye avtalen er ikke bevis på at kontrollen faktisk skjedde."
     }
   ],
   "crisis": [
     {
       "id": "c1",
       "time": "08.57",
-      "title": "En journalist ringer",
-      "prompt": "Journalisten spør hvem som godkjente overleveringen.",
+      "title": "Journalisten trenger et presist svar",
+      "prompt": "25. september: Journalisten spør hvem som godkjente overleveringen. Notatet viser hvem som sendte det, men navngir ikke den som godkjente.",
       "options": [
         {
-          "title": "Lov at alt er i orden",
-          "outcome": "Du har lovet mer enn de tilgjengelige sporene kan bekrefte.",
+          "title": "Svar hvem som sendte notatet, og undersøk godkjenningen senere",
+          "outcome": "Du kan gi en korrekt opplysning om avsenderen. Hvis du ikke skiller rollene tydelig, kan svaret bli forstått som en bekreftelse på hvem som godkjente.",
           "safe": false
         },
         {
-          "title": "Avklar spørsmålet og hent beslutningsgrunnlaget",
-          "outcome": "Du har gitt undersøkelsen en konkret retning uten å love et udokumentert svar.",
+          "title": "Skill rollene og bestill søk etter godkjenning og grunnlag",
+          "outcome": "Du kan svare hva som er kjent om avsenderen, gjøre godkjenningen uavklart og avtale hvem som undersøker den videre.",
           "safe": true
         }
       ]
@@ -262,17 +272,17 @@
     {
       "id": "c2",
       "time": "09.04",
-      "title": "Vedlegget vil ikke åpne",
-      "prompt": "Drift sier at filen er kopiert, men ikke lesbar i den nye løsningen.",
+      "title": "Vedlegget åpner ikke i den nye løsningen",
+      "prompt": "Kopien er sikret. Gårsdagens oppfølging viser at innholdet fortsatt ikke er bekreftet, men det eldre miljøet kan brukes til en ny test.",
       "options": [
         {
-          "title": "Meld at vedlegget er tapt",
-          "outcome": "Du har gjort uavklart lesbarhet til en sikker påstand om tap.",
+          "title": "Behold kopien og ta lesbarheten med i neste systemoppgradering",
+          "outcome": "Kopien er fortsatt sikret, men den aktuelle innsynssaken mangler et avklart underlag. En fremtidig oppgradering er ikke en bestilt test nå.",
           "safe": false
         },
         {
-          "title": "Bevar kopien og bestill en dokumentert lesbarhetstest",
-          "outcome": "Du har sikret videre undersøkelse uten å konkludere for tidlig.",
+          "title": "Avtal test i riktig miljø med ansvarlig og dokumentert resultat",
+          "outcome": "Systemforvalter og fagansvarlig kan avklare lesbarhet og innhold. Et mislykket første forsøk blir verken bortforklart eller gjort til en sikker påstand om tap.",
           "safe": true
         }
       ]
@@ -280,17 +290,17 @@
     {
       "id": "c3",
       "time": "09.11",
-      "title": "En beslutning finnes bare i chat",
-      "prompt": "Prosjektlederen spør om chatten er tilstrekkelig.",
+      "title": "Beslutningen finnes bare i chat",
+      "prompt": "Du finner en beslutning om overlevering i prosjektchatten. Den er ikke koblet til saksnotatet, og prosjektlederen foreslår en rask kopi.",
       "options": [
         {
-          "title": "La hver deltaker beholde sin egen kopi",
-          "outcome": "Sammenhengen og ansvaret for gjenfinning er fortsatt uavklart.",
+          "title": "Lagre et datert skjermbilde i prosjektmappen",
+          "outcome": "Du har sikret noe av innholdet. Det gjenstår å kontrollere at beslutning, deltakere, relevant sammenheng og kobling til saken faktisk følger med.",
           "safe": false
         },
         {
-          "title": "Sikre beslutningen med dato, ansvar og sakstilknytning",
-          "outcome": "Etterfølgeren får et spor som kan gjenfinnes i riktig sammenheng.",
+          "title": "Sikre beslutning, deltakere og grunnlag i riktig sak",
+          "outcome": "En etterfølger kan få et spor som forklarer både beslutningen og sammenhengen. En ansvarlig må kontrollere at overføringen er komplett.",
           "safe": true
         }
       ]
@@ -298,17 +308,17 @@
     {
       "id": "c4",
       "time": "09.18",
-      "title": "Noen foreslår å unnta hele mappen",
-      "prompt": "Mappen inneholder én privat opplysning og flere ordinære dokumenter.",
+      "title": "Én privat opplysning forsinker hele mappen",
+      "prompt": "Mappen inneholder ordinære prosjektdokumenter og ett dokument med en opplysning som øvelsen forutsetter er taushetsbelagt. Resten av dette dokumentet kan gis ut.",
       "options": [
         {
-          "title": "Skjerm hele mappen for sikkerhets skyld",
-          "outcome": "Du har ikke skilt den private opplysningen fra dokumentene som kan vurderes for innsyn.",
+          "title": "Gi ut de ordinære dokumentene og legg det siste til side",
+          "outcome": "Deler av kravet kan bli besvart raskt. Den øvrige, åpne teksten i det siste dokumentet må fortsatt vurderes og følges opp; én privat opplysning avgjør ikke hele dokumentet.",
           "safe": false
         },
         {
-          "title": "Vurder dokumenter og opplysninger konkret",
-          "outcome": "Du har bestilt en avgrenset vurdering, ikke et automatisk avslag.",
+          "title": "Gi ut det åpne materialet og skjerm den avgrensede opplysningen",
+          "outcome": "På øvelsens oppgitte grunnlag får mottakeren også den åpne delen av dokumentet. En virkelig avgjørelse krever konkret hjemmel og vurdering.",
           "safe": true
         }
       ]
@@ -316,17 +326,17 @@
     {
       "id": "c5",
       "time": "09.24",
-      "title": "Overordnet vil ha et svar nå",
-      "prompt": "Ingen har funnet en bekreftet sluttkontroll.",
+      "title": "Lederen vil vite hva som kan bekreftes",
+      "prompt": "Ingen har funnet en bekreftet sluttkontroll. Et utkast, en kopieringslogg og et overleveringsnotat er tilgjengelige.",
       "options": [
         {
-          "title": "Send utkastet som bevis på godkjent kontroll",
-          "outcome": "Utkastets status er blitt borte i forklaringen.",
+          "title": "Send de tre dokumentene med deres opprinnelige status",
+          "outcome": "Statusene beholdes, og mottakeren får underlaget. Det gjenstår å forklare hva dokumentene underbygger, og hva de ikke kan bekrefte.",
           "safe": false
         },
         {
-          "title": "Skill bekreftede fakta fra det som fortsatt undersøkes",
-          "outcome": "Du har gjort usikkerheten synlig og bevart skillet mellom utkast og bekreftelse.",
+          "title": "Send underlaget med en tydelig vurdering av kjent og uavklart",
+          "outcome": "Du kan vise at overleveringen er dokumentert uten å kalle utkastet en utført kontroll. Videre undersøkelse kan få et konkret spørsmål og en ansvarlig.",
           "safe": true
         }
       ]
@@ -334,35 +344,37 @@
     {
       "id": "c6",
       "time": "09.30",
-      "title": "Hvem følger opp etter møtet?",
-      "prompt": "Møtet er over. To dokumentasjonsmangler er fortsatt åpne.",
+      "title": "To mangler står igjen etter møtet",
+      "prompt": "Lesbarheten i vedlegg 05 og hvem som bekreftet sluttkontrollen er fortsatt uavklart. Møtedeltakerne må vite hva som skal skje videre.",
       "options": [
         {
-          "title": "Skriv «følges opp» og gå videre",
-          "outcome": "Ingen kan se hvem som skal lukke de åpne punktene eller når det skal skje.",
+          "title": "Send referatet med de to åpne punktene til alle",
+          "outcome": "Punktene er synlige for deltakerne. Uten eier, frist og forventet resultat kan hver deltaker fortsatt tro at en annen følger dem opp.",
           "safe": false
         },
         {
-          "title": "Navngi ansvarlig, avtal frist og beskriv hva som må vises",
-          "outcome": "Oppgaven har fått en eier og et etterprøvbart kriterium for å bli lukket.",
+          "title": "Avtal eier, frist og hva som skal vises for hvert punkt",
+          "outcome": "Oppfølgingen kan kontrolleres: hvem gjør testen, hvem undersøker godkjenningen, og hvilket resultat skal legges frem? Åpne spørsmål trenger ikke skjules for at undersøkelsen skal oppsummeres.",
           "safe": true
         }
       ]
     }
   ],
   "reconstruction": {
-    "question": "Hva kan disse ti sporene faktisk underbygge?",
+    "question": "Hvilken konklusjon kan du begrunne med både utkastet, kopieringsloggen og overleveringsnotatet?",
     "options": [
-      "Sluttkontrollen ble sikkert aldri utført.",
+      "Den ubesvarte e-posten og utkastet viser at sluttkontrollen ikke ble utført.",
       "Overleveringen er dokumentert, men sporene bekrefter ikke utført sluttkontroll.",
-      "Alle dokumentene er endelig tapt."
+      "Overleveringsnotatet og kopieringsloggen bekrefter at sluttkontrollen ble utført."
     ],
     "answer": 1,
-    "explanation": "Vi vet at Aurora ble overlevert. Vi har ikke et bekreftet spor av sluttkontrollen. Fravær i denne samlingen beviser verken at kontrollen aldri skjedde eller at all dokumentasjon er tapt."
+    "explanation": "Overleveringsnotatet dokumenterer overleveringen. Kopieringsloggen viser en teknisk jobb, og utkastet viser planlagt kontroll. Ingen av dem bekrefter utført sluttkontroll. Det kan finnes andre spor; manglende bekreftelse i denne samlingen beviser ikke at kontrollen aldri skjedde."
   },
   "secret": {
     "title": "Skuff 00 · Beskjed til etterfølgeren",
     "body": "Når du kommer etter meg, skal du slippe å gjette. Derfor skriver jeg ikke bare hva vi valgte, men hva vi bygget valget på.\n\n— En tenkt kollega",
     "meaning": "Det viktigste dokumentet er ikke alltid det mest høytidelige. Noen ganger er det et tydelig spor til neste menneske."
-  }
+  },
+  "endingFrame": "Etter undersøkelsen",
+  "crisisFrame": "25. september 2026 · Mulig følge av valget"
 }

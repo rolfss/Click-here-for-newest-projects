@@ -74,3 +74,19 @@ dialog{background:#f0eee4;max-width:880px}dialog p{font-size:1rem}.dialog-header
 .scenario>p,.choices button,.consequence-chain li{font-size:1rem;line-height:1.65}.room-list small,.settings small{font-size:.875rem}
 
 .case-context{padding:1rem;margin-bottom:1.25rem;background:#223d31;border:1px solid #9eb59666}.case-context summary{font-size:1rem;font-weight:600;line-height:1.5;cursor:pointer;min-height:44px}.case-context p{font-size:1rem;margin:.8rem 0}.case-context a{font-size:.9375rem}.case-context summary:focus-visible{outline:3px solid #f3d99f;outline-offset:4px}
+
+/* Learning feedback separates practice results from earned participation badges. */
+.learning-goal{padding:.8rem 1rem;border-left:3px solid #d9bd83;background:#233c32;line-height:1.65}
+.learning-guide{margin:1rem 0;border:1px solid #728b7d;border-radius:6px;padding:.75rem 1rem}
+.learning-guide summary{font-weight:650;cursor:pointer;min-height:44px;display:list-item;align-content:center}
+.learning-guide li,.learning-guide p{line-height:1.7}.learning-guide ul{padding-left:1.3rem}
+.learning-feedback{margin:1.5rem 0;padding:1.1rem;border:1px solid #769584;background:#edf2e9;color:#172c24;border-radius:6px}
+.learning-feedback h3{margin:.2rem 0 1rem;font-size:1.35rem}.learning-feedback p{line-height:1.7}
+.learning-rubric{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6rem;margin:0}
+.learning-rubric div{padding:.7rem;border:1px solid #a4b7a7;border-radius:4px}
+.learning-rubric dt{font-size:.9rem;overflow-wrap:anywhere}.learning-rubric dd{font-size:1.5rem;font-weight:700;margin:.3rem 0 0}
+.learning-profile{margin:1.3rem 0}.learning-results>details{border-top:1px solid #a4b7a7;padding:1rem 0}
+.learning-results>details>summary{font-weight:650;cursor:pointer;min-height:44px;line-height:1.6}
+.learning-results>details>summary>span{display:inline-block;margin-left:.5rem;font-variant-numeric:tabular-nums}
+.path-comparison{grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))}
+@media(max-width:520px){.learning-rubric{grid-template-columns:1fr}.learning-rubric div{display:flex;align-items:center;justify-content:space-between;gap:1rem}.learning-rubric dd{font-size:1.25rem;white-space:nowrap}.learning-guide{padding:.6rem .8rem}}

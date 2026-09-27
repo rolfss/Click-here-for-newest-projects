@@ -1,6 +1,6 @@
 # Kilder til Arkivmuseet
 
-Kontrollert 8. september 2026. Originalkildene er lenket. Førstesiden av rapportene om Osen og NPE vises også som merkede faksimiler, med originalkilden tilgjengelig.
+Historiske hovedkilder og de oppgitte lovbestemmelsene kontrollert 27. september 2026. Kontrollen gjelder kildeinnhold, ikke senere utbedringer eller ny bilde-/lisenskontroll. Originalkildene er lenket. Førstesiden av rapportene om Osen og NPE vises også som merkede faksimiler, med originalkilden tilgjengelig.
 
 ## osen25: Endelig tilsynsrapport og pålegg – Osen kommune
 
@@ -30,7 +30,7 @@ Kontrollert 8. september 2026. Originalkildene er lenket. Førstesiden av rappor
 
 - Institusjon: Samferdselsdepartementet
 - Dato: 2007-05-15
-- Sted: Kapittel 3.13, undersøkingsgruppa sine konklusjonar, punkt 6
+- Sted: Kapittel 3.13, «Årsakene til raset», punkt 6, og «Forbetring av byggjemetode»
 - [Originalkilde](https://www.regjeringen.no/no/dokumenter/stprp-nr-68-2006-2007-/id467021/?ch=3)
 - Kort autentisk utdrag: «denne dokumentasjonen er ikkje lenger tilgjengeleg»
 
@@ -64,10 +64,24 @@ Kontrollert 8. september 2026. Originalkildene er lenket. Førstesiden av rappor
 - [Originalkilde](https://www.nasjonalarkivet.no/content/uploads/2025/11/Arsrapport-for-tilsyn-2024-1.pdf)
 - Kort autentisk utdrag: «Innbyggere får ikke innsyn i viktig rettighetsdokumentasjon om seg selv.»
 
+## offl06: Lov om rett til innsyn i dokument i offentleg verksemd (offentleglova)
+
+- Institusjon: Lovdata
+- Dato: 2006-05-19
+- Sted: §§ 3, 11–13, 16, 28–29 og 31–32
+- [Originalkilde](https://lovdata.no/dokument/NL/lov/2006-05-19-16)
+
+## fvl67: Lov om behandlingsmåten i forvaltningssaker (forvaltningsloven)
+
+- Institusjon: Lovdata
+- Dato: 1967-02-10
+- Sted: § 13 første ledd nr. 1–2
+- [Originalkilde](https://lovdata.no/dokument/NL/lov/1967-02-10)
+
 ## Kuratering
 
 Osen-rapporten gjelder et tilsyn i 2025 selv om saksreferansen starter med 2024. Tokke er inkludert som dokumentert risiko; årsrapportens anonyme eksempler på tap kan ikke tilordnes Tokke. NPEs endelige rapport omfatter både kritikk, positive funn og endringen etter innvendinger.
 
 Det ble også søkt i rapportene om Statistisk sentralbyrå (5.–6. mars 2024), Helseklage (5.–6. november 2024), Ibestad (12.–13. juni 2024) og Sauda (24. og 30. september 2024). De er utelatt fra denne utgaven for å holde antallet historier avgrenset. Tilsynsrapportene finnes i [statlig katalog](https://www.nasjonalarkivet.no/offentlig-forvaltning/om_tilsyn/tilsynsrapporter-fra-statlig-sektor/) og [kommunal katalog](https://www.nasjonalarkivet.no/offentlig-forvaltning/om_tilsyn/tilsynsrapporter-fra-kommunal-sektor/).
 
-Lovdata ble kontrollert ved direkte henting av konsolidert lov- og forskriftstekst. Alle fem historiske hovedkilder og begge Lovdata-tekster ga HTTP 200.
+Lovdata ble kontrollert ved direkte henting av konsolidert lov- og forskriftstekst. Alle fem historiske hovedkilder og de oppgitte Lovdata-tekstene ga HTTP 200.

@@ -43,17 +43,57 @@ test('Completion requires evidence, casework, six considered decisions and a sup
   for(const a of data.access)s.access[a.id]=a.answer;s.redactions={a2:true,a4:true};
   s.crisis=[0,1,0,1,0,1];assert.equal(workSummary(s,data.triage,data.access).complete,false);
   s.reconstruction=1;assert.equal(workSummary(s,data.triage,data.access).complete,true);
+  assert.equal(workSummary(s,data.triage,data.access).responsibleOutcome,false,'Trying all choices is not proof of responsible leadership');
   s.crisis[5]=null;assert.equal(workSummary(s,data.triage,data.access).complete,false);
 });
 test('Unanswered decisions do not receive positive or negative outcomes', () => {
   const s=freshCase(),r=workSummary(s,data.triage,data.access);
   assert.equal(r.decisions,0);assert.equal(r.protectedDecisions,0);
+  assert.equal(r.leadershipQuality,'unassessed');assert.equal(r.unresolvedDecisions,0);assert.equal(r.unansweredDecisions,6);assert.equal(r.responsibleOutcome,false);
   assert.match(caseReport(s,r),/ikke ferdig avklart/);
+});
+
+test('All sixty-four completed decision combinations distinguish participation from protected outcomes', () => {
+  const s=freshCase();for(const e of data.evidence)collectEvidence(s,e.id);
+  for(const t of data.triage)s.triage[t.id]=t.answer;
+  for(const a of data.access)s.access[a.id]=a.answer;
+  s.redactions={a2:true,a4:true};s.reconstruction=1;
+  for(let mask=0;mask<64;mask++){
+    s.crisis=Array.from({length:6},(_,i)=>(mask>>i)&1);
+    const summary=workSummary(s,data.triage,data.access),protectedCount=s.crisis.reduce((sum,value)=>sum+value,0);
+    assert.equal(summary.complete,true);assert.equal(summary.decisions,6);assert.equal(summary.protectedDecisions,protectedCount);
+    assert.equal(summary.unresolvedDecisions,6-protectedCount);assert.equal(summary.unansweredDecisions,0);
+    assert.equal(summary.responsibleOutcome,mask===63);assert.equal(summary.leadershipQuality,mask===63?'protected':'needs-follow-up');
+  }
+  s.found.pop();assert.equal(workSummary(s,data.triage,data.access).responsibleOutcome,false,'Good choices cannot substitute for missing evidence');
+});
+
+test('Partial leadership work distinguishes unexamined decisions from examined unsafe choices', () => {
+  const s=freshCase();s.crisis=[1,0,null,1,null,null];const r=workSummary(s,data.triage,data.access);
+  assert.equal(r.decisions,3);assert.equal(r.protectedDecisions,2);assert.equal(r.unresolvedDecisions,1);assert.equal(r.unansweredDecisions,3);
+  assert.equal(r.leadershipQuality,'needs-follow-up');assert.equal(r.complete,false);assert.equal(r.responsibleOutcome,false);
+});
+
+test('Reports cannot make unsafe and safe completed choices look equivalent', () => {
+  const s=freshCase();for(const e of data.evidence)collectEvidence(s,e.id);
+  for(const t of data.triage)s.triage[t.id]=t.answer;for(const a of data.access)s.access[a.id]=a.answer;
+  s.redactions={a2:true,a4:true};s.reconstruction=1;s.crisis=Array(6).fill(0);
+  const unsafe=caseReport(s,workSummary(s,data.triage,data.access));
+  s.crisis=Array(6).fill(1);const safe=caseReport(s,workSummary(s,data.triage,data.access));
+  assert.notEqual(unsafe,safe);assert.match(unsafe,/0\/6 prøvde valg/);assert.match(safe,/6\/6 prøvde valg/);
+  assert.match(unsafe,/Gjennomføring er ikke det samme som gode ledervalg/);
+});
+
+test('A premature saved conclusion is cleared instead of bypassing the ten-clue evidence requirement', () => {
+  const raw={...freshCase(),found:['e1'],reconstruction:1};const restored=restoreCase(JSON.stringify(raw));
+  assert.equal(restored.reconstruction,null);
+  assert.match(caseReport(raw,workSummary(raw,data.triage,data.access)),/Konklusjonen er ikke ferdig avklart/);
 });
 test('The conclusion distinguishes missing proof from proven permanent loss', () => {
   assert.equal(data.reconstruction.answer,1);
-  assert.match(data.reconstruction.explanation,/beviser verken/);
-  assert.match(data.evidence.find(e=>e.id==='e4').meaning,/ikke dokumentert/);
+  assert.match(data.reconstruction.explanation,/Ingen av dem bekrefter utført sluttkontroll/);
+  assert.match(data.reconstruction.explanation,/manglende bekreftelse.*beviser ikke at kontrollen aldri skjedde/);
+  assert.match(data.evidence.find(e=>e.id==='e4').meaning,/mislykket åpning her beviser ikke endelig tap/);
 });
 test('Case data has complete explanations and no blanket delete or deny action', () => {
   for(const card of [...data.triage,...data.access])assert.ok(card.explanation.length>65);

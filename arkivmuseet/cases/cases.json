@@ -44,7 +44,7 @@
     ],
     "authorityFindings": [
       {
-        "text": "Kommunen fikk pålegg om å følge opp journalføring og korrekt registrering, og gjøre rutinene kjent for saksbehandlere og ledere.",
+        "text": "Kommunen fikk pålegg om å følge opp journalføring og korrekt registrering, og gjøre rutinene kjent for saksbehandlere og ledere. Retting av feilregistrerte x-notater skulle vurderes; hvis kommunen lot være, måtte den vurdere konsekvensene.",
         "sourceIds": [
           "osen25"
         ],
@@ -64,11 +64,12 @@
     ],
     "currentLegalRelevance": [
       {
-        "text": "Nå regulerer arkivforskrifta §§ 14–15 journalplikt og løpende registrering av metadata.",
+        "text": "Arkivforskrifta §§ 14–15 regulerer journalplikt og løpende registrering av metadata. Saksframlegg med vedlegg til kommunale folkevalgte organer omfattes gjennom henvisningen til offentleglova § 16 første ledd bokstav a. Dette er ikke en regel om at alle interne notater skal journalføres.",
         "sourceIds": [
-          "reg26"
+          "reg26",
+          "offl06"
         ],
-        "locator": "§§ 14–15",
+        "locator": "Arkivforskrifta §§ 14–15; offentleglova § 16 første ledd bokstav a",
         "kind": "fact"
       }
     ],
@@ -96,7 +97,7 @@
       "Rapportens henvisning til «1999 nr. 126» er en skrivefeil; den tidligere arkivloven er fra 1992."
     ],
     "confidence": "Høy for de avgrensede kildefunnene; forbehold er oppgitt.",
-    "sourceCheckedDate": "2026-09-08",
+    "sourceCheckedDate": "2026-09-27",
     "displayMetric": {
       "value": "433",
       "label": "Ferdigstilte dokumenter i kontrollsøket",
@@ -126,7 +127,7 @@
     "eventDate": "2019–2024",
     "inspectionDate": "2024-03-18",
     "location": "Tokke, Telemark",
-    "wing": "II · Det som forsvant",
+    "wing": "II · Det som kan gå tapt",
     "position": [
       19,
       9
@@ -149,6 +150,14 @@
         ],
         "locator": "Side 7, pålegg 4",
         "kind": "fact"
+      },
+      {
+        "text": "Rapporten fremhevet også godt samarbeid mellom IKT, arkivleder og ledelsen, og at kommunen allerede hadde deponert flere elektroniske uttrekk til IKA Kongsberg.",
+        "sourceIds": [
+          "tokke24"
+        ],
+        "locator": "Side 1–2, positive funn",
+        "kind": "fact"
       }
     ],
     "consequence": [
@@ -163,7 +172,7 @@
     ],
     "authorityFindings": [
       {
-        "text": "Kommunen måtte planlegge et godkjent uttrekk og kartlegge eventuelle tap. Arkivverket understreket at manglende gjenfinning ville innebære uhjemlet kassasjon.",
+        "text": "Kommunen måtte lage en plan for godkjent deponering av uttrekk fra Oppad. Eventuelle tap og bevart materiale måtte kartlegges. Arkivverket understreket at dokumentasjon som ikke lot seg finne igjen, ville innebære uhjemlet kassasjon.",
         "sourceIds": [
           "tokke24"
         ],
@@ -183,7 +192,7 @@
     ],
     "currentLegalRelevance": [
       {
-        "text": "Arkivforskrifta §§ 5–7 gjelder systemfunksjoner, systembeskrivelser og vedlikehold av digitale arkiv.",
+        "text": "Arkivforskrifta §§ 5–7 gjelder systemfunksjoner, systembeskrivelser og vedlikehold av digitale arkiv. Ved systemskifte skal blant annet lesbarhet, metadata og muligheten for søk og kobling ivaretas. En lagret kopi alene viser ikke at dette er oppfylt.",
         "sourceIds": [
           "reg26"
         ],
@@ -214,7 +223,7 @@
       "Dette er en dokumentert bevaringsrisiko, ikke bevis for endelig tap. Senere gjenfinning eller retting er ikke undersøkt."
     ],
     "confidence": "Høy for de avgrensede kildefunnene; forbehold er oppgitt.",
-    "sourceCheckedDate": "2026-09-08",
+    "sourceCheckedDate": "2026-09-27",
     "image": {
       "src": "assets/cases/tokke.webp",
       "alt": "Utsikt over Dalen i Tokke, elvedeltaet og Bandak mellom skogkledde fjellsider.",
@@ -299,6 +308,14 @@
         ],
         "locator": "§ 14 tredje ledd",
         "kind": "fact"
+      },
+      {
+        "text": "Offentleglova §§ 28 og 31–32 regulerer innsynskrav, begrunnelse og klage. Et krav kan gjelde en bestemt sak eller i rimelig utstrekning en bestemt sakstype; søkeren trenger ikke kjenne alle dokumentene på forhånd.",
+        "sourceIds": [
+          "offl06"
+        ],
+        "locator": "§§ 28 og 31–32",
+        "kind": "fact"
       }
     ],
     "leadershipLesson": "Sørg for at en klageinstans kan følge både avgjørelsen og saksbehandlingen.",
@@ -324,7 +341,7 @@
       "2008-uttalelsen kan ikke brukes som påstand om at alle innsynskrav er journalpliktige i dag."
     ],
     "confidence": "Høy for de avgrensede kildefunnene; forbehold er oppgitt.",
-    "sourceCheckedDate": "2026-09-08"
+    "sourceCheckedDate": "2026-09-27"
   },
   {
     "id": "hanekleiv",
@@ -342,11 +359,11 @@
     "accent": "#a8bdb1",
     "visualConcept": "tunnel",
     "shortNarrative": {
-      "text": "Hanekleivtunnelen raste 25. desember 2006. En undersøkelsesgruppe gransket årsakene og leverte rapport i februar 2007.",
+      "text": "Det gikk et ras i Hanekleivtunnelen 25. desember 2006. En undersøkelsesgruppe gransket årsakene og leverte rapport 15. februar 2007.",
       "sourceIds": [
         "tunnel07"
       ],
-      "locator": "Kapittel 3.13, undersøkingsgruppa sine konklusjonar, punkt 6",
+      "locator": "Kapittel 3.13, innledningen og «Årsakene til raset»",
       "kind": "fact"
     },
     "documentedFacts": [
@@ -365,7 +382,7 @@
         "sourceIds": [
           "tunnel07"
         ],
-        "locator": "Kapittel 3.13, undersøkingsgruppa sine konklusjonar, punkt 6",
+        "locator": "Kapittel 3.13, «Årsakene til raset», punkt 2–6",
         "kind": "fact"
       }
     ],
@@ -375,7 +392,7 @@
         "sourceIds": [
           "tunnel07"
         ],
-        "locator": "Kapittel 3.13, undersøkingsgruppa sine konklusjonar, punkt 6",
+        "locator": "Kapittel 3.13, «Forbetring av byggjemetode», punkt 4, 6 og 8 og avsnittet etter tiltakslisten",
         "kind": "fact"
       }
     ],
@@ -407,7 +424,7 @@
         "institution": "Samferdselsdepartementet",
         "date": "2007-05-15",
         "url": "https://www.regjeringen.no/no/dokumenter/stprp-nr-68-2006-2007-/id467021/?ch=3",
-        "locator": "Kapittel 3.13, undersøkingsgruppa sine konklusjonar, punkt 6",
+        "locator": "Kapittel 3.13, «Årsakene til raset», punkt 6, og «Forbetring av byggjemetode»",
         "excerpt": "denne dokumentasjonen er ikkje lenger tilgjengeleg",
         "type": "primary"
       }
@@ -423,7 +440,7 @@
       "Modellen er abstrakt og viser ikke tunnelens faktiske geologi eller sikring."
     ],
     "confidence": "Høy for de avgrensede kildefunnene; forbehold er oppgitt.",
-    "sourceCheckedDate": "2026-09-08",
+    "sourceCheckedDate": "2026-09-27",
     "image": {
       "src": "assets/cases/hanekleiv.webp",
       "alt": "De to sørportalene til Hanekleivtunnelen på E18, med trafikk og skogkledd fjellside.",
@@ -482,7 +499,7 @@
     ],
     "authorityFindings": [
       {
-        "text": "Arkivverket krevde korrekt registrering av daterte dokumenter. Etter NPEs innvendinger fikk virksomheten vurdere behovet for etterregistrering. Arkivholdet ble omtalt som generelt godt.",
+        "text": "Arkivverket krevde korrekt registrering av daterte dokumenter. Etter NPEs innvendinger fikk virksomheten vurdere behovet for etterregistrering og konsekvensene dersom den lot være. Arkivholdet ble omtalt som generelt godt.",
         "sourceIds": [
           "npe24"
         ],
@@ -502,11 +519,11 @@
     ],
     "currentLegalRelevance": [
       {
-        "text": "Arkivforskrifta § 15 regulerer metadata i journalen, inkludert dokumentdato eller dato for sending/mottak og tidspunkt for registrering.",
+        "text": "Arkivforskrifta § 15 bokstav e krever dokumentets dato eller datoen for sending eller mottak; bokstav f krever registreringstidspunktet. Et tomt dokumentdatofelt alene beviser derfor ikke brudd på dagens regel. Datoene må beskrive de riktige hendelsene og ikke erstattes med en vilkårlig dato.",
         "sourceIds": [
           "reg26"
         ],
-        "locator": "§ 15",
+        "locator": "§ 15 første ledd bokstav e–f",
         "kind": "fact"
       }
     ],
@@ -534,7 +551,7 @@
       "Dette er historiske funn. Status for senere utbedring er ikke undersøkt."
     ],
     "confidence": "Høy for de avgrensede kildefunnene; forbehold er oppgitt.",
-    "sourceCheckedDate": "2026-09-08",
+    "sourceCheckedDate": "2026-09-27",
     "image": {
       "src": "assets/cases/npe-rapport.webp",
       "alt": "Faksimile: Arkivverkets endelige tilsynsrapport for Norsk pasientskadeerstatning. Tilsyn 19. november 2024, rapport datert 22. januar 2025, side 1.",

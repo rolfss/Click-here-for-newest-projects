@@ -48,6 +48,7 @@ jobs:
           timeout 360s xvfb-run -a pnpm test:investigation 2>&1 | tee qa-logs/investigation.log || RESULT=1
           timeout 360s xvfb-run -a pnpm test:browser 2>&1 | tee qa-logs/original-museum.log || RESULT=1
           timeout 240s xvfb-run -a pnpm test:visit-ui 2>&1 | tee qa-logs/visit-ui.log || RESULT=1
+          timeout 240s xvfb-run -a pnpm test:learning 2>&1 | tee qa-logs/learning.log || RESULT=1
           exit "$RESULT"
       - name: Behold testet kildegrunnlag for etterprøvbar visuell kontroll
         if: always()
@@ -62,6 +63,7 @@ jobs:
             arkivmuseet/qa-investigation/
             arkivmuseet/qa-output/
             arkivmuseet/qa-visit/
+            arkivmuseet/qa-learning/
             arkivmuseet/qa-logs/
             arkivmuseet/qa-source.tar.gz
             arkivmuseet/qa-revision.txt

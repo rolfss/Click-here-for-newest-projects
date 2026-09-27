@@ -1,4 +1,16 @@
-# Validering av visuell oppgradering
+# Validering av oppgaver og læringsskår
+
+27. september 2026. Produksjonsbygg testet med installert Microsoft Edge på Windows, Node og Playwright.
+
+- 54 automatiske tester bestått. De dekker blant annet alle kombinasjoner av sporkort, vurderingskriterier, første/nyeste skår, øvre poenggrense, repetisjon, gjenoppretting fra eldre lagring og alle 64 kombinasjoner av Auroras ledervalg.
+- Kilde- og innholdsvalidering, TypeScript og Vite-bygg bestått. Alle fem historiske hovedkilder og oppgitte lovbestemmelser er kontrollert på nytt; se [EDITORIAL-NOTES.md](./EDITORIAL-NOTES.md).
+- 21 nye nettleserkontroller bestått på det endelige bygget. De følger alle fem oppgavene gjennom feil sporvalg, delvis tiltak, sammenligning, forbedring, læringsmerke og gjenopptakelse. De kontrollerer også 320/390 px, dialog- og tastaturfokus, sladdingens tilgjengelige navn, lederbestilling og ulike Aurora-resultater. Resultater og skjermbilder finnes i `qa-learning` og GitHub-artifaktet `museum-qa`.
+- Eksisterende museum-, etterforsknings- og besøkskontroller bestod henholdsvis 61, 47 og 72 kontroller. De ble kjørt før siste avgrensede rettelser av dialogfokus, scenariofokus og sladdingens tilgjengelige navn; disse verifiseres særskilt i læringstesten og samlet i GitHub Actions.
+- Testene avdekket og verifiserte en rettelse av en oppstartsfeil: Tidlig bruk uten 3D kan ikke lenger bytte materialer mens Three.js kompilerer dem.
+
+Skjermbilder er visuelt kontrollert. Skåren er redaksjonelt utformet læringsstøtte, ikke en validert kompetansetest. Mobilbreddene er emulert; fysisk iOS/Safari og en full WCAG-revisjon er ikke gjennomført. Ingen produksjonspublisering inngår i kontrollen.
+
+## Historikk: visuell oppgradering
 
 26. september 2026. Kontrollert med Node 24 og installert Microsoft Edge via Playwright på Windows.
 
