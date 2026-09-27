@@ -514,9 +514,12 @@ export async function extractTextFromFile(file) {
 export function sampleTextForAi(text = '', max = 24000) {
   const normalized = normalizeExtractedText(text);
   if (normalized.length <= max) return normalized;
-  const headLength = Math.floor(max * 0.68);
-  const tailLength = max - headLength;
-  return `${normalized.slice(0, headLength)}\n\n[... midtpartiet er utelatt lokalt ...]\n\n${normalized.slice(-tailLength)}`;
+  const separator = '\n\n[... midtpartiet er utelatt lokalt ...]\n\n';
+  if (max <= separator.length) return normalized.slice(0,Math.max(0,max));
+  const available = max - separator.length;
+  const headLength = Math.floor(available * 0.68);
+  const tailLength = available - headLength;
+  return `${normalized.slice(0, headLength)}${separator}${normalized.slice(-tailLength)}`;
 }
 
 export { encoder };

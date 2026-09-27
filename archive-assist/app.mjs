@@ -3,7 +3,7 @@ import {
   createMetadata, duplicateHashes, extensionOf, formatBytes, manifestCsv, manifestJson,
   metadataScore, proposeFilename, suggestDocumentTitle, validateMetadata
 } from './engine.mjs';
-import { analyzeDocumentWithLocalAi, localAiAvailability } from './ai.mjs';
+import { analyzeDocumentWithLocalAi, localAiAvailability, getAiConnection } from './ai.mjs';
 import { extractTextFromFile } from './extract.mjs';
 import { createZip, safeZipPath } from './zip.mjs';
 import { buildControlReport, summarizeControl } from './control-report.mjs';
@@ -250,7 +250,7 @@ function renderTitleSuggestion(record) {
   elements.runFileAiButton.hidden = false;
   elements.runFileAiButton.textContent = running ? 'Luna analyserer …' : 'Forbedre valgt dokument med Luna';
   elements.aiFileStatus.textContent = running
-    ? 'Et begrenset tekstutdrag og utvalgte metadata sendes til Luna via backend.'
+    ? 'Et begrenset tekstutdrag, metadata og oppgitt kontekst behandles med GPT-6 Luna via ChatGPT-kontoen.'
     : `${metadata.aiAnalysisStatus || 'Ikke kjørt'} · ${metadata.contentExtractionMethod || 'Ingen innholdsuttrekking'} · ${metadata.contentCharacters || 0} tegn analysert.`;
 }
 
@@ -297,9 +297,9 @@ function renderAiBanner() {
   const contentRecords = state.records.filter(record => record.text);
   const messages = {
     idle: ['Valgfri AI-forbedring', 'Lokale forslag krever ingen AI. Åpne dette valget for å sjekke om Luna-tjenesten er tilgjengelig.'],
-    checking: ['Sjekker Luna-tjenesten', 'Dette sjekker bare tilgjengelighet. Ingen dokumenttekst er sendt.'],
-    available: ['GPT-5.6 Luna', 'Velg et dokument eller alle dokumenter. Først når du trykker på en av knappene, sendes inntil 12 000 tegn per dokument, filnavn og utvalgte metadata via backend til OpenAI.'],
-    unavailable: ['Luna er ikke tilgjengelig nå', 'Lokale forslag, kontroll og eksport virker fortsatt. Lukk og åpne AI-valget for å sjekke tjenesten på nytt.']
+    checking: ['Sjekker lokal ChatGPT-tilkobling', 'Dette sjekker bare innlogging og modelltilgang i Codex. Ingen dokumenttekst er sendt.'],
+    available: ['GPT-6 Luna · resonnering: medium', `${getAiConnection().message} Først ved knappetrykk sendes inntil 12 000 tegn per dokument, filnavn, utvalgte metadata og oppgitt arbeidskontekst til OpenAI. Modellen kjører i skyen.`],
+    unavailable: ['GPT-6 Luna er ikke koblet til', `${getAiConnection().message} Lokale forslag, kontroll og eksport virker fortsatt. Lukk og åpne AI-valget for å sjekke på nytt.`]
   };
   const [heading, copy] = messages[state.aiAvailability] || messages.unavailable;
   elements.aiHeading.textContent = heading;
@@ -397,7 +397,7 @@ function applyDefaultsToAll() {
   render();
 }
 
-async function refineRecordWithAi(record) {
+async function refineRecordWithAi(record, userContext) {
   if (!record?.text || !state.records.includes(record) || state.aiActiveIds.has(record.id)) return false;
   state.aiActiveIds.add(record.id);
   record.metadata.aiAnalysisStatus = 'Analyserer med Luna';
@@ -407,7 +407,8 @@ async function refineRecordWithAi(record) {
     const result = await analyzeDocumentWithLocalAi({
       fileName: record.file.name,
       text: record.text,
-      metadata: record.metadata
+      metadata: record.metadata,
+      userContext
     });
     if (!state.records.includes(record)) return false;
     const currentMetadata = record.metadata;
@@ -439,12 +440,14 @@ async function refineRecordsWithAi(records = state.records) {
     return;
   }
   state.aiBatchRunning = true;
+  const userContext = Object.fromEntries(new FormData($('#ai-context-form')).entries());
   renderAiBanner();
   renderTitleSuggestion(selectedRecord());
   let completed = 0;
   try {
     for (const record of candidates) {
-      if (await refineRecordWithAi(record)) completed += 1;
+      if (await refineRecordWithAi(record,userContext)) completed += 1;
+      if (state.aiAvailability !== 'available') break;
     }
   } finally {
     state.aiBatchRunning = false;
@@ -527,7 +530,7 @@ async function exportZip() {
 }
 
 function packageReadme() {
-  return `ARCHIVE ASSIST – METADATAPAKKE\n\nOpprettet: ${new Date().toLocaleString('nb-NO')}\nAntall dokumenter: ${state.records.length}\nTittelprompt: ${TITLE_PROMPT_VERSION}\n\nINNHOLD\n- dokumenter/: kopier av valgte filer med normaliserte filnavn\n- metadata/: én JSON-sidecar per dokument\n- manifest.json: samlet maskinlesbart manifest\n- manifest.csv: tabell for kontroll og videre import\n\nTITTELKONTROLL\nSaksdokumenttitler foreslås fra dokumentinnhold og tilgjengelige metadata. Lokal analyse krever ingen AI. Valgfri forbedring med GPT-5.6 Luna (medium) starter bare ved et aktivt valg og sender et begrenset tekstutdrag, filnavn og utvalgte metadata via backend til OpenAI. Metoden og AI-statusen følger hvert dokument. Forslag er aldri et automatisk arkivvedtak; feltet titleReviewStatus viser om en saksbehandler eller arkivar har godkjent eller redigert tittelen.\n\nVIKTIG\nArchive Assist er en demonstrasjon og erstatter ikke journalføring, arkivfaglig vurdering, tilgangskontroll, bevarings- og kassasjonsvedtak eller kontroll mot et konkret sak-/arkivsystem. Binærfilene endres ikke; metadata bindes til dokumentene gjennom sidecar-filer og manifest.\n`;
+  return `ARCHIVE ASSIST – METADATAPAKKE\n\nOpprettet: ${new Date().toLocaleString('nb-NO')}\nAntall dokumenter: ${state.records.length}\nTittelprompt: ${TITLE_PROMPT_VERSION}\n\nINNHOLD\n- dokumenter/: kopier av valgte filer med normaliserte filnavn\n- metadata/: én JSON-sidecar per dokument\n- manifest.json: samlet maskinlesbart manifest\n- manifest.csv: tabell for kontroll og videre import\n\nTITTELKONTROLL\nSaksdokumenttitler foreslås fra dokumentinnhold og tilgjengelige metadata. Lokal analyse krever ingen AI. Valgfri forbedring med GPT-6 Luna (medium) starter bare ved et aktivt valg og bruker lokal Codex-innlogging med ChatGPT. Et begrenset tekstutdrag, filnavn, utvalgte metadata og brukeroppgitt kontekst sendes til OpenAI. Kontoens bruksgrenser gjelder; modellen kjører i skyen. Metoden og AI-statusen følger hvert dokument. Forslag er aldri et automatisk arkivvedtak; feltet titleReviewStatus viser om en saksbehandler eller arkivar har godkjent eller redigert tittelen.\n\nVIKTIG\nArchive Assist er en demonstrasjon og erstatter ikke journalføring, arkivfaglig vurdering, tilgangskontroll, bevarings- og kassasjonsvedtak eller kontroll mot et konkret sak-/arkivsystem. Binærfilene endres ikke; metadata bindes til dokumentene gjennom sidecar-filer og manifest.\n`;
 }
 
 function loadSamples() {
@@ -572,6 +575,7 @@ $('#paste-form').addEventListener('submit', async event => {
 // Editing a field with Enter must never submit/reload this in-memory workspace.
 elements.editorForm.addEventListener('submit', event => event.preventDefault());
 $('#defaults-form').addEventListener('submit', event => event.preventDefault());
+$('#ai-context-form').addEventListener('submit', event => event.preventDefault());
 $('#ai-options').addEventListener('toggle', () => {
   if ($('#ai-options').open && ['idle', 'unavailable'].includes(state.aiAvailability)) refreshAiAvailability();
 });

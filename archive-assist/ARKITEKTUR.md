@@ -1,64 +1,46 @@
 # Arkitektur
 
-## Dataflyt
-
 ```mermaid
 flowchart LR
-  F[Valgte filer eller innlimt tekst] --> X[Lokal tekstuttrekking]
-  F --> H[SHA-256 via Web Crypto]
-  X --> D[Lokal deterministisk metadatamotor]
-  D --> T[Redigerbare forslag og kildeuttrekk]
-  O[Åpne valgfritt AI-panel] --> S[Tilgjengelighetssjekk uten dokumenttekst]
-  T --> K[Eksplisitt Luna-knapp]
-  K --> A[Ekstern backend og OpenAI]
-  A --> T
-  T --> M[Menneskelig kontroll]
-  M --> V[Validering]
-  V --> J[JSON og CSV]
-  V --> R[Kontrollrapport]
-  V --> Z[ZIP med originaler og sidecars]
+  F[Filer eller innlimt tekst] --> X[Tekstuttrekk og SHA-256 i nettleseren]
+  X --> D[Lokal metadatamotor]
+  D --> M[Forslag, kilde og menneskelig kontroll]
+  M --> K[Eksplisitt AI-knapp]
+  C[Manuelt oppgitt arbeidskontekst] --> K
+  K --> L[Lokalt Node API]
+  L --> A[Codex App Server med ChatGPT-konto]
+  A --> G[GPT-6 Luna medium i skyen]
+  G --> M
+  M --> E[JSON, CSV, kontrollrapport og ZIP]
 ```
 
-Første uttrekk og metadataforslag er lokale. Generativ forbedring bruker GPT-5.6 Luna med reasoning `medium` via en ekstern Cloudflare Worker; den bruker ikke en språkmodell i nettleseren. Oppstart og import kontakter ikke Luna. Å åpne AI-panelet sjekker tilgjengelighet uten å sende dokumentinnhold. En eksplisitt analyseknapp sender et avgrenset tekstutdrag, filnavn og utvalgte metadata.
-
-## Arbeidsflyt
-
-1. `app.mjs` tar imot filer eller lager en TXT-fil av innlimt tekst. Originalbyte beholdes til eventuell eksport.
-2. `extract.mjs` henter lesbar tekst fra støttede formater. Den beholder relevante liste-, rad- og cellegrenser, leser MIME-deler og håndterer Windows-1252 som varslet reserve for ugyldig UTF-8.
-3. `engine.mjs` lager første forslag fra uttrykkelige metadata, overskrifter eller meningsbærende tekst. Filnavn er tittelfallback. Dokumentdato hentes fra innhold før datert filnavn; manglende dato blir tom, ikke filstempel eller importdato.
-4. Brukeren sammenligner forslag og kildeuttrekk, redigerer felter og godkjenner tittelen. Felles metadata og avanserte felt er tilgjengelige uten å dominere første visning.
-5. Valgfri Luna-analyse håndteres av `ai.mjs`. `app.mjs` beskytter godkjente/menneskeredigerte titler og endringer gjort mens svaret var underveis.
-6. Eksport inneholder metode, begrunnelse, sikkerhet, promptversjon og kontrollstatus. Originalfilene omskrives ikke; metadata leveres som manifest og sidecars.
-
-## Ekstern AI-grense
-
-- Tilgjengelighet: `GET /api/health` på `noark-luna-api.rolfsselas.workers.dev`, først ved åpning av valgfritt AI-panel.
-- Analyse: `POST /api/archive-assist`, bare etter eksplisitt handling. Klienten sender maksimalt 12 000 tegn dokumenttekst, avgrenset filnavn, utvalgte metadata, forespørsels-ID og Turnstile-token.
-- Tillatte metadata: tittel/tittelforslag, dokumenttype, emne, dokumentdato, ansvarlig/forfatter, organisasjonsenhet, språk og uttrekksmetode.
-- Cloudflare Turnstile lastes ved analysehandlingen, ikke ved vanlig import eller tilgjengelighetssjekk.
-- Originalfilens binærdata sendes ikke. Lokal analyse og eksport er uavhengig av om den eksterne tjenesten er tilgjengelig.
-- Klienten kontrollerer modell-/reasoningkontrakten og parsesvaret. Backendens drift, logging og lagringsvilkår er utenfor den statiske klientens kontroll.
+Den statiske klienten fungerer uten AI. `npm run local` bygger klienten og starter serveren på `127.0.0.1:5197`; `npm run preview` og den offentlige demoen serverer bare klienten. De har ingen kontotilkobling eller alternativ ekstern AI-backend.
 
 ## Moduler
 
-- `index.html`, `styles.css`, `workspace.css` og `luna.css`: semantisk og responsiv arbeidsflate med prøving, kontroll, eksport og valgfritt AI-panel.
-- `extract.mjs`: lokal tekst-, e-post-, PDF-, Office Open XML- og OpenDocument-lesing.
-- `engine.mjs`: metadataforslag, datakvalitet, filnavn, manifest og personopplysningssignaler.
-- `ai.mjs`: klient for ekstern Luna-backend, Turnstile, versjonert prompt, dataminimering og strukturert svar.
-- `app.mjs`: File API, Web Crypto, tilstand, menneskelig kontroll, brukerinitierte AI-kall og nedlasting.
-- `zip.mjs`: ZIP-skriver med CRC-32 og UTF-8-filnavn.
-- `control-report.mjs`: kontrollstatus og rapport i Markdown.
-- `scripts/build.mjs`: statisk `dist/` fra en eksplisitt liste klientfiler.
-- `scripts/serve.mjs`: lokal forhåndsvisning av bygget på `127.0.0.1`.
-- `tests/`: Node-tester og ti syntetiske dokumenter med SHA-256 og kildebelagt fasit.
-- `tests/browser/verify.mjs`: Playwright-kontroll med syntetiske data og mockede eksterne svar; ingen levende API-kall.
+- `index.html`, `styles.css`, `workspace.css`, `luna.css`: responsiv arbeidsflate med kilde ved siden av forslag og redigering, samt valgfritt AI-panel.
+- `extract.mjs`: tekst-, MIME-, PDF-, Office- og OpenDocument-uttrekk; bevarer meningsfulle radgrenser og varsler om tegnsett-reserve.
+- `engine.mjs`: første metadataforslag, datakvalitet, manifest og versjonert tittelpraksis. Innhold prioriteres før filnavn; manglende dokumentdato forblir tom.
+- `app.mjs`: filbyte, SHA-256, tilstand, redigering, kontrollstatus og eksport. Bevarer menneskelige endringer når AI-svar kommer senere.
+- `ai.mjs`: systemprompt, JSON-skjema, dataminimering og klient for det lokale API-et.
+- `scripts/local-server.mjs`: begrenset statisk server, helse- og analyseendepunkter, validering og lokalt økttoken.
+- `scripts/codex-bridge.mjs`: Codex-oppdagelse, stdio-protokoll, kontosjekk og isolert analysetråd.
+- `zip.mjs`, `control-report.mjs`: originaler med sidecars og menneskelesbar kontrollrapport.
+- `scripts/build.mjs`, `scripts/serve.mjs`: statisk bygg fra en eksplisitt filliste og forhåndsvisning uten AI.
+- `tests/`: syntetiske format-, metadata-, bro- og nettlesertester med mockede modellresponser.
 
-## Tillitsgrenser og begrensninger
+## Lokal API-grense
 
-Dokumenttekst er ubetrodd data. Kildeuttrekket settes med `textContent`, og AI-prompten instruerer modellen om å ignorere kommandoer i dokumentet. Dette erstatter ikke menneskelig kontroll av svaret.
+`GET /api/health` brukes først når AI-panelet åpnes. Det sjekker Codex, ChatGPT-autentisering, `gpt-6-luna`, `medium` og sikker konfigurasjon uten å starte en modellturn eller sende dokumenttekst. Det offentlige nettstedet kontakter ikke en besøkendes localhost.
 
-Tittelforslag er ikke journalføring eller arkivfaglige vedtak. Sidecars er et overføringsformat, ikke uforanderlig arkivlagring. PDF-leseren utfører ikke OCR, uttrekk kan miste layout, og personopplysningssignaler kan gi både falske positive og falske negative. Tilgang og bevaring må besluttes etter virksomhetens regler.
+`POST /api/archive-assist` krever en eksplisitt AI-handling, samme origin og serverens tilfeldige lokale økttoken. Serveren validerer nyttelast og svar og tillater én pågående analyse. Modellsvar følger et avgrenset JSON-skjema; avbrudd, timeout og kontraktbrudd gir feil uten alternativ modell eller API-fallback.
 
-## Bygg og kontroll
+Nyttelasten omfatter maksimalt 12 000 tegn dokumenttekst, filnavn og et utvalg metadata. Manuell kontekst begrenses til `operatorName` 120, `department` 160 og `parentContext` 600 tegn. Ingen automatisk lesing av lokal brukeridentitet eller miljø inngår. `relation` kan foreslås ut fra dokumentet eller uttrykkelig oppgitt sak; verdien er tom uten belegg. Originalfiler omskrives eller lastes ikke opp som binærdata.
 
-`npm ci`, `npm test`, `npm run build` og `npm run preview` installerer utviklingsverktøy, tester og viser den statiske klienten. `npm run test:browser` bruker Playwright Chromium eller nettleserbanen i `ARCHIVE_ASSIST_CHROME`. Testene blokkerer/erstatter eksterne tjenester og kan gjennomføres uten modellkostnader. Se [README.md](./README.md) for kommandoer.
+## Codex og kontoen
+
+Broen bruker [Codex App Server](https://learn.chatgpt.com/docs/app-server) over stdio og godtar bare administrert ChatGPT-innlogging. Codex håndterer egne legitimasjonsopplysninger. Modellen kjører i skyen under kontoens tilgang og brukskvoter; det lokale API-et er ingen lokal språkmodell.
+
+Hver operasjon får en midlertidig arbeidsmappe og en ephemeral-tråd. Prosessoverstyringer begrenser filtilgang til lesing av denne mappen, sperrer agentens nettverk og deaktiverer blant annet shell, koblinger, plugins og nettleserfunksjoner. Rettighetsprofilen tillater ikke filskriving selv om et skriveverktøy skulle være tilgjengelig. Broen kontrollerer faktisk konfigurasjon og trådinnstillinger før en analyse og avbryter ved uventede verktøy-/godkjenningsforespørsler. Global Codex-konfigurasjon endres ikke. Midlertidig mappe og underprosess ryddes etterpå. Skykommunikasjon for selve modellen er fortsatt nødvendig.
+
+Dokumentet og brukeroppgitt kontekst er ubetrodd data, ikke instruksjoner. Kilden vises med `textContent`. Promptregler og tekniske grenser erstatter ikke arkivfaglig kontroll. Se [SECURITY.md](./SECURITY.md) for behandlingsgrenser og [README.md](./README.md) for kjøring og tester.

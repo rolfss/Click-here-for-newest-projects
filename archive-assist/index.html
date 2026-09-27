@@ -28,12 +28,13 @@
         <h1>En god tittel begynner med innholdet.</h1>
         <p class="lead">Prøv en tekstfil. Få forslag til saksdokumenttittel, dato og beskrivelse — og kontroller dem mot teksten før du tar dem videre.</p>
         <div class="trust-row"><span>Lokalt først</span><span>Du har siste ord</span><span>Originalfilen endres ikke</span></div>
+        <p class="prototype-note"><strong>Nettprototype</strong> Appen kjenner ikke automatisk brukeren, avdelingen eller arbeidsmiljøet ditt. Her legger du inn konteksten selv.</p>
       </div>
       <aside class="hero-note">
-        <p class="eyebrow">Hva er Archive Assist?</p>
-        <strong>En arbeidsflate for dokumentkontroll.</strong>
-        <p>For deg som vil gjøre dokumenter lettere å forstå og finne igjen før registrering eller overføring. Dette er metadatahjelp, ikke et sak-/arkivsystem.</p>
-        <a href="#usage-guide">Slik bruker du appen ↓</a>
+        <p class="eyebrow">Målet for Archive Assist</p>
+        <strong>Dokumenthjelp i arbeidsmiljøet ditt.</strong>
+        <p>En app du kan laste ned og installere, som bruker dokumentinnhold og kontekst du godkjenner til å foreslå tittel, forfatter og sakstilknytning etter arkivfaglig praksis.</p>
+        <a href="#context-guide">Slik er den lokale appen tenkt ↓</a>
       </aside>
     </section>
     <ol class="journey" aria-label="Slik virker det">
@@ -67,7 +68,7 @@
         <div class="paste-actions"><small>Behandles som en TXT-fil. Maks 100 000 tegn.</small><button id="analyze-text" class="button button-primary" type="submit">Lag lokale forslag →</button></div>
       </form>
       </div>
-      <p class="privacy-note">Fil og innlimt tekst analyseres lokalt. Arbeidet beholdes ikke når siden lukkes eller lastes på nytt. Valgfri sky-AI sender et tekstutdrag bare når du velger den.</p>
+      <p class="privacy-note">Fil og innlimt tekst leses lokalt. Arbeidet beholdes ikke når siden lukkes eller lastes på nytt. Valgfri Luna-analyse bruker en lokal Codex-kobling til ChatGPT-kontoen din; tekstutdraget sendes til modellen i skyen først når du velger analyse.</p>
       <p id="status" class="status" role="status" aria-live="polite" hidden></p>
     </section>
 
@@ -76,6 +77,7 @@
       <div class="section-heading">
         <div><div><p class="eyebrow">Felles kontekst</p><h2 id="defaults-heading">Metadata som gjelder flere filer</h2></div></div>
       </div>
+      <p class="context-help">Oppgi bare det du kjenner til om dokumentene. Brukeren som legger inn en fil, er ikke automatisk forfatteren. Kontroller ansvarlig, avdeling og sak mot kilden før du bruker verdiene på flere filer.</p>
       <form id="defaults-form" class="defaults-grid">
         <label>Dokumentansvarlig eller forfatter<input name="creator" autocomplete="organization-title" placeholder="Eksempel: Kari Nordmann"></label>
         <label>Organisasjonsenhet<input name="organizationalUnit" autocomplete="organization" placeholder="Eksempel: Digital forvaltning"></label>
@@ -110,12 +112,21 @@
         <article class="control-summary"><span>Overføringsstatus</span><strong id="control-status">Tom arbeidsflate</strong><small id="control-status-detail">Legg til filer for kontroll</small></article>
       </div>
 
-      <details id="ai-options" class="optional-ai"><summary>Valgfri AI-forbedring <span>Sender et tekstutdrag til ekstern tjeneste</span></summary>
+      <details id="ai-options" class="optional-ai"><summary>Valgfri AI-forbedring <span>GPT-6 Luna · medium · via lokal Codex-kobling</span></summary>
+      <details class="ai-context"><summary>Gi AI-en arbeidskontekst <span>Valgfritt · bare opplysninger du fyller inn</span></summary>
+        <p id="ai-context-help">Disse opplysningene sendes først når du velger Luna-analyse. Appen leser ikke identiteten din automatisk. Brukerens navn er arbeidskontekst og settes ikke automatisk som dokumentets forfatter.</p>
+        <form id="ai-context-form" class="ai-context-form" aria-describedby="ai-context-help" autocomplete="off">
+          <label>Bruker / dokumentbehandler<input name="operatorName" maxlength="120" placeholder="Navnet på den som kontrollerer dokumentet"></label>
+          <label>Avdeling / virksomhet<input name="department" maxlength="160" placeholder="Eksempel: Arkiv og dokumentasjonsforvaltning"></label>
+          <label class="wide">Overordnet sak eller arbeidskontekst<textarea name="parentContext" rows="3" maxlength="600" placeholder="Eksempel: Sak 2026/1042 – planlegging av overføring til nytt depot"></textarea></label>
+        </form>
+        <p class="ai-context-note">Opplysningene beholdes bare i denne arbeidsflaten. Kontroller forslag til ansvar og sakstilknytning mot dokumentet.</p>
+      </details>
       <section id="ai-banner" class="ai-banner" aria-live="polite">
         <div>
           <p class="eyebrow">Valgfri resonnering</p>
-          <h2 id="ai-heading">GPT-5.6 Luna</h2>
-          <p id="ai-copy">Reasoning effort: medium. Luna brukes bare når du velger det; et begrenset tekstutdrag og relevante metadata sendes via sikker backend.</p>
+          <h2 id="ai-heading">GPT-6 Luna</h2>
+          <p id="ai-copy">Resonneringsnivå: medium. Tilkoblingen kontrolleres når du åpner dette valget. Analyse krever lokal Codex med en innlogget ChatGPT-konto; en forbindelse er ikke bekreftet ennå.</p>
         </div>
         <div class="luna-actions">
           <div id="luna-bot-widget" aria-label="Sikkerhetskontroll"></div>
@@ -123,7 +134,7 @@
           <button id="run-all-ai" class="button button-primary" type="button" hidden>Forbedre alle med Luna</button>
         </div>
       </section>
-      <p class="ai-scope">Velg dokument i listen før du forbedrer ett dokument. Luna mottar inntil 12 000 tegn fra hvert valgt dokument og utvalgte metadata. Resultatet må fortsatt kontrolleres mot kilden.</p>
+      <p class="ai-scope">Codex-koblingen kjører på maskinen din, mens GPT-6 Luna kjører i OpenAIs sky. Når du velger analyse, sendes inntil 12 000 tegn fra hvert valgt dokument, filnavn, utvalgte metadata og arbeidskonteksten du har fylt inn via ChatGPT-kontoen. Kontroller alltid forslagene mot kilden.</p>
       <p id="ai-file-status" class="ai-file-status" role="status" aria-live="polite"></p>
       </details>
       <div class="workspace-grid">
@@ -237,9 +248,17 @@
         <article><span>02 / KONTROLLER</span><h3>Sammenlign med kilden</h3><p>Velg dokumentet i listen. Les uttrekket og begrunnelsen. Rett tittel, dato og beskrivelse. Velg «Godkjenn gjeldende tittel» når den er riktig. Kontroller også mangler og personopplysningssignaler.</p></article>
         <article><span>03 / EKSPORTER</span><h3>Ta med kontrollsporet</h3><p>Last ned metadata eller en ZIP med dokumentkopier og metadatafiler. Uavklarte felt følger med som kontrollpunkter. Originalfilene på maskinen din endres ikke.</p></article>
       </div>
+      <section id="context-guide" class="context-guide" aria-labelledby="context-heading">
+        <p class="eyebrow">Retningen videre</p><h3 id="context-heading">En lokal app med kontekst du styrer.</h3>
+        <div class="context-grid">
+          <div><h4>Du velger hva appen får vite</h4><p>En planlagt installert versjon skal kunne bruke godkjent kontekst om brukerrolle, avdeling, arbeidsmiljø, prosjekt og dokumentets plassering. Nettprototypen henter ikke dette automatisk. Her oppgir du kjent kontekst i «Felles metadata» og, ved behov, i arbeidskonteksten under «Valgfri AI-forbedring».</p></div>
+          <div><h4>Dokumentet er hovedkilden</h4><p>Målet er forslag til tittel, mulig forfatter eller avsender og overordnet sammenheng, som sak eller arkivserie, etter virksomhetens arkivfaglige praksis. Grunnlaget må være synlig, og du må kontrollere det mot dokumentet. Den som bruker appen, er ikke automatisk forfatteren.</p></div>
+        </div>
+      </section>
       <details class="guide-faq"><summary>Hva betyr prosentene og kontrollstatusen?</summary><p>Utfyllingsprosenten viser hvor mye metadata som er fylt inn, ikke hvor riktig innholdet er. Forslagsstyrken er motorens anslag, ikke en garanti. «Godkjent» gjelder tittelen; overføringsstatusen gjelder demonstrasjonens kontrollregler, ikke juridisk godkjenning.</p></details>
       <details class="guide-faq"><summary>Hva gjør jeg når teksten mangler eller forslaget er feil?</summary><p>Kontroller originalfilen. Skannede sider trenger OCR, som ikke er inkludert her. Du kan teste ved å lime inn lesbar tekst, men dette erstatter ikke kontroll av originalen. Rett feil manuelt; ikke gjett dato, avsender eller hjemmel.</p></details>
-      <details class="guide-faq"><summary>Hva er lokalt, og hva sendes til AI?</summary><p>Innlasting, tekstuttrekk og de første forslagene skjer i nettleseren. Den valgfrie Luna-funksjonen sender inntil 12 000 tegn og utvalgte metadata til ekstern AI via backend. Du trenger ikke AI for å teste appen. Bruk syntetisk eller offentlig materiale i demoen.</p></details>
+      <details class="guide-faq"><summary>Vet appen hvem jeg er, eller hvilken avdeling jeg tilhører?</summary><p>Nei. Innloggingen i Codex gir tilgang til AI, ikke dokumentert kunnskap om forfatter eller arkivtilhørighet. Nettprototypen bruker dokumentinnhold og metadata du oppgir. En senere installert versjon skal be deg godkjenne arbeidskontekst; den skal ikke sette brukerens identitet som forfatter uten belegg.</p></details>
+      <details class="guide-faq"><summary>Hva er lokalt, og hvordan brukes ChatGPT-kontoen?</summary><p>Innlasting, tekstuttrekk og de første forslagene skjer i nettleseren. Valgfri resonnering er laget for GPT-6 Luna med nivå medium, gjennom Codex på maskinen din når Codex er logget inn med ChatGPT-kontoen. Modellen kjører i OpenAIs sky. AI-panelet viser om koblingen faktisk er tilgjengelig; åpning av panelet sender ikke dokumenttekst.</p><p>Når du velger analyse, sendes inntil 12 000 tegn per dokument, filnavn, utvalgte metadata og eventuell arbeidskontekst du har fylt inn. En lokalt installert app betyr derfor ikke at AI-modellen kjører på enheten. Du kan bruke lokale forslag og eksport uten AI. Bruk syntetisk eller offentlig materiale i demoen.</p></details>
       <p class="guide-limit">Archive Assist er en demonstrasjon, ikke et Noark-godkjent arkivsystem. Du må selv vurdere tilgang, personvern, arkivverdi og bevaring. Last ned det du vil beholde før du lukker eller laster siden på nytt.</p>
     </section>
   </main>

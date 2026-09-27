@@ -15,7 +15,7 @@ import {chromium, expect} from '@playwright/test';
 const appRoot=fileURLToPath(new URL('../../',import.meta.url));
 const out=resolve(process.env.ARCHIVE_ASSIST_QA_DIR||resolve(appRoot,'qa-output'));
 const fixtureRoot=resolve(process.env.ARCHIVE_ASSIST_FIXTURES||resolve(appRoot,'tests/fixtures'));
-const results={checked:new Date().toISOString(),checks:[],errors:[],missing:[],remote:[],screenshots:[]};
+const results={checked:new Date().toISOString(),checks:[],errors:[],expectedErrors:[],missing:[],remote:[],screenshots:[]};
 const pass=name=>{results.checks.push(name);console.log('PASS: '+name);};
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const exists=path=>access(path).then(()=>true,()=>false);
@@ -89,41 +89,42 @@ function unzip(bytes) {
  return entries;
 }
 
-async function createPage(url,viewport,label,{healthAvailable=true}={}){
+async function createPage(url,viewport,label,{healthAvailable=true,publicHost=false}={}){
  const context=await browser.newContext({viewport,reducedMotion:'reduce',acceptDownloads:true,serviceWorkers:'block'});
- const mock={label,health:0,healthAvailable,turnstile:0,posts:[],unexpected:[],allowed:0,releases:[],hold:false};mocks.push(mock);
- const localOrigin=new URL(url).origin;
+ const mock={label,health:0,healthAvailable,sessionToken:'test-session',turnstile:0,posts:[],requestTokens:[],unexpected:[],allowed:0,releases:[],hold:false,expectedConsole:[]};mocks.push(mock);
+ const pageUrl=publicHost?'https://archive-assist.invalid/':url;
+ const localOrigin=new URL(pageUrl).origin;
  await context.route('**/*',async route=>{
   const request=route.request(),target=new URL(request.url());
-  if(target.origin===localOrigin&&request.method()==='GET')return route.continue();
   if(!['http:','https:'].includes(target.protocol))return route.continue();
-  const event={label,method:request.method(),url:target.href};results.remote.push(event);
-  const headers={'access-control-allow-origin':localOrigin,'content-type':'application/json'};
-  if(target.hostname==='noark-luna-api.rolfsselas.workers.dev'&&target.pathname==='/api/archive-assist'&&request.method()==='OPTIONS'){
-   return route.fulfill({status:204,headers:{...headers,'access-control-allow-methods':'POST','access-control-allow-headers':'content-type'},body:''});
+  const event={label,method:request.method(),url:target.href};
+  const headers={'content-type':'application/json'};
+  if(!publicHost&&target.origin===localOrigin&&target.pathname==='/api/health'&&request.method()==='GET'){
+   mock.health++;return route.fulfill({status:200,headers,body:JSON.stringify({configured:mock.healthAvailable,model:'gpt-6-luna',reasoning:'medium',authMode:'chatgpt',localRuntime:true,sessionToken:mock.sessionToken,message:mock.healthAvailable?'Syntetisk ChatGPT-tilkobling er klar.':'ChatGPT er ikke innlogget. Start npm run local.',...mock.healthOverrides})});
   }
-  if(target.hostname==='noark-luna-api.rolfsselas.workers.dev'&&target.pathname==='/api/health'&&request.method()==='GET'){
-   mock.health++;return route.fulfill({status:200,headers,body:JSON.stringify({archiveAssist:true,configured:mock.healthAvailable,model:'gpt-5.6-luna',reasoning:'medium',siteKey:'browser-test-only'})});
-  }
-  if(target.hostname==='challenges.cloudflare.com'&&target.pathname==='/turnstile/v0/api.js'){
-   mock.turnstile++;
-   return route.fulfill({contentType:'application/javascript',body:'window.turnstile={render(_target,options){this.options=options;queueMicrotask(()=>options.callback("test-token-never-sent"));return "qa-widget";},reset(){queueMicrotask(()=>this.options.callback("test-token-never-sent"));}};'});
-  }
-  if(target.hostname==='noark-luna-api.rolfsselas.workers.dev'&&target.pathname==='/api/archive-assist'&&request.method()==='POST'){
-   const payload=request.postDataJSON();mock.posts.push(payload);
+  if(!publicHost&&target.origin===localOrigin&&target.pathname==='/api/archive-assist'&&request.method()==='POST'){
+   const payload=request.postDataJSON();mock.posts.push(payload);mock.requestTokens.push(request.headers()['x-archive-session']);
    if(mock.allowed<=0){mock.unexpected.push(event);return route.fulfill({status:403,headers,body:JSON.stringify({message:'Unexpected AI call blocked by browser QA'})});}
    mock.allowed--;
+   if(request.headers()['x-archive-session']!==mock.sessionToken)return route.fulfill({status:403,headers,body:JSON.stringify({message:'Syntetisk lokal økt er utløpt. Åpne AI-valget på nytt.'})});
    if(mock.hold)await new Promise(resolve=>mock.releases.push(resolve));
-   return route.fulfill({status:200,headers,body:JSON.stringify({mode:'luna',model:'gpt-5.6-luna',reasoning:'medium',analysis:{title:mock.titles?.[payload.fileName]||'AI-forslag om syntetisk dokumentkontroll',documentType:'Rapport',subject:'Syntetisk QA',creator:'Fiktiv QA-avsender',organizationalUnit:'Testenhet',documentDate:'2040-01-01',description:'AI foreslår en annen beskrivelse.',keywords:['kvalitetstest'],rationale:'Syntetisk svar kontrollert av nettlesertesten.',confidence:.87}})});
+   if(mock.postError)return route.fulfill({status:mock.postError.status,headers,body:JSON.stringify({message:mock.postError.message})});
+   return route.fulfill({status:200,headers,body:JSON.stringify({mode:'luna',model:'gpt-6-luna',reasoning:'medium',authMode:'chatgpt',analysis:{title:mock.titles?.[payload.fileName]||'AI-forslag om syntetisk dokumentkontroll',documentType:'Rapport',subject:'Syntetisk QA',creator:'Fiktiv QA-avsender',organizationalUnit:'Testenhet',documentDate:'2040-01-01',relation:'Sak QA/2026-01',description:'AI foreslår en annen beskrivelse.',keywords:['kvalitetstest'],rationale:'Syntetisk svar kontrollert av nettlesertesten.',confidence:.87},...mock.answerOverrides})});
   }
+  if(target.origin===localOrigin&&request.method()==='GET'&&!target.pathname.startsWith('/api/')){
+   if(publicHost)return route.fulfill({response:await route.fetch({url:new URL(target.pathname+target.search,url).href})});
+   return route.continue();
+  }
+  results.remote.push(event);
+  if(target.hostname==='challenges.cloudflare.com')mock.turnstile++;
   mock.unexpected.push(event);
   return route.fulfill({status:403,headers,body:JSON.stringify({message:'Outbound request blocked by browser QA'})});
  });
  const page=await context.newPage();page.setDefaultTimeout(15000);
  page.on('pageerror',error=>results.errors.push({label,message:error.message}));
- page.on('console',message=>{if(message.type()==='error')results.errors.push({label,message:message.text()});});
- page.on('response',response=>{if(response.url().startsWith(url)&&response.status()>=400&&!response.url().endsWith('/favicon.ico'))results.missing.push({label,status:response.status(),url:response.url()});});
- await page.goto(url);await expect(page.locator('#sample-button')).toBeEnabled();
+ page.on('console',message=>{if(message.type()==='error')(mock.expectedConsole.some(pattern=>pattern.test(message.text()))?results.expectedErrors:results.errors).push({label,message:message.text()});});
+ page.on('response',response=>{if(response.url().startsWith(pageUrl)&&response.status()>=400&&!response.url().endsWith('/favicon.ico')&&!new URL(response.url()).pathname.startsWith('/api/'))results.missing.push({label,status:response.status(),url:response.url()});});
+ await page.goto(pageUrl);await expect(page.locator('#sample-button')).toBeEnabled();
  return {page,context,mock};
 }
 
@@ -229,7 +230,11 @@ try {
  const aiOptions=page.locator('#ai-options');await expect(aiOptions).not.toHaveAttribute('open','');
  await page.locator('#ai-options>summary').focus();await page.keyboard.press('Space');
  await expect.poll(()=>mock.health).toBeGreaterThan(0);await expect(page.locator('#run-file-ai')).toBeEnabled();
- assert.equal(mock.posts.length,0);assert.equal(mock.turnstile,0);pass('Opening optional AI only checks availability; no model or bot call');
+ assert.equal(mock.posts.length,0);assert.equal(mock.turnstile,0);pass('Opening optional AI checks only the local ChatGPT connection');
+ await details(page,'.ai-context');
+ const userContext={operatorName:'Syntetisk dokumentbehandler',department:'QA-arkiv',parentContext:'Sak QA/2026-01 – kontroll av syntetisk materiale'};
+ for(const [name,value] of Object.entries(userContext))await page.locator(`#ai-context-form [name="${name}"]`).fill(value);
+ assert.equal(mock.posts.length,0,'Entering optional work context does not send documents');
  mock.allowed=1;mock.hold=true;
  await page.locator('#run-file-ai').click();await expect.poll(()=>mock.posts.length).toBe(1);
  await expect.poll(()=>mock.releases.length).toBe(1);
@@ -240,6 +245,17 @@ try {
  for(const [name,value] of Object.entries(concurrent))await expect(field(page,name)).toHaveValue(value);
  await expect(page.locator('#title-review')).toHaveText('Redigert av bruker');
  assert.equal(mock.posts[0].fileName,first.name);assert.ok(mock.posts[0].text.includes(first.text.trim().slice(0,50)));assert.ok(mock.posts[0].text.length<=12000);
+ assert.deepEqual(Object.keys(mock.posts[0]).sort(),['fileName','metadata','text','userContext']);
+ assert.deepEqual(Object.keys(mock.posts[0].metadata).sort(),['titleSuggestion','title','documentType','subject','documentDate','creator','organizationalUnit','language','contentExtractionMethod','caseReference','relation','source'].sort());
+ assert.deepEqual(mock.posts[0].userContext,userContext);
+ await expect(field(page,'creator')).toHaveValue(edited.creator);
+ await expect(field(page,'organizationalUnit')).not.toHaveValue(userContext.department);
+ await expect(field(page,'relation')).toHaveValue('Sak QA/2026-01');
+ await expect(page.locator('#title-method')).toContainText('GPT-6 Luna');
+ const analyzed=JSON.parse((await download(page,'#download-json')).bytes.toString('utf8')).files.find(file=>file.originalFileName===first.name);
+ assert.match(analyzed.titleSuggestionMethod,/GPT-6 Luna/);assert.match(analyzed.aiAnalysisStatus,/GPT-6 Luna/);
+ assert.equal(analyzed.creator,edited.creator);assert.equal(analyzed.relation,'Sak QA/2026-01');
+ pass('Optional work context is sent only on explicit analysis; operator identity never replaces document authorship');
  assert.equal(mock.posts.length,1);pass('One explicit mocked AI request preserves edits made while its response is pending');
 
  await page.locator('#remove-file').click();await idle(page,1);await expect(page.locator('#source-text')).toContainText(second.text.trim().slice(0,50));
@@ -273,6 +289,79 @@ try {
   await context.close();
  }
 
+ // Restarting the local server rotates its token; reconnect without reloading this in-memory workspace.
+ {
+  const {page,context,mock}=await createPage(url,{width:768,height:900},'rotated-session');
+  mock.expectedConsole=[/Syntetisk lokal økt er utløpt/,/Failed to load resource: the server responded with a status of 403/];
+  await page.locator('#file-input').setInputFiles(first.path);await idle(page,1);
+  await field(page,'title').fill('Menneskekontrollert før serveren startet på nytt');
+  await field(page,'description').fill('Skal beholdes gjennom ny lokal tilkobling.');
+  const localSuggestion=await page.locator('#title-suggestion').innerText();
+  await details(page,'#ai-options');await expect(page.locator('#run-file-ai')).toBeEnabled();
+  mock.sessionToken='rotated-session';mock.allowed=1;await page.locator('#run-file-ai').click();
+  await expect(page.locator('#status')).toHaveAttribute('data-kind','error');await expect(page.locator('#ai-heading')).toContainText('ikke koblet til');
+  await expect(page.locator('#run-file-ai')).toBeDisabled();await expect(page.locator('#run-all-ai')).toBeDisabled();
+  await expect(page.locator('#title-suggestion')).toHaveText(localSuggestion);
+  assert.equal(mock.posts.length,1);assert.equal(mock.health,1,'Session failure does not automatically reconnect or resend content');
+  await page.locator('#ai-options>summary').click();await details(page,'#ai-options');
+  await expect(page.locator('#run-file-ai')).toBeEnabled();assert.equal(mock.health,2);assert.equal(mock.posts.length,1,'Reconnecting checks only account availability');
+  mock.allowed=1;await page.locator('#run-file-ai').click();await expect(page.locator('#title-suggestion')).toHaveText('AI-forslag om syntetisk dokumentkontroll');
+  await expect(field(page,'title')).toHaveValue('Menneskekontrollert før serveren startet på nytt');await expect(field(page,'description')).toHaveValue('Skal beholdes gjennom ny lokal tilkobling.');
+  await expect(page.locator('#source-text')).toContainText(first.text.trim().slice(0,50));
+  const restored=JSON.parse((await download(page,'#download-json')).bytes.toString('utf8')).files[0];
+  assert.equal(restored.sha256,hash(first.bytes));assert.equal(restored.title,'Menneskekontrollert før serveren startet på nytt');
+  assert.deepEqual(mock.requestTokens,['test-session','rotated-session']);assert.equal(mock.posts.length,2);assert.deepEqual(mock.unexpected,[]);
+  pass('Expired local session reconnects and retries only on explicit actions while preserving documents and manual edits');
+  await context.close();
+ }
+
+ // A public static page must not reach any account bridge or the old paid Worker.
+ {
+  const {page,context,mock}=await createPage(url,{width:768,height:900},'public-static',{publicHost:true});
+  await page.locator('#file-input').setInputFiles(first.path);await idle(page,1);await details(page,'#ai-options');
+  await expect(page.locator('#ai-copy')).toContainText('npm run local');
+  await expect(page.locator('#run-file-ai')).toBeDisabled();await expect(page.locator('#run-all-ai')).toBeDisabled();
+  const local=JSON.parse((await download(page,'#download-json')).bytes.toString('utf8'));
+  assert.equal(local.files[0].sha256,hash(first.bytes));assert.equal(mock.health,0);assert.equal(mock.posts.length,0);assert.deepEqual(mock.unexpected,[]);
+  pass('Public static hosting explains local startup and keeps local exports working without account or paid API traffic');
+  await context.close();
+ }
+
+ // Wrong provider/model/reasoning capabilities cannot silently enable another backend.
+ for(const healthOverrides of [{model:'gpt-5.6-luna'},{reasoning:'high'},{authMode:'apikey'}]){
+  const {page,context,mock}=await createPage(url,{width:768,height:900},`unsupported-${Object.keys(healthOverrides)[0]}`);
+  mock.healthOverrides=healthOverrides;
+  await page.locator('#file-input').setInputFiles(first.path);await idle(page,1);await details(page,'#ai-options');
+  await expect(page.locator('#ai-heading')).toContainText('ikke koblet til');
+  await expect(page.locator('#run-file-ai')).toBeDisabled();await expect(page.locator('#run-all-ai')).toBeDisabled();
+  assert.equal(mock.health,1);assert.equal(mock.posts.length,0);assert.deepEqual(mock.unexpected,[]);
+  pass(`Incompatible ${Object.keys(healthOverrides)[0]} capability remains unavailable without a fallback request`);
+  await context.close();
+ }
+
+ // Expected failures must retain reviewed values and source bytes, with no hidden retries.
+ for(const failure of [
+  {label:'bridge-failure',postError:{status:502,message:'Syntetisk lokal tilkoblingsfeil'},expected:/Syntetisk lokal tilkoblingsfeil/},
+  {label:'wrong-response-model',answerOverrides:{model:'gpt-5.6-luna'},expected:/Ugyldig svar fra den lokale Luna/},
+  {label:'invalid-analysis',answerOverrides:{analysis:{title:'',confidence:.8}},expected:/manglet en brukbar saksdokumenttittel/}
+ ]){
+  const {page,context,mock}=await createPage(url,{width:768,height:900},failure.label);
+  Object.assign(mock,failure);mock.expectedConsole=[failure.expected,/Failed to load resource: the server responded with a status of 502/];
+  await page.locator('#file-input').setInputFiles(first.path);await idle(page,1);
+  const localSuggestion=await page.locator('#title-suggestion').innerText();
+  await field(page,'title').fill('Kontrollert før lokal AI-feil');await page.locator('#approve-title').click();
+  await details(page,'#ai-options');await expect(page.locator('#run-file-ai')).toBeEnabled();
+  mock.allowed=1;await page.locator('#run-file-ai').click();
+  await expect(page.locator('#status')).toHaveAttribute('data-kind','error');await expect(page.locator('#status')).toContainText(failure.expected);
+  await expect(page.locator('#run-file-ai')).toBeEnabled();
+  await expect(page.locator('#title-suggestion')).toHaveText(localSuggestion);await expect(field(page,'title')).toHaveValue('Kontrollert før lokal AI-feil');
+  const after=JSON.parse((await download(page,'#download-json')).bytes.toString('utf8'));
+  assert.equal(after.files[0].title,'Kontrollert før lokal AI-feil');assert.equal(after.files[0].sha256,hash(first.bytes));
+  assert.match(after.files[0].aiAnalysisStatus,/Ikke fullført/);assert.equal(mock.posts.length,1);assert.equal(mock.turnstile,0);assert.deepEqual(mock.unexpected,[]);
+  pass(`${failure.label}: explicit local error preserves reviewed metadata and export without retry or paid fallback`);
+  await context.close();
+ }
+
  // Pasted markup is source evidence, never executable page content.
  {
   const {page,context,mock}=await createPage(url,{width:390,height:900},'literal-markup');
@@ -290,7 +379,7 @@ try {
  {
   const {page,context,mock}=await createPage(url,{width:768,height:900},'unavailable-ai',{healthAvailable:false});
   await page.locator('#file-input').setInputFiles(first.path);await idle(page,1);await details(page,'#ai-options');
-  await expect(page.locator('#ai-heading')).toContainText('ikke tilgjengelig');await expect(page.locator('#ai-copy')).toContainText('Lukk og åpne');
+  await expect(page.locator('#ai-heading')).toContainText('ikke koblet til');await expect(page.locator('#ai-copy')).toContainText('Lukk og åpne');
   await expect(page.locator('#run-file-ai')).toBeDisabled();await expect(page.locator('#run-all-ai')).toBeDisabled();
   await field(page,'title').fill('Lokalt kontrollert uten tilgjengelig AI');await page.locator('#approve-title').click();
   const offline=JSON.parse((await download(page,'#download-json')).bytes.toString('utf8'));
@@ -420,7 +509,8 @@ try {
  }
  assert.deepEqual(results.errors,[],'No browser exceptions or console errors');assert.deepEqual(results.missing,[],'No missing application resources');
  assert.ok(mocks.every(mock=>mock.unexpected.length===0),'No unexpected network request');
- assert.equal(mocks.reduce((n,mock)=>n+mock.posts.length,0),3,'Only one explicit analysis and the two-document explicit batch were submitted');
+ assert.equal(mocks.reduce((n,mock)=>n+mock.posts.length,0),8,'Only explicitly requested analysis, failure/recovery checks and the two-document batch were submitted');
+ assert.equal(results.remote.length,0,'No remote API, Turnstile or other outbound request was attempted');
  pass('All viewports complete without browser errors, missing assets or unintended network traffic');
  results.passed=results.checks.length;console.log(JSON.stringify({passed:results.passed,errors:results.errors,missing:results.missing}));
 } catch(error) {

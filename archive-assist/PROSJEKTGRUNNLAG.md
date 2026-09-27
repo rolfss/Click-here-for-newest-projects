@@ -1,28 +1,26 @@
 # Prosjektgrunnlag
 
-Archive Assist realiserer den opprinnelige Arkivklar-ideen om et enkelt verktøy som knytter metadata til filer i en arkiv- og dokumentasjonsforvaltningskontekst.
+Archive Assist viderefører Arkivklar-ideen: et enkelt verktøy som hjelper saksbehandleren og arkivaren med å gjøre dokumenter forståelige, søkbare og etterprøvbare gjennom innholdsbaserte titler og metadata.
 
-## Rekonstruert kjernebehov
+## Tiltenkt produkt og dagens prototype
 
-1. Brukeren skal kunne velge én eller flere filer uten å sende dem til en ekstern tjeneste.
-2. Løsningen skal lese innholdet og foreslå en sømmelig saksdokumenttittel – ikke bare rydde filnavnet.
-3. Forslaget skal bygge på dokumentets handling, tema, overskrift, emne og tilgjengelige metadata.
-4. Saksbehandler eller arkivar skal kunne godkjenne forslaget eller redigere det før videre bruk.
-5. Metode, begrunnelse, sikkerhet og menneskelig kontrollstatus skal være synlig og kunne følge eksporten.
-6. Metadata skal dekke ansvar, kontekst, tilgang, klassifikasjon og livsløp – ikke bare filtype og dato.
-7. Resultatet skal kunne tas videre som maskinlesbart manifest og dokumentbundne sidecar-filer.
-8. Demoen skal kunne brukes direkte av utenforstående fra GitHub Pages, uten API-nøkkel.
+Målet er en **nedlastbar, lokalt installert app**. Den skal kunne bruke brukerens godkjente opplysninger om rolle, avdeling, sak og arbeidsmiljø sammen med dokumentinnhold og arkivfaglig praksis. Dette kan gi bedre forslag til tittel, dokumentets opphav og overordnet sammenheng, men må ikke erstatte kildekontroll.
 
-## Viktige designvalg
+Dagens nettprototype kjenner ikke automatisk lokal identitet, avdeling, mappekontekst eller virksomhetens arkivregler. Den tilbyr filimport, innliming, syntetiske eksempler, lokale forslag, redigering og eksport. Kontekst oppgis manuelt i et valgfritt feltsett. Brukeren/dokumentbehandleren er aldri automatisk dokumentets forfatter, og avdelingen er ikke automatisk avsender.
 
-- **Innhold før filnavn:** emne, uttrykkelig tittel, overskrift og meningsbærende innhold prioriteres. Filnavnet er reserve.
-- **To analysetrinn:** en forklarbar lokal motor lager første forslag; valgfri GPT-5.6 Luna kan forbedre resultatet etter en eksplisitt brukerhandling. Luna sender et begrenset tekstutdrag og utvalgte metadata via ekstern backend til OpenAI.
-- **Versjonert prompt:** reglene for saksdokumenttittel ligger i `TITTELPROMPT.md` og kildekoden.
-- **Menneskelig kontroll:** forslag settes i et redigerbart felt, og eksporten varsler når tittelen ikke er kontrollert.
-- **Lokal behandling som standard:** gir en testbar offentlig demo uten ekstern dokumentanalyse. Sky-AI er et separat valg med synlig forklaring av dataflyten.
-- **Sidecar fremfor binær omskriving:** unngår å korrumpere PDF-, Office- og bildefiler og gir samme modell på tvers av formater.
-- **Flyttbart resultat:** JSON, CSV og ZIP gjør veien videre mot import eller integrasjon konkret.
+Den offentlige demoen er statisk og har ikke tilgang til en ChatGPT-konto. Ved lokal kjøring med `npm run local` kan en separat Node-bro bruke en eksisterende Codex-innlogging med ChatGPT. Valgfri **GPT-6 Luna med `medium` reasoning** kjører i skyen og bruker kontoens brukskvote. Dette er ikke en ferdig distribuert skrivebordsapp eller en modell som kjører på enheten.
 
-Den komplette opprinnelige Antigravity-eksporten ble ikke funnet i repoet da prosjektet ble rekonstruert. Kravene og tittelpremissene er derfor gjort eksplisitte og versjonerte i denne utgaven, fremfor å bli fremstilt som en ordrett kopi av en utilgjengelig promptpakke.
+## Prinsipper for arbeidsflyten
 
-Den tidligere migrerte mappen `metaready` utviklet seg til en bredere informasjonsstyringsdemo. MetaReady og Archive Assist beholdes derfor som to selvstendige prosjekter: MetaReady for informasjonsstyring og AI-beredskap, og Archive Assist for konkret filbasert metadataflyt og saksdokumenttitler.
+1. **Innhold før filnavn:** emne, uttrykkelig tittel, overskrift og meningsbærende innhold prioriteres. Filnavnet er reserve. Ukjent dokumentdato forblir ukjent.
+2. **Prøv → kontroller → eksporter:** kilden står ved siden av forslag og redigering på brede skjermer. Begrensninger, mangler og kontrollstatus er synlige før eksport.
+3. **Valgfri AI:** lokal uttrekking fungerer alene. Bare en eksplisitt analyseknapp sender avgrenset tekst, metadata og oppgitt kontekst til skymodellen. Ingen automatisk konto- eller miljøinnhenting brukes som dokumentkilde.
+4. **Bevar proveniens:** skill dokumentets opphav fra den som behandler det. Overordnet sammenheng (`relation`) må ha belegg i dokumentet eller en uttrykkelig oppgitt sak. Menneskelige endringer og originale filbyte bevares.
+5. **Etterprøvbare forslag:** metode, begrunnelse, sikkerhet, promptversjon og menneskelig kontrollstatus følger eksporten. Utfyllingsgrad er ikke kvalitetsgodkjenning.
+6. **Flyttbart resultat:** JSON, CSV, kontrollrapport og ZIP med originaler og sidecars gir grunnlag for videre import uten å skrive om originaldokumentene.
+
+## Videre arbeid
+
+En installert virksomhetsversjon trenger pakket distribusjon og oppdatering, eksplisitte valg for hvilke kontekstkilder som tillates, en metadataprofil og integrasjon mot virksomhetens sak-/arkivsystem. Automatisk konteksthenting er et fremtidig produktvalg som må godkjennes og være synlig for brukeren.
+
+Archive Assist er Noark-inspirert og hevder ikke Noark-samsvar. Tilgang, hjemmel, arkivverdi, bevaring og kassasjon krever faglig beslutning. Dagens avgrensninger og dataflyt står i [README.md](./README.md) og [SECURITY.md](./SECURITY.md); den operative tittelpraksisen står i [TITTELPROMPT.md](./TITTELPROMPT.md).

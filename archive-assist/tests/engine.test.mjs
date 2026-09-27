@@ -92,8 +92,8 @@ test('AI-forslag erstatter åpent forslag, men ikke menneskeredigert tittel', ()
     originalFileName: 'a.pdf', documentDate: '2026-01-01', keywords: []
   }, { title: 'Vedtak om ny arkivstruktur', rationale: 'Vedtaket er dokumentets hovedhandling.', confidence: 0.91, keywords: ['arkiv'] }, new Date('2026-09-02T10:00:00Z'));
   assert.equal(open.title, 'Vedtak om ny arkivstruktur');
-  assert.equal(open.titleSuggestionMethod, 'GPT-5.6 Luna (medium)');
-  assert.equal(open.aiAnalysisStatus, 'Fullført med GPT-5.6 Luna (medium)');
+  assert.equal(open.titleSuggestionMethod, 'GPT-6 Luna (medium) · ChatGPT');
+  assert.equal(open.aiAnalysisStatus, 'Fullført med GPT-6 Luna (medium) via ChatGPT');
   assert.equal(open.titleSuggestionConfidence, 91);
 
   const edited = applyAiAnalysis({
@@ -107,6 +107,12 @@ test('AI-forslag erstatter åpent forslag, men ikke menneskeredigert tittel', ()
 test('gjenkjenner dokumenttype fra navn og innhold', () => {
   assert.equal(inferDocumentType('rutine_dokumentfangst.docx', '', ''), 'Prosedyre eller rutine');
   assert.equal(inferDocumentType('slides.pptx', '', ''), 'Presentasjon');
+});
+
+test('overordnet sammenheng kan foreslås uten å erstatte en allerede oppgitt relasjon', () => {
+  const base = { title:'Lokalt forslag',titleReviewStatus:'Ikke gjennomgått',originalFileName:'a.txt',keywords:[] };
+  assert.equal(applyAiAnalysis(base,{title:'Forslag om avlevering',relation:'Sak TEST/2026'}).relation,'Sak TEST/2026');
+  assert.equal(applyAiAnalysis({...base,relation:'Kontrollert sak'},{title:'Forslag om avlevering',relation:'Annen sak'}).relation,'Kontrollert sak');
 });
 
 test('skiller grovt mellom norsk og engelsk', () => {

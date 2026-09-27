@@ -51,7 +51,7 @@ const HUMAN_TITLE_STATES = new Set(['Godkjent', 'Redigert av bruker']);
 const TITLE_MAX_LENGTH = 120;
 
 export const PROFILE_VERSION = 'archive-assist/1.1';
-export const TITLE_PROMPT_VERSION = 'archive-assist/saksdokumenttittel-1.0';
+export const TITLE_PROMPT_VERSION = 'archive-assist/saksdokumenttittel-1.1-gpt6-context';
 export const LIMITS = Object.freeze({ maxFiles: 50, maxFileSize: 100 * 1024 * 1024, maxTotalSize: 300 * 1024 * 1024 });
 
 export function extensionOf(filename = '') {
@@ -488,12 +488,12 @@ export function applyAiAnalysis(metadata = {}, result = {}, now = new Date()) {
   if (!suggestedTitle) throw new Error('AI-analysen returnerte ikke en gyldig saksdokumenttittel.');
   const canReplaceTitle = next.titleReviewStatus === 'Ikke gjennomgått' && (!next.title || next.title === previousSuggestion);
   next.titleSuggestion = suggestedTitle;
-  next.titleSuggestionMethod = 'GPT-5.6 Luna (medium)';
+  next.titleSuggestionMethod = 'GPT-6 Luna (medium) · ChatGPT';
   next.titleSuggestionConfidence = normalizeConfidence(result.confidence);
-  next.titleSuggestionReason = normalizeTitleCandidate(result.rationale || result.reason || 'GPT-5.6 Luna vurderte dokumentinnhold og tilgjengelige metadata.');
+  next.titleSuggestionReason = normalizeTitleCandidate(result.rationale || result.reason || 'GPT-6 Luna vurderte dokumentinnhold og oppgitt kontekst.');
   next.titleSuggestionGeneratedAt = now.toISOString();
   next.titlePromptVersion = TITLE_PROMPT_VERSION;
-  next.aiAnalysisStatus = 'Fullført med GPT-5.6 Luna (medium)';
+  next.aiAnalysisStatus = 'Fullført med GPT-6 Luna (medium) via ChatGPT';
   if (canReplaceTitle) next.title = suggestedTitle;
 
   if ((!next.documentType || next.documentType === 'Dokument' || next.documentType === 'PDF-dokument') && result.documentType) {
@@ -502,6 +502,7 @@ export function applyAiAnalysis(metadata = {}, result = {}, now = new Date()) {
   if (!next.subject && result.subject) next.subject = normalizeTitleCandidate(result.subject).slice(0, 180);
   if (!next.creator && result.creator) next.creator = stripPersonalDetails(result.creator).slice(0, 160);
   if (!next.organizationalUnit && result.organizationalUnit) next.organizationalUnit = stripPersonalDetails(result.organizationalUnit).slice(0, 160);
+  if (!next.relation && result.relation) next.relation = String(result.relation).trim().slice(0, 240);
   if (result.documentDate && parseDateText(result.documentDate)) next.documentDate = parseDateText(result.documentDate);
   if (result.description && (!next.description || next.description.startsWith(`${metadata.documentType || 'Dokument'}:`))) {
     next.description = String(result.description).trim().slice(0, 320);
