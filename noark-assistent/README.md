@@ -2,17 +2,19 @@
 
 Korte, kildebaserte svar og konkrete henvisninger til Noark 5 versjon 6.0, arkivregelverket og Nasjonalarkivets praktiske veiledning. Formålet er å hjelpe leseren videre til relevant originalmateriale – ikke å skrive lange utredninger.
 
-## To tydelige driftsmoduser
+## Kildesøk og valg av svarmodell
 
 **Lokalt kildesøk** virker uten konto, server eller API-nøkkel. Appen rangerer kuraterte kildeposter og setter sammen forhåndskontrollerte sammendrag.
 
 **GPT-6 Luna**, med resonneringsnivå `medium`, tilpasser svarene til spørsmålet og oppgitt situasjon. Enkle spørsmål besvares kort; forklaringer, sammenligninger og sjekklister får normalt 150–350 ord med begrunnelse og kildehenvisninger. Oppfølgingsspørsmål beholder temaet fra samtalen. API-bruken er separat fra ChatGPT-abonnementet.
 
-Når Luna er valgt, erstattes ikke feil med et ferdig lokalt standardsvar. Appen viser «Luna svarte ikke», forklarer årsaken og lar spørsmålet stå klart for nytt forsøk. Brukeren kan velge lokalt søk selv. Kildeoversikten og relevansprosentene beholdes til høyre.
+**JEV** velger kildegrunnlaget før svarmodellen skriver, når tjenesten er tilgjengelig og brukeren har samtykket til TypeSafe-behandling. Hvis JEV svikter, brukes det vanlige kildesøket, og svaret opplyser om dette.
 
-Den offentlige Worker-adressen er konfigurert i `api-config.mjs`; ingen hemmelighet ligger i klientkoden. Grensesnittet kontrollerer faktisk tilgjengelighet og faller tilbake til lokalt søk ved feil eller oppbrukt appbudsjett.
+**Bonsai på eierens PC** kan velges direkte. Når Luna er valgt, kan Bonsai gjøre ett forsøk ved kapasitets- eller kvotefeil fra OpenAI (HTTP 429/503). Ved oppbrukt appbudsjett kan Bonsai brukes uten nye betalte JEV- eller OpenAI-kall. Dette krever samtykke, at PC-en er på og at den private forbindelsen er klar. ChatGPT-/Codex-kvoten er separat fra appens API-bruk.
 
-**Versjon 1.3.2:** GitHub Pages og Cloudflare må oppdateres separat med kildegrunnlaget fra 26.09.2026. En vellykket Pages-publisering alene bekrefter ikke at Luna-serveren er oppdatert. Ved versjonskonflikt viser klienten feil for spørsmål som trenger nyere kilder. Se [vedlikeholdsregelen](SOURCE_MAINTENANCE.md) og [utrulling og privat kvalitetsgjennomgang](../noark-api/GUIDANCE_AND_REVIEW.md).
+Ugyldige, ufullstendige eller avviste modellsvar utløser ikke modellbytte. Hvis ingen modell gir et gyldig svar, viser appen en tydelig feil og lar spørsmålet stå klart. Brukeren kan velge lokalt kildesøk selv. Svaret viser hvilken modell og hvilket kildevalg som faktisk ble brukt.
+
+Den offentlige Worker-adressen er konfigurert i `api-config.mjs`; ingen hemmelighet ligger i klientkoden. GitHub Pages og Cloudflare må oppdateres koordinert fordi klientene kontrollerer modell og kildeversjon. Se [driftsbeskrivelsen og verifikasjonen](../noark-api/RAG_OPERATION.md).
 
 ## Kildegrunnlag
 
@@ -33,7 +35,7 @@ Formatoppføringene bevarer filendelser, PRONOM-identifikatorer og eksplisitte v
 Prosenten er et **anslag på kildepostens relevans for spørsmålet**, ikke sannsynligheten for at svaret er riktig, og ikke hvor stor del av hele originaldokumentet som svarer på spørsmålet.
 
 - Lokalt: vektet dekning av spørsmålets ord, synonymer og kravnummer, kombinert med BM25-signal. Toppresultatet får ikke automatisk 100 prosent.
-- Med Luna: semantisk vurdering av hver kandidatpost mot spørsmålet og relevant samtalekontekst. Hvert treff får en kort begrunnelse. Skårene er ikke statistisk kalibrert.
+- Med KI: Luna eller Bonsai vurderer kildepostene mot spørsmålet og relevant samtalekontekst. Hvert treff får en kort begrunnelse. Dette er svarmodellens relevansanslag, ikke JEVs rangering eller en statistisk kalibrert sannsynlighet.
 - Treff sorteres etter anslått relevans. Henvisninger og kopierte beslutningsnotater bruker samme rekkefølge. En eldre svarhenvisning viser kildene til akkurat det svaret.
 
 Bare registrerte kilde-ID-er kan brukes. Lenker, seksjoner, kravnummer og sideankere kommer fra kildebasen, aldri fra modellgenererte nettadresser. Dette hindrer oppdiktede lenker, men beviser ikke at en påstand er korrekt støttet.
@@ -42,7 +44,7 @@ Bare registrerte kilde-ID-er kan brukes. Lenker, seksjoner, kravnummer og sidean
 
 Dette er en kuratert kunnskapsbase, ikke en fulltekstindeks eller løpende nettsøk. KI kan feiltolke spørsmål, kilder og rettslige skiller. Kontroller ordlyd, dato og gyldighet i originalmaterialet; dette er fagstøtte, ikke juridisk rådgivning.
 
-Ved eksplisitt aktivering av Luna sendes spørsmålet, inntil fire tidligere meldinger og relevante kildeposter via bakenden til OpenAI. Ikke skriv personopplysninger, pasientdata, taushetsbelagt eller intern informasjon. Samtaletekst lagres ikke i bakendens budsjettregister. `store: false` utelukker ikke leverandørens sikkerhetslogger eller øvrige oppbevaring.
+KI-valget beskriver mottakerne før bruk: Luna sender spørsmålet, inntil fire tidligere meldinger og kildeposter via bakenden til OpenAI. Med JEV sendes også spørsmålet, relevant kontekst fra tidligere spørsmål og kildeposter til TypeSafe. Bonsai behandler innholdet på eierens PC via en privat Cloudflare-forbindelse; direkte valg av Bonsai sender ikke innholdet til OpenAI. Ikke skriv personopplysninger, pasientdata, taushetsbelagt eller intern informasjon. Samtaletekst lagres ikke i bakendens budsjettregister. OpenAIs `store: false` utelukker ikke leverandørens sikkerhetslogger eller øvrige oppbevaring.
 
 Etter oppdatert Worker-utrulling kan godkjente backendforespørsler registreres i en separat, privat kvalitetslogg. **Spørsmålstekst krever eget, ikke forhåndsavkrysset samtykke**; ellers lagres bare minimal diagnostikk med kilde-ID-er, skårer og utfall. Redigering av samtykket tekst er ikke garantert anonymisering. Aktiv lagring utløper etter 30 dager; loggen har maks. 5 000 poster og eierbeskyttet eksport/sletting. Leverandørens gjenopprettingskopier og lokale eksportfiler har egne hensyn.
 
