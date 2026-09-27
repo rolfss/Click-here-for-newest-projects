@@ -71,3 +71,25 @@ Utviklingsmålingen 26.09.2026: 14 fullførte TypeSafe-kall uten feil. Forventet
 kilde først i 11/11 målbare spørsmål, mot 7/11 for ordsøket. Kildekontroll var
 korrekt i 2/3 tilfeller. Luna-sammenligning og holdout må rapporteres separat;
 disse små målingene beviser ikke juridisk riktighet eller allmenn kvalitet.
+
+### Publisert løsning kontrollert 27.09.2026
+
+PR #39 publiserte grensesnittet med GPT-6 Luna. Offentlig helsekontroll bekreftet
+`gpt-6-luna`, svarversjon `2026-09-27-gpt6-luna-v1`, aktiv JEV og tilgjengelig
+Bonsai. Spørsmålslogging var deaktivert; budsjettene var fortsatt USD 2/6/6.
+
+Ni ekte nettleserkall gjennom ordinær Turnstile kontrollerte JEV med begge
+svarmodellene. Luna svarte med kilder om systemID, beholdt temaet i oppfølging,
+avgrenset PDF/A-3-aksept til riktig mottaker og avsto fra ukjente produktmenyer.
+Bonsai beholdt SIARD-vilkårene og avsto også fra ukjente produktmenyer.
+
+Ett tidlig Bonsai-svar svekket «skal ikke» til «bør ikke» i et støttepunkt.
+PR #44 presiserte at instruksjonen skal bevare kravstyrke og avgrense unntak.
+Etter oppdatering av PC-connectoren beholdt nye svar «skal ikke» for systemID
+og mappeID, og skilte disse fra unntaket for registreringsID. Dette er en
+kontrollert forbedring i eksemplene, ikke en garanti mot nye tolkningsfeil.
+
+Automatisk reserve ved kvote-/kapasitetsfeil og oppbrukt budsjett er kontrollert
+med simulerte leverandørsvar og budsjettgrenser i testene. Produksjonskontoens
+kreditt ble ikke tømt for å fremprovosere reservebytte. Den private Bonsai-ruten
+er separat bekreftet med ekte nettlesersvar.
