@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  applyAiAnalysis, applyCommonDefaults, createMetadata, csvCell, deriveTitle, detectSensitiveData,
+  applyAiAnalysis, applyCommonDefaults, calculateDisposalYear, createMetadata, csvCell, deriveTitle, detectSensitiveData,
   duplicateHashes, extractDateFromName, extractLabeledMetadata, inferDocumentType, inferLanguage,
   manifestCsv, metadataScore, proposeFilename, suggestDocumentTitle, validateMetadata
 } from '../engine.mjs';
@@ -64,13 +64,36 @@ test('createMetadata setter innholdsbasert forslag og kontrollstatus', () => {
   assert.equal(metadata.contentExtractionMethod, 'Direkte lokal tekstlesing');
 });
 
+test('uttrykkelig dokumentdato prioriteres foran et annet datert filnavn', () => {
+  const { metadata } = createMetadata(
+    { name: '2040-01-02_brev.txt', size: 50, lastModified: Date.UTC(2040, 0, 2) },
+    'Emne: Forespørsel om avleveringsplan\nDato: 14.09.2026\nFrist: 30.11.2026',
+    'a'.repeat(64), {}, new Date('2041-03-04T12:00:00Z')
+  );
+  assert.equal(metadata.documentDate, '2026-09-14');
+  assert.ok(metadata.suggestionBasis.includes('dato i dokumentinnhold'));
+  assert.ok(!metadata.suggestionBasis.includes('dato i filnavn'));
+});
+
+test('kassasjonsår krever en fullstendig gyldig dokumentdato', () => {
+  for (const date of ['', '2026', '2026-02', '2026-02-30', '14.09.2026', 'ukjent']) {
+    assert.equal(calculateDisposalYear(date, 'Kasseres etter angitt tid', '5'), '', date || 'manglende dato');
+  }
+  assert.equal(calculateDisposalYear('2026-09-14', 'Kasseres etter angitt tid', '5'), '2031');
+  assert.equal(calculateDisposalYear('2026-09-14', 'Bevares', '5'), '');
+  const { metadata } = createMetadata({ name: 'udatert.txt' }, 'Brev om avlevering', '', { retentionDecision: 'Kasseres etter angitt tid', retentionYears: '5' });
+  assert.equal(metadata.documentDate, '');
+  assert.equal(metadata.disposalYear, '');
+});
+
 test('AI-forslag erstatter åpent forslag, men ikke menneskeredigert tittel', () => {
   const open = applyAiAnalysis({
     title: 'Gammelt forslag', titleSuggestion: 'Gammelt forslag', titleReviewStatus: 'Ikke gjennomgått',
     originalFileName: 'a.pdf', documentDate: '2026-01-01', keywords: []
   }, { title: 'Vedtak om ny arkivstruktur', rationale: 'Vedtaket er dokumentets hovedhandling.', confidence: 0.91, keywords: ['arkiv'] }, new Date('2026-09-02T10:00:00Z'));
   assert.equal(open.title, 'Vedtak om ny arkivstruktur');
-  assert.equal(open.titleSuggestionMethod, 'Lokal nettleser-AI');
+  assert.equal(open.titleSuggestionMethod, 'GPT-6 Luna (medium) · ChatGPT');
+  assert.equal(open.aiAnalysisStatus, 'Fullført med GPT-6 Luna (medium) via ChatGPT');
   assert.equal(open.titleSuggestionConfidence, 91);
 
   const edited = applyAiAnalysis({
@@ -84,6 +107,12 @@ test('AI-forslag erstatter åpent forslag, men ikke menneskeredigert tittel', ()
 test('gjenkjenner dokumenttype fra navn og innhold', () => {
   assert.equal(inferDocumentType('rutine_dokumentfangst.docx', '', ''), 'Prosedyre eller rutine');
   assert.equal(inferDocumentType('slides.pptx', '', ''), 'Presentasjon');
+});
+
+test('overordnet sammenheng kan foreslås uten å erstatte en allerede oppgitt relasjon', () => {
+  const base = { title:'Lokalt forslag',titleReviewStatus:'Ikke gjennomgått',originalFileName:'a.txt',keywords:[] };
+  assert.equal(applyAiAnalysis(base,{title:'Forslag om avlevering',relation:'Sak TEST/2026'}).relation,'Sak TEST/2026');
+  assert.equal(applyAiAnalysis({...base,relation:'Kontrollert sak'},{title:'Forslag om avlevering',relation:'Annen sak'}).relation,'Kontrollert sak');
 });
 
 test('skiller grovt mellom norsk og engelsk', () => {

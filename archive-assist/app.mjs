@@ -3,14 +3,14 @@ import {
   createMetadata, duplicateHashes, extensionOf, formatBytes, manifestCsv, manifestJson,
   metadataScore, proposeFilename, suggestDocumentTitle, validateMetadata
 } from './engine.mjs';
-import { analyzeDocumentWithLocalAi, localAiAvailability } from './ai.mjs';
+import { analyzeDocumentWithLocalAi, localAiAvailability, getAiConnection } from './ai.mjs';
 import { extractTextFromFile } from './extract.mjs';
 import { createZip, safeZipPath } from './zip.mjs';
 import { buildControlReport, summarizeControl } from './control-report.mjs';
 
 const state = {
   records: [], selectedId: '', busy: false,
-  aiAvailability: 'checking', aiActiveIds: new Set(), aiProgress: new Map()
+  aiAvailability: 'idle', aiActiveIds: new Set(), aiBatchRunning: false
 };
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -58,6 +58,8 @@ function commonDefaults() {
 }
 
 async function refreshAiAvailability() {
+  state.aiAvailability = 'checking';
+  renderAiBanner();
   state.aiAvailability = await localAiAvailability();
   renderAiBanner();
   renderTitleSuggestion(selectedRecord());
@@ -65,6 +67,7 @@ async function refreshAiAvailability() {
 }
 
 async function addFiles(fileList) {
+  if (state.busy) return;
   const incoming = [...fileList];
   if (!incoming.length) return;
   const totalCount = state.records.length + incoming.length;
@@ -91,14 +94,15 @@ async function addFiles(fileList) {
     for (const file of incoming) {
       const [extraction, sha256] = await Promise.all([extractTextFromFile(file), sha256Hex(file)]);
       const { metadata, signals } = createMetadata(file, extraction.text, sha256, defaults, new Date(), extraction);
-      const record = { id: metadata.identifier, file, text: extraction.text, metadata, signals, extraction };
-      state.records.push(record);
+      const record = { id: metadata.identifier, file, text: extraction.text, metadata, signals, extraction, editedFields: new Set() };
       addedRecords.push(record);
     }
-    state.selectedId ||= state.records[0]?.id || '';
+    state.records.push(...addedRecords);
+    state.selectedId = addedRecords[0]?.id || state.selectedId;
     const withContent = addedRecords.filter(record => record.text).length;
-    setStatus(`${incoming.length} ${incoming.length === 1 ? 'fil er' : 'filer er'} analysert. ${withContent} fikk innholdsbasert tittelforslag. Ingenting er lastet opp.`, 'success');
+    setStatus(`${incoming.length} ${incoming.length === 1 ? 'fil er' : 'filer er'} analysert lokalt. ${withContent} har lesbart innhold. Kontroller forslagene mot teksten. Ingenting er lastet opp.`, 'success');
   } catch (error) {
+    addedRecords.length = 0;
     console.error(error);
     setStatus('Filene kunne ikke analyseres. Prøv færre, mindre eller andre filer.', 'error');
   } finally {
@@ -106,20 +110,33 @@ async function addFiles(fileList) {
     render();
   }
 
-  const availability = await refreshAiAvailability();
-  if (availability === 'available') await refineRecordsWithAi(addedRecords, { automatic: true });
+  if (addedRecords.length) {
+    $('#review-heading').focus({ preventScroll: true });
+    elements.workspace.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
+  }
+  // Import has no cloud path. Availability and analysis are separate user actions.
+  return addedRecords.length;
 }
 
 function uniquePackageNames() {
-  const used = new Map();
+  const used = new Set();
+  const usedMetadata = new Set();
   const result = new Map();
   for (const record of state.records) {
     const proposed = safeZipPath(record.metadata.proposedFileName || record.file.name);
     const ext = extensionOf(proposed);
     const base = ext ? proposed.slice(0, -(ext.length + 1)) : proposed;
-    const count = (used.get(proposed.toLowerCase()) || 0) + 1;
-    used.set(proposed.toLowerCase(), count);
-    result.set(record.id, count === 1 ? proposed : `${base}-${count}${ext ? `.${ext}` : ''}`);
+    let count = 1;
+    let stem = base;
+    let name = proposed;
+    while (used.has(name.toLowerCase()) || usedMetadata.has(stem.toLowerCase())) {
+      count += 1;
+      stem = `${base}-${count}`;
+      name = `${stem}${ext ? `.${ext}` : ''}`;
+    }
+    used.add(name.toLowerCase());
+    usedMetadata.add(stem.toLowerCase());
+    result.set(record.id, name);
   }
   return result;
 }
@@ -155,6 +172,8 @@ function fileCard(record) {
   const required = findings.filter(item => item.severity === 'required').length;
   const button = document.createElement('button');
   button.type = 'button';
+  button.disabled = state.busy;
+  button.setAttribute('aria-pressed', String(record.id === state.selectedId));
   button.className = `file-card${record.id === state.selectedId ? ' is-selected' : ''}`;
   button.dataset.id = record.id;
   button.innerHTML = `
@@ -170,7 +189,9 @@ function fileCard(record) {
 }
 
 function renderFileList() {
+  const focusedId = elements.fileList.contains(document.activeElement) ? document.activeElement.dataset.id : null;
   elements.fileList.replaceChildren(...state.records.map(fileCard));
+  if (focusedId) [...elements.fileList.children].find(card => card.dataset.id === focusedId)?.focus({ preventScroll: true });
 }
 
 function selectedRecord() {
@@ -202,6 +223,8 @@ function renderEditor() {
   for (const [name, value] of Object.entries(record.metadata)) setField(name, value);
   setField('keywords', record.metadata.keywords);
   renderEditorChrome(record);
+  $('#source-text').textContent = record.text || 'Ingen lesbar tekst ble hentet ut. Kontroller originalfilen; skannede sider krever OCR.';
+  $('#source-count').textContent = `${record.text.length.toLocaleString('nb-NO')} tegn`;
 }
 
 function titleReviewClass(status = '') {
@@ -211,26 +234,23 @@ function titleReviewClass(status = '') {
 }
 
 function renderTitleSuggestion(record) {
-  if (!record || !elements.titleSuggestion) return;
+  if (!record || record.id !== state.selectedId || !elements.titleSuggestion) return;
   const metadata = record.metadata;
   elements.titleSuggestion.textContent = metadata.titleSuggestion || metadata.title || 'Ingen forslag';
   elements.titleReason.textContent = metadata.titleSuggestionReason || 'Forslaget bygger på tilgjengelig innhold og metadata.';
   elements.titleMethod.textContent = metadata.titleSuggestionMethod || 'Ukjent metode';
-  elements.titleConfidence.textContent = `${Number(metadata.titleSuggestionConfidence || 0)} % sikkerhet`;
+  elements.titleConfidence.textContent = `${Number(metadata.titleSuggestionConfidence || 0)} % forslagsstyrke`;
   elements.titleReview.textContent = metadata.titleReviewStatus || 'Ikke gjennomgått';
   elements.titleReview.className = `suggestion-chip ${titleReviewClass(metadata.titleReviewStatus)}`;
   elements.useTitleButton.disabled = state.busy || state.aiActiveIds.has(record.id) || !metadata.titleSuggestion;
-  elements.approveTitleButton.disabled = state.busy || state.aiActiveIds.has(record.id) || metadata.titleReviewStatus === 'Godkjent';
+  elements.approveTitleButton.disabled = state.busy || state.aiActiveIds.has(record.id) || !metadata.title.trim() || metadata.titleReviewStatus === 'Godkjent';
 
   const running = state.aiActiveIds.has(record.id);
-  const progress = state.aiProgress.get(record.id);
-  elements.runFileAiButton.disabled = state.busy || running || !record.text || state.aiAvailability === 'unavailable' || state.aiAvailability === 'checking';
-  elements.runFileAiButton.hidden = state.aiAvailability === 'unavailable';
-  elements.runFileAiButton.textContent = running
-    ? (Number.isFinite(progress) ? `Klargjør lokal AI ${Math.round(progress * 100)} %` : 'Lokal AI analyserer …')
-    : (state.aiAvailability === 'downloadable' ? 'Aktiver og forbedre med lokal AI' : 'Forbedre med lokal AI');
+  elements.runFileAiButton.disabled = state.busy || state.aiBatchRunning || running || !record.text || state.aiAvailability !== 'available';
+  elements.runFileAiButton.hidden = false;
+  elements.runFileAiButton.textContent = running ? 'Luna analyserer …' : 'Forbedre valgt dokument med Luna';
   elements.aiFileStatus.textContent = running
-    ? 'Dokumentinnholdet behandles lokalt på enheten.'
+    ? 'Et begrenset tekstutdrag, metadata og oppgitt kontekst behandles med GPT-6 Luna via ChatGPT-kontoen.'
     : `${metadata.aiAnalysisStatus || 'Ikke kjørt'} · ${metadata.contentExtractionMethod || 'Ingen innholdsuttrekking'} · ${metadata.contentCharacters || 0} tegn analysert.`;
 }
 
@@ -273,23 +293,22 @@ function renderFindings(record) {
 
 function renderAiBanner() {
   if (!elements.aiBanner) return;
-  const running = state.aiActiveIds.size > 0;
+  const running = state.aiBatchRunning || state.aiActiveIds.size > 0;
   const contentRecords = state.records.filter(record => record.text);
   const messages = {
-    checking: ['Kontrollerer lokal AI', 'Innholdsbaserte tittelforslag virker allerede. Nettleseren kontrolleres for en lokal språkmodell.'],
-    available: ['Lokal AI er klar', 'Nettleserens lokale språkmodell kan forbedre saksdokumenttittel og øvrige forslag uten opplasting.'],
-    downloadable: ['Lokal AI kan aktiveres', 'Modellen må lastes ned av nettleseren én gang. Dokumentene forlater fortsatt ikke enheten.'],
-    downloading: ['Lokal AI lastes ned', 'Nettleseren klargjør modellen lokalt.'],
-    unavailable: ['Innholdsbaserte forslag er aktive', 'Archive Assist leser innhold og lager tittelforslag lokalt. Generativ nettleser-AI er ikke tilgjengelig på denne enheten.']
+    idle: ['Valgfri AI-forbedring', 'Lokale forslag krever ingen AI. Åpne dette valget for å sjekke om Luna-tjenesten er tilgjengelig.'],
+    checking: ['Sjekker lokal ChatGPT-tilkobling', 'Dette sjekker bare innlogging og modelltilgang i Codex. Ingen dokumenttekst er sendt.'],
+    available: ['GPT-6 Luna · resonnering: medium', `${getAiConnection().message} Først ved knappetrykk sendes inntil 12 000 tegn per dokument, filnavn, utvalgte metadata og oppgitt arbeidskontekst til OpenAI. Modellen kjører i skyen.`],
+    unavailable: ['GPT-6 Luna er ikke koblet til', `${getAiConnection().message} Lokale forslag, kontroll og eksport virker fortsatt. Lukk og åpne AI-valget for å sjekke på nytt.`]
   };
   const [heading, copy] = messages[state.aiAvailability] || messages.unavailable;
   elements.aiHeading.textContent = heading;
   elements.aiCopy.textContent = copy;
-  elements.runAllAiButton.hidden = state.aiAvailability === 'unavailable' || state.aiAvailability === 'checking';
-  elements.runAllAiButton.disabled = state.busy || running || !contentRecords.length;
+  elements.runAllAiButton.hidden = false;
+  elements.runAllAiButton.disabled = state.busy || running || !contentRecords.length || state.aiAvailability !== 'available';
   elements.runAllAiButton.textContent = running
-    ? `Lokal AI arbeider med ${state.aiActiveIds.size} fil${state.aiActiveIds.size === 1 ? '' : 'er'} …`
-    : (state.aiAvailability === 'downloadable' ? 'Aktiver lokal AI og analyser alle' : 'Forbedre alle med lokal AI');
+    ? `Luna analyserer ${state.aiActiveIds.size} dokument …`
+    : `Forbedre alle med Luna (${contentRecords.length})`;
 }
 
 function render() {
@@ -328,6 +347,7 @@ function saveEditor(event, fullRender = false) {
   const record = selectedRecord();
   if (!record) return;
   const prior = record.metadata;
+  if (event?.target?.name && !event.target.readOnly) record.editedFields.add(event.target.name);
   const data = Object.fromEntries(new FormData(elements.editorForm).entries());
   const metadata = { ...prior };
   for (const [key, value] of Object.entries(data)) metadata[key] = String(value).trim();
@@ -357,24 +377,30 @@ function removeRecord(id) {
   state.records.splice(index, 1);
   if (state.selectedId === id) state.selectedId = state.records[index]?.id || state.records[index - 1]?.id || '';
   render();
+  if (state.records.length) elements.fileList.querySelector('.is-selected')?.focus();
+  else elements.sampleButton.focus();
+  setStatus('Dokumentet er fjernet fra arbeidsflaten. Originalfilen er uendret.');
 }
 
 function applyDefaultsToAll() {
   const defaults = commonDefaults();
   const overwrite = $('#overwrite-defaults').checked;
   state.records.forEach(record => {
-    record.metadata = applyCommonDefaults(record.metadata, defaults, overwrite);
+    const next = applyCommonDefaults(record.metadata, defaults, overwrite);
+    for (const name of Object.keys(defaults)) {
+      if (next[name] !== record.metadata[name]) record.editedFields.add(name);
+    }
+    record.metadata = next;
     if (record.metadata.titleReviewStatus === 'Ikke gjennomgått') rebuildLocalTitleSuggestion(record);
   });
   setStatus(`Felles metadata er brukt på ${state.records.length} ${state.records.length === 1 ? 'fil' : 'filer'}, og åpne tittelforslag er oppdatert.`, 'success');
   render();
 }
 
-async function refineRecordWithAi(record, { automatic = false } = {}) {
-  if (!record?.text || state.aiActiveIds.has(record.id)) return false;
+async function refineRecordWithAi(record, userContext) {
+  if (!record?.text || !state.records.includes(record) || state.aiActiveIds.has(record.id)) return false;
   state.aiActiveIds.add(record.id);
-  state.aiProgress.delete(record.id);
-  record.metadata.aiAnalysisStatus = 'Analyserer lokalt';
+  record.metadata.aiAnalysisStatus = 'Analyserer med Luna';
   renderAiBanner();
   renderTitleSuggestion(record);
   try {
@@ -382,41 +408,53 @@ async function refineRecordWithAi(record, { automatic = false } = {}) {
       fileName: record.file.name,
       text: record.text,
       metadata: record.metadata,
-      onDownloadProgress: progress => {
-        state.aiAvailability = progress < 1 ? 'downloading' : 'available';
-        state.aiProgress.set(record.id, progress);
-        renderAiBanner();
-        if (record.id === state.selectedId) renderTitleSuggestion(record);
-      }
+      userContext
     });
-    record.metadata = applyAiAnalysis(record.metadata, result);
+    if (!state.records.includes(record)) return false;
+    const currentMetadata = record.metadata;
+    const next = applyAiAnalysis(currentMetadata, result);
+    // A delayed model response cannot overwrite edits made before or during the request.
+    for (const name of record.editedFields) next[name] = currentMetadata[name];
+    next.disposalYear = calculateDisposalYear(next.documentDate, next.retentionDecision, next.retentionYears);
+    next.proposedFileName = proposeFilename(next, extensionOf(record.file.name));
+    record.metadata = next;
     state.aiAvailability = 'available';
     return true;
   } catch (error) {
     console.error(error);
     record.metadata.aiAnalysisStatus = `Ikke fullført: ${error.message}`;
-    if (!automatic) setStatus(error.message || 'Lokal AI kunne ikke analysere dokumentet.', 'error');
+    setStatus(error.message || 'Luna kunne ikke analysere dokumentet.', 'error');
     if (error.code === 'AI_UNAVAILABLE') state.aiAvailability = 'unavailable';
     return false;
   } finally {
     state.aiActiveIds.delete(record.id);
-    state.aiProgress.delete(record.id);
     render();
   }
 }
 
-async function refineRecordsWithAi(records = state.records, { automatic = false } = {}) {
+async function refineRecordsWithAi(records = state.records) {
+  if (state.busy || state.aiBatchRunning || state.aiAvailability !== 'available') return;
   const candidates = records.filter(record => record.text && !state.aiActiveIds.has(record.id));
   if (!candidates.length) {
-    if (!automatic) setStatus('Ingen av filene har lesbart innhold som lokal AI kan analysere.', 'error');
+    setStatus('Ingen av dokumentene har lesbart innhold som Luna kan analysere.', 'error');
     return;
   }
+  state.aiBatchRunning = true;
+  const userContext = Object.fromEntries(new FormData($('#ai-context-form')).entries());
+  renderAiBanner();
+  renderTitleSuggestion(selectedRecord());
   let completed = 0;
-  for (const record of candidates) {
-    if (await refineRecordWithAi(record, { automatic })) completed += 1;
+  try {
+    for (const record of candidates) {
+      if (await refineRecordWithAi(record,userContext)) completed += 1;
+      if (state.aiAvailability !== 'available') break;
+    }
+  } finally {
+    state.aiBatchRunning = false;
+    render();
   }
   if (completed) {
-    setStatus(`${completed} ${completed === 1 ? 'tittelforslag er' : 'tittelforslag er'} forbedret med lokal AI. Kontroller og rediger før eksport.`, 'success');
+    setStatus(`${completed} tittelforslag er forbedret med Luna. Kontroller mot originalteksten før eksport.`, 'success');
   }
 }
 
@@ -492,7 +530,7 @@ async function exportZip() {
 }
 
 function packageReadme() {
-  return `ARCHIVE ASSIST – METADATAPAKKE\n\nOpprettet: ${new Date().toLocaleString('nb-NO')}\nAntall dokumenter: ${state.records.length}\nTittelprompt: ${TITLE_PROMPT_VERSION}\n\nINNHOLD\n- dokumenter/: kopier av valgte filer med normaliserte filnavn\n- metadata/: én JSON-sidecar per dokument\n- manifest.json: samlet maskinlesbart manifest\n- manifest.csv: tabell for kontroll og videre import\n\nTITTELKONTROLL\nSaksdokumenttitler foreslås fra dokumentinnhold og tilgjengelige metadata. Der nettleseren støtter lokal generativ AI, kan forslagene forbedres på enheten. Forslag er aldri et automatisk arkivvedtak; feltet titleReviewStatus viser om en saksbehandler eller arkivar har godkjent eller redigert tittelen.\n\nVIKTIG\nArchive Assist er en demonstrasjon og erstatter ikke journalføring, arkivfaglig vurdering, tilgangskontroll, bevarings- og kassasjonsvedtak eller kontroll mot et konkret sak-/arkivsystem. Binærfilene endres ikke; metadata bindes til dokumentene gjennom sidecar-filer og manifest.\n`;
+  return `ARCHIVE ASSIST – METADATAPAKKE\n\nOpprettet: ${new Date().toLocaleString('nb-NO')}\nAntall dokumenter: ${state.records.length}\nTittelprompt: ${TITLE_PROMPT_VERSION}\n\nINNHOLD\n- dokumenter/: kopier av valgte filer med normaliserte filnavn\n- metadata/: én JSON-sidecar per dokument\n- manifest.json: samlet maskinlesbart manifest\n- manifest.csv: tabell for kontroll og videre import\n\nTITTELKONTROLL\nSaksdokumenttitler foreslås fra dokumentinnhold og tilgjengelige metadata. Lokal analyse krever ingen AI. Valgfri forbedring med GPT-6 Luna (medium) starter bare ved et aktivt valg og bruker lokal Codex-innlogging med ChatGPT. Et begrenset tekstutdrag, filnavn, utvalgte metadata og brukeroppgitt kontekst sendes til OpenAI. Kontoens bruksgrenser gjelder; modellen kjører i skyen. Metoden og AI-statusen følger hvert dokument. Forslag er aldri et automatisk arkivvedtak; feltet titleReviewStatus viser om en saksbehandler eller arkivar har godkjent eller redigert tittelen.\n\nVIKTIG\nArchive Assist er en demonstrasjon og erstatter ikke journalføring, arkivfaglig vurdering, tilgangskontroll, bevarings- og kassasjonsvedtak eller kontroll mot et konkret sak-/arkivsystem. Binærfilene endres ikke; metadata bindes til dokumentene gjennom sidecar-filer og manifest.\n`;
 }
 
 function loadSamples() {
@@ -515,6 +553,33 @@ function escapeHtml(value = '') {
   return String(value).replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
 }
 
+$('#paste-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (state.busy) return;
+  const input = $('#paste-text');
+  if (!input.value.trim()) {
+    setStatus('Lim inn dokumenttekst før du lager forslag.', 'error');
+    input.focus();
+    return;
+  }
+  if (input.value.length > 100000) {
+    setStatus('Teksten er for lang. Bruk en fil eller begrens teksten til 100 000 tegn.', 'error');
+    input.focus();
+    return;
+  }
+  const text = input.value;
+  const added = await addFiles([new File([text], `innlimt-tekst-${state.records.length + 1}.txt`, { type: 'text/plain' })]);
+  if (added && input.value === text) input.value = '';
+});
+
+// Editing a field with Enter must never submit/reload this in-memory workspace.
+elements.editorForm.addEventListener('submit', event => event.preventDefault());
+$('#defaults-form').addEventListener('submit', event => event.preventDefault());
+$('#ai-context-form').addEventListener('submit', event => event.preventDefault());
+$('#ai-options').addEventListener('toggle', () => {
+  if ($('#ai-options').open && ['idle', 'unavailable'].includes(state.aiAvailability)) refreshAiAvailability();
+});
+
 elements.fileInput.addEventListener('change', event => { addFiles(event.target.files); event.target.value = ''; });
 elements.dropzone.addEventListener('dragover', event => { event.preventDefault(); elements.dropzone.classList.add('is-over'); });
 elements.dropzone.addEventListener('dragleave', () => elements.dropzone.classList.remove('is-over'));
@@ -528,7 +593,7 @@ elements.dropzone.addEventListener('keydown', event => {
 });
 elements.sampleButton.addEventListener('click', loadSamples);
 elements.clearButton.addEventListener('click', () => {
-  state.records = []; state.selectedId = ''; setStatus('Arbeidsflaten er tømt.', 'info'); render();
+  state.records = []; state.selectedId = ''; setStatus('Arbeidsflaten er tømt.', 'info'); render(); elements.sampleButton.focus();
 });
 elements.applyDefaultsButton.addEventListener('click', applyDefaultsToAll);
 elements.fileList.addEventListener('click', event => {
@@ -536,6 +601,7 @@ elements.fileList.addEventListener('click', event => {
   if (!card) return;
   state.selectedId = card.dataset.id;
   render();
+  elements.fileList.querySelector('.is-selected')?.focus();
 });
 elements.editorForm.addEventListener('input', event => saveEditor(event, false));
 elements.editorForm.addEventListener('change', event => saveEditor(event, true));
@@ -562,4 +628,3 @@ elements.reportButton.addEventListener('click', exportControlReport);
 elements.zipButton.addEventListener('click', exportZip);
 
 render();
-refreshAiAvailability();

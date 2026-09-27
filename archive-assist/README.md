@@ -1,77 +1,71 @@
 # Archive Assist
 
-**Innholdsbasert saksdokumenttittel og metadatahjelp for arkivfiler**
+**Prøv → kontroller → eksporter: innholdsbaserte saksdokumenttitler og metadata.**
 
-[Åpne den publiserte demoen](https://rolfss.github.io/Click-here-for-newest-projects/archive-assist/)
+[Åpne den offentlige prototypen](https://rolfss.github.io/Click-here-for-newest-projects/archive-assist/)
 
-Archive Assist leser dokumentinnhold lokalt, foreslår saksdokumenttittel og øvrige metadata, og lar saksbehandler eller arkivar kontrollere resultatet før videre overføring eller registrering. Brukeren kan i tillegg velge forbedring med **GPT-5.6 Luna** og **reasoning effort `medium`** via den samme sikre API-bakenden som Noark-assistenten.
+Archive Assist hjelper saksbehandlere og arkivarer med å foreslå, kontrollere og eksportere metadata. Import, tekstuttrekk, SHA-256 og første forslag skjer i nettleseren. Denne utgavens statiske prototype har ingen kontotilkobling og viser AI som utilgjengelig. Lokal kjøring kan koble **GPT-6 Luna med reasoning `medium`** til en innlogget ChatGPT-konto gjennom Codex App Server. Modellen kjører i skyen.
 
-## Saksdokumenttittel
+Dokumentasjonen gjelder koden i denne utgaven. Den publiserte demoen kan ligge etter inntil endringene er slått sammen og publisert.
 
-Tittelen kommer ikke lenger bare fra filnavnet. Ved innlasting prioriterer motoren:
+## Arbeidsflyt og formål
 
-1. oppgitt emne eller sak;
-2. uttrykkelig tittel i dokumentet;
-3. emnefelt i dokumentet eller e-posten;
-4. første tydelige overskrift;
-5. første meningsbærende setning;
-6. filnavnet som reserve.
+1. **Prøv:** Velg filer, dra dem inn, bruk syntetiske eksempler eller lim inn dokumenttekst. Innlimt tekst blir en TXT-fil i samme arbeidsflyt.
+2. **Kontroller:** Sammenlign forslag og grunnleggende metadata med kildeuttrekket, rett feil og godkjenn tittelen. Uttrekket kan mangle layout; kontroller originalen ved tvil. Utfyllingsprosent måler utfylte felt, ikke riktighet.
+3. **Eksporter:** Last ned JSON, CSV, kontrollrapport eller ZIP med originaler og metadata-sidecars. Metode, begrunnelse, sikkerhet, promptversjon og kontrollstatus følger resultatet. Originalbytene endres ikke.
 
-Forslaget settes direkte i det redigerbare tittelfeltet. Brukeren ser metode, begrunnelse, sikkerhet og kontrollstatus, og kan godkjenne forslaget eller skrive en annen tittel. En menneskeredigert tittel blir ikke overskrevet av en senere Luna-analyse.
+Målet er en nedlastbar, lokalt installert app som kan bruke **brukergodkjent** opplysning om bruker, avdeling og arbeidsmiljø sammen med arkivfaglig praksis. Dagens prototype leser ikke slik kontekst automatisk. Du kan oppgi den manuelt i det valgfrie AI-panelet. Dokumentbehandleren er aldri automatisk dokumentets forfatter; opphav og overordnet sak må kontrolleres mot kilden.
 
-Den deterministiske innholdsanalysen virker uten API. Luna er valgfri og bruker OpenAI Responses API gjennom Cloudflare Worker-backenden. Modellen er fastsatt til `gpt-5.6-luna`, `reasoning.effort` er `medium`, `store` er `false`, og svaret må følge et strengt JSON-skjema. Bare et begrenset tekstutdrag (maks 12 000 tegn), filnavn og en tillatt delmengde metadata sendes når brukeren eksplisitt velger Luna. Selve binærfilen sendes ikke.
+## Kjør lokalt med ChatGPT-konto
 
-Se den versjonerte [prompten for saksdokumenttittel](./TITTELPROMPT.md).
-
-## Dette virker i demoen
-
-- Dra inn inntil 50 filer.
-- Lokal tekstuttrekking fra tekst, Markdown, CSV, JSON, XML, HTML, EML, PDF, DOCX, PPTX, XLSX, ODT, ODS og ODP.
-- Automatisk lokalt, innholdsbasert forslag til saksdokumenttittel ved innlasting.
-- Valgfri forbedring av metadata med GPT-5.6 Luna og medium reasoning.
-- Forslag til dokumentdato, dokumenttype, språk, beskrivelse, emne, forfatter, organisasjonsenhet og nøkkelord når grunnlaget finnes.
-- Felles metadata for forfatter, organisasjonsenhet, sak, klassifikasjon, tilgang og livsløp.
-- Kontroll av obligatoriske felt, betingede krav og menneskelig tittelgjennomgang.
-- Indikasjon på mulige e-postadresser, telefonnumre, fødselsnumre og sensitive nøkkelord.
-- SHA-256 og duplikatindikasjon.
-- Normaliserte filnavn basert på kontrollert saksdokumenttittel.
-- Eksport av JSON-manifest, CSV-manifest og ZIP-pakke med dokumenter og JSON-sidecars.
-- Kontrollrapport i Markdown med overføringsstatus, tittelgjennomgang, obligatoriske mangler, duplikater og SHA-256.
-- Tre syntetiske eksempelfiler for rask testing.
-- Automatiske tester av tittelregler, promptformat, innholdsuttrekk, metadata, ZIP-bygger og Luna-kontrakten.
-
-## Personvern og sikkerhet
-
-Filinnlasting, tekstuttrekk, hashing og de første metadataforslagene skjer lokalt i nettleseren. Luna kjøres ikke automatisk når en fil legges til. Når brukeren velger Luna, sendes et avgrenset tekstutdrag og relevante metadata via `noark-luna-api`-Workeren til OpenAI. API-nøkkelen finnes bare som Worker-hemmelighet og eksponeres ikke i nettleseren.
-
-Luna-kallet er beskyttet med Cloudflare Turnstile, bruker den eksisterende felles kostnads- og rate-limit-ledgeren, lagrer ikke OpenAI-responsen (`store: false`) og sender ikke tilgangshjemmel, klassifikasjon eller bevarings-/kassasjonsvedtak som AI skal finne på. Dokumentinnhold behandles som ubetrodd data i prompten.
-
-Bruk likevel ikke demoen som eneste kontroll for reelle personopplysninger, tilgangsvurdering, journalføring, arkivverdi eller bevaring og kassasjon. Skannede PDF-er krever OCR og kan derfor gi et lokalt tittelforslag basert på filnavn og tilgjengelige metadata.
-
-## Kjør lokalt
+Bruk Node.js 22 eller nyere og en installert Codex som støtter App Server. Fra prosjektmappen:
 
 ```bash
 cd archive-assist
-python -m http.server 8080
+npm ci
+npm run local
 ```
 
-Åpne `http://localhost:8080`.
+Åpne `http://127.0.0.1:5197/`. Kommandoen bygger klienten og starter `scripts/local-server.mjs`, som tilbyr statiske filer og et lokalt API fra samme adresse. Codex finnes via `PATH` eller den offisielle Windows-installasjonen. Du kan også sette en absolutt bane i PowerShell før oppstart:
 
-Tester:
+```powershell
+$env:ARCHIVE_ASSIST_CODEX = 'C:\full\bane\til\codex.exe'
+npm run local
+```
+
+Hvis Codex ikke allerede er innlogget med ChatGPT, kjør `codex login` og fullfør den offisielle innloggingen. Med eksplisitt bane kan du bruke `& $env:ARCHIVE_ASSIST_CODEX login`. Archive Assist ber ikke om passord, kontotoken eller API-nøkkel i nettsiden. [Codex-autentisering](https://learn.chatgpt.com/docs/auth) skiller ChatGPT-abonnement fra API-basert bruk; denne appen krever ChatGPT. Modellen må være tilgjengelig på kontoen, og analyse belaster abonnementets brukskvote.
+
+Åpne «Valgfri AI-forbedring» for å sjekke tilkoblingen. Oppstart og import starter ingen AI-analyse. Tilgjengelighetssjekken sender ikke dokumenttekst. AI forblir avslått hvis riktig konto, modell eller sikker kjørekonfigurasjon mangler; appen går ikke over til API-nøkkel, betalt Worker eller en annen modell.
+
+For bare den statiske klienten: kjør `npm run build` og `npm run preview`. Denne forhåndsvisningen har ikke AI-kobling. Sett `PORT` for en annen lokal port. Bruk HTTP, ikke `file://`.
+
+## Hva en eksplisitt AI-handling sender
+
+Luna-knappen sender inntil **12 000 tegn dokumenttekst**, filnavn og utvalgte metadata gjennom det lokale API-et til Codex og skymodellen. Utvalget er tittel/tittelforslag, dokumenttype, emne, dokumentdato, forfatter, organisasjonsenhet, språk, uttrekksmetode, saksreferanse, overordnet sammenheng og kilde. Originalfilens binærdata sendes ikke.
+
+Bare konteksten du fyller inn, legges til: dokumentbehandler (120 tegn), avdeling (160 tegn) og overordnet sak/arbeidskontekst (600 tegn). Feltene lagres ikke i `localStorage`. «Forbedre alle» kan sende ett slikt kall per dokument med lesbar tekst. Godkjente eller menneskeredigerte titler og felt endret mens svaret er underveis, beskyttes mot overskriving.
+
+## Formater og avgrensning
+
+- Inntil 50 filer, 100 MiB per fil og 300 MiB samlet. Innholdsuttrekk har en egen grense på 25 MiB per fil.
+- Tekst, Markdown, CSV, JSON, XML, HTML, EML, PDF, DOCX, PPTX, XLSX, ODT, ODS og ODP. PDF-leseren er grunnleggende og utfører ikke OCR.
+- UTF-8 med varslet Windows-1252-reserve, SHA-256, duplikatindikasjon og signaler om mulige personopplysninger.
+- Dokumentdato fra uttrykkelig datofelt før datert filnavn. Manglende dato blir tom; teknisk opprettelsesdato, filstempel og importtid blir ikke dokumentdato.
+- Forslag til tittel, dato, type, beskrivelse, emne, forfatter, avdeling, nøkkelord og eventuell overordnet sammenheng (`relation`).
+
+Archive Assist er Noark-inspirert, ikke et godkjent sak-/arkivsystem. Forslag og uttrekk kan være feil. Tilgang, hjemmel, arkivverdi og bevaring/kassasjon må vurderes av mennesker. Bruk syntetiske dokumenter ved utprøving; virksomhetsbruk krever godkjent behandling og en tilpasset metadataprofil.
+
+## Verifisering
 
 ```bash
 npm test
-npm run check
+npm run build
+npx playwright install chromium
+npm run test:browser
 ```
 
-Node.js 22 anbefales.
+Node- og nettlesertestene bruker syntetiske data og kontrollerte mock-svar; de starter ingen reell modellanalyse. Nettlesertesten kan bruke en installert nettleser gjennom `ARCHIVE_ASSIST_CHROME`. Resultater skrives til `qa-output/` eller `ARCHIVE_ASSIST_QA_DIR`. En eventuell levende kontroll er et separat, uttrykkelig valg med syntetiske data og ChatGPT-kontoens brukskvote.
 
-## Avgrensning
+Se [arkitektur](./ARKITEKTUR.md), [prosjektgrunnlag](./PROSJEKTGRUNNLAG.md), [versjonert prompt](./TITTELPROMPT.md) og [sikkerhet](./SECURITY.md). Integrasjonen følger [Codex App Server](https://learn.chatgpt.com/docs/app-server); [modellbeskrivelsen for GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna) dokumenterer støtten for `medium`.
 
-Archive Assist er Noark-inspirert, men hevder ikke Noark-samsvar og er ikke et sak-/arkivsystem. En produksjonsversjon måtte i tillegg ha virksomhetsspesifikk metadataprofil, autentisering, serverbasert autorisasjon, uforanderlig hendelseslogg, godkjent behandlingsgrunnlag for dokumenter som sendes til en ekstern modell og konkrete import-/API-integrasjoner.
-
-Se [ARKITEKTUR.md](./ARKITEKTUR.md), [PROSJEKTGRUNNLAG.md](./PROSJEKTGRUNNLAG.md), [TITTELPROMPT.md](./TITTELPROMPT.md) og [SECURITY.md](./SECURITY.md).
-
-## Lisens
-
-MIT.
+MIT-lisens.

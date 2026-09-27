@@ -1,0 +1,248 @@
+{
+  "synthetic": true,
+  "cases": [
+    {
+      "id": "01",
+      "file": "dokumenter/01-brev.txt",
+      "expected": {
+        "title": "Forespørsel om avleveringsplan for byggesaksarkiv",
+        "document_date": "2026-09-14",
+        "sender": "Eksempelvik kommune",
+        "document_type": "brev",
+        "language": "nb"
+      },
+      "challenge": "Dokumentdato kontra frist",
+      "evidence": {
+        "title": "linje 4",
+        "document_date": "linje 3",
+        "sender": "linje 2"
+      },
+      "must_preserve": [
+        "TEST-2026/101",
+        "30.11.2026"
+      ],
+      "review_notes": "Frist er ikke dokumentdato.",
+      "sha256": "00c80596dfbd4a6b9580db11441727a2fe1eacd05de95fdf848493326f29e352"
+    },
+    {
+      "id": "02",
+      "file": "dokumenter/02-tegnsett.txt",
+      "expected": {
+        "title": "Årlig gjennomgang av arkivnøkler",
+        "document_date": "2026-09-15",
+        "sender": "Prøveby arkivtjeneste",
+        "document_type": "notat",
+        "language": "nb"
+      },
+      "challenge": "Windows-1252 og norske tegn",
+      "evidence": {
+        "title": "linje 4 (Windows-1252)",
+        "document_date": "linje 3",
+        "sender": "linje 2"
+      },
+      "must_preserve": [
+        "blåbær",
+        "øvelse",
+        "Ås"
+      ],
+      "review_notes": "",
+      "sha256": "ab7f0c9f8f0270dcaffff789c82012de50eb7ba841a75872344ee4d8c0d08507"
+    },
+    {
+      "id": "03",
+      "file": "dokumenter/03-innrykk.docx",
+      "expected": {
+        "title": "Sjekkliste for kvalitetssikring før avlevering",
+        "document_date": "2026-09-16",
+        "sender": "Eksempelvik kommune",
+        "document_type": "sjekkliste",
+        "language": "nb"
+      },
+      "challenge": "Ekte Word-liste med innrykk",
+      "evidence": {
+        "title": "word/document.xml, avsnitt 2",
+        "document_date": "avsnitt 3",
+        "sender": "avsnitt 4"
+      },
+      "must_preserve": [
+        "Kontroller dokumentdato.",
+        "Bevar vedleggsrekkefølge.",
+        "Registrer manglende signatur."
+      ],
+      "review_notes": "Alle tre listepunkter i samme rekkefølge.",
+      "sha256": "dd98b89469bb165aab1117622099fa0f80e30c1daade0c44df6a5bc079b04d45"
+    },
+    {
+      "id": "04",
+      "file": "dokumenter/04-liste-tabell.docx",
+      "expected": {
+        "title": "Oppfølging av avvik i dokumentfangst",
+        "document_date": "2026-09-17",
+        "sender": "Testfjord etat",
+        "document_type": "notat",
+        "language": "nb"
+      },
+      "challenge": "Liste før og etter tabell",
+      "evidence": {
+        "title": "word/document.xml, avsnitt 2",
+        "document_date": "avsnitt 3",
+        "sender": "avsnitt 4"
+      },
+      "must_preserve": [
+        "Kontroller status i tabellen.",
+        "Bekreft at A-17 er lukket.",
+        "Følg opp A-18 innen fristen.",
+        "A-17",
+        "Lukket",
+        "A-18",
+        "Åpent"
+      ],
+      "review_notes": "Rekkefølge: første listepunkt, tabell, siste to listepunkter. A-17=Lukket, A-18=Åpent.",
+      "sha256": "2ec79dc3b3240504cd2b42d2e4718801d9317be8def1b02f2abfdabce63f2a93"
+    },
+    {
+      "id": "05",
+      "file": "dokumenter/05-kontroll.xlsx",
+      "expected": {
+        "title": "Kontrolloversikt for avleveringspakker",
+        "document_date": "2026-09-18",
+        "sender": "Prøveby arkivtjeneste",
+        "document_type": "kontrolloversikt",
+        "language": "nb"
+      },
+      "challenge": "Tabellkobling og duplisering",
+      "evidence": {
+        "title": "Kontroll!B2",
+        "document_date": "Kontroll!B3",
+        "sender": "Kontroll!B4"
+      },
+      "must_preserve": [
+        "TEST-P01",
+        "12",
+        "Godkjent",
+        "TEST-P02",
+        "7",
+        "Mangler vedlegg"
+      ],
+      "review_notes": "Rad 6 og 7 forekommer én gang hver. Kolonnerelasjonene skal bevares.",
+      "sha256": "7d3c6fe55e7aaba6288a10fa4810bdada19792daa3cc9a888ea251a714ff7665"
+    },
+    {
+      "id": "06",
+      "file": "dokumenter/06-epost.eml",
+      "expected": {
+        "title": "Avklaring av vedlegg til avlevering",
+        "document_date": "2026-09-19",
+        "sender": "Testarkiv <arkiv@example.invalid>",
+        "document_type": "e-post",
+        "language": "nb"
+      },
+      "challenge": "Tom tekstdel, innhold i HTML-del",
+      "evidence": {
+        "title": "Subject-header",
+        "document_date": "Date-header",
+        "sender": "From-header"
+      },
+      "must_preserve": [
+        "Vedlegg V-03 mangler i pakke TEST-P02.",
+        "25.09.2026"
+      ],
+      "review_notes": "Ikke mist HTML-innholdet. Adressene er syntetiske; personvernindikator er ikke juridisk konklusjon.",
+      "sha256": "77e19db604bd7fe595c805fe1a98010c1d1c1b4c45867a3086f405b1aee3ad68"
+    },
+    {
+      "id": "07",
+      "file": "dokumenter/07-nettside.html",
+      "expected": {
+        "title": "Rutine for kontroll av journalmetadata",
+        "document_date": "2026-09-20",
+        "sender": "Testfjord etat",
+        "document_type": "rutine",
+        "language": "nb"
+      },
+      "challenge": "Nettsidetittel kontra dokumenttittel",
+      "evidence": {
+        "title": "main/h1",
+        "document_date": "p med Dokumentdato",
+        "sender": "p med Avsender"
+      },
+      "must_preserve": [
+        "Kontroller tittel.",
+        "Kontroller dokumentdato."
+      ],
+      "review_notes": "Ikke bruk Testportal som tittel eller oppdateringsdato som dokumentdato.",
+      "sha256": "038ed9528000df129e5ed22e43c9e32d8a6cb142031c679b6b6687f70d8ddba3"
+    },
+    {
+      "id": "08",
+      "file": "dokumenter/08-register.csv",
+      "expected": {
+        "title": "Avviksregister for metadata",
+        "document_date": "2026-09-21",
+        "sender": "Eksempelvik kommune",
+        "document_type": "register",
+        "language": "nb"
+      },
+      "challenge": "UTF-8 BOM og sitert semikolon",
+      "evidence": {
+        "title": "rad 1, kolonne 2",
+        "document_date": "rad 3, kolonne 2",
+        "sender": "rad 2, kolonne 2"
+      },
+      "must_preserve": [
+        "Be om presisering; ikke gjett",
+        "TEST-02",
+        "Manuell kontroll"
+      ],
+      "review_notes": "Semikolon i tiltak er del av én celle.",
+      "sha256": "879e8e4e96b346a7446c53aa1c1c86af63897e539e913197a52c5024042b395d"
+    },
+    {
+      "id": "09",
+      "file": "dokumenter/09-referat.md",
+      "expected": {
+        "title": "Referat fra møte om arkivuttrekk",
+        "document_date": "2026-09-22",
+        "sender": "Testfjord etat",
+        "document_type": "referat",
+        "language": "nb"
+      },
+      "challenge": "Overskrift, underoverskrift og frist",
+      "evidence": {
+        "title": "linje 1",
+        "document_date": "linje 5",
+        "sender": "linje 4"
+      },
+      "must_preserve": [
+        "TEST-U04",
+        "før overføring",
+        "15.10.2026"
+      ],
+      "review_notes": "Ikke bruk Vedtak eller Frist alene som tittel.",
+      "sha256": "d4b9d5e414750bffeedba8efe387a896b23f5de6d37ada92b10b0023c74c4804"
+    },
+    {
+      "id": "10",
+      "file": "dokumenter/10-udatert.xml",
+      "expected": {
+        "title": "Forespørsel om manglende arkivvedlegg",
+        "document_date": null,
+        "sender": "Prøveby arkivtjeneste",
+        "document_type": "forespørsel",
+        "language": "nb"
+      },
+      "challenge": "Manglende dato",
+      "evidence": {
+        "title": "/dokument/emne",
+        "document_date": "Ingen dato i kilden; null er fasit",
+        "sender": "/dokument/avsender"
+      },
+      "must_preserve": [
+        "TEST-V09",
+        "Dato er ikke oppgitt."
+      ],
+      "review_notes": "Ikke bruk dagens dato eller filens tidsstempel. Krever manuell avklaring.",
+      "sha256": "0e097433632003d60d97175fc8035b7a1ee4a88feb4e33679ed55486786e6232"
+    }
+  ]
+}

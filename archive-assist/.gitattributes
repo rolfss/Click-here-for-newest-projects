@@ -1,0 +1,2 @@
+# Preserve the supplied synthetic fixture bytes and their SHA-256 across platforms.
+tests/fixtures/dokumenter/** -text whitespace=cr-at-eol
