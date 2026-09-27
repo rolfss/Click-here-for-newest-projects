@@ -57,6 +57,7 @@
           <h2 id="prototype-notice-title">GPT-6 Luna · kildebasert resonnering</h2>
           <p>Tilkobling til <strong>GPT-6 Luna</strong>, OpenAIs kostnadseffektive resonneringsmodell, med <strong>medium resonnering</strong>. Modellen skal gi svar tilpasset spørsmålet ditt, med begrunnelse, praktiske råd og kildehenvisninger. Du kan stille oppfølgingsspørsmål.</p>
           <p>KI kan ta feil. Grunnlaget er kuraterte sammendrag og kontrollerte formatoppføringer, ikke fulltekst eller løpende nettsøk. Nye veiledere har kontrolltidspunkt og avgrenset virkeområde. Kontroller originalkildene; dette er fagstøtte, ikke en juridisk fasit.</p>
+          <p><button type="button" class="source-maintenance-link" data-tab="sources" data-focus="design-rationale-title">Hvorfor er appen utformet slik?</button></p>
           <p id="model-status" role="status">Luna er ikke aktivert ennå. Lokalt kildesøk fungerer uansett.</p>
         </div>
       </aside>
@@ -181,6 +182,18 @@
           <p>Faggrunnlaget kommer fra kildene nedenfor. Lokalt søk kjører i nettleseren. Når KI er aktivert, vurderer svarmodellen de hentede sammendragene via en sikker backend; den søker ikke fritt på nettet.</p>
         </div>
       </div>
+
+      <section class="design-rationale" aria-labelledby="design-rationale-title">
+        <h2 id="design-rationale-title" tabindex="-1">Designvalg og arkivfaglig praksis</h2>
+        <p>Appen er utformet for å støtte etterprøvbarhet, riktig kontekst og tydelig ansvar i arkivarbeidet.</p>
+        <dl>
+          <div><dt>Originalkilder som kan kontrolleres</dt><dd>Henvisninger peker til registrerte kilder, med kravnummer, seksjon eller side der det finnes. Det gjør grunnlaget for svaret mulig å ettergå.</dd></div>
+          <div><dt>Regler i riktig sammenheng</dt><dd>Kildetype, oppgitt versjon og virkeområde hjelper deg å skille lov, forskrift, standard og veiledning – og vurdere om kravet gjelder saken din.</dd></div>
+          <div><dt>Synlig KI-bruk og usikkerhet</dt><dd>JEV kan velge kilder; GPT-6 Luna eller Bonsai formulerer svaret. Appen viser hvilken modell som svarte. Relevansprosenten er et søkeanslag, ikke et mål på riktighet.</dd></div>
+          <div><dt>Faglig kontroll før bruk</dt><dd>Du kontrollerer svaret mot originalkildene. Et kopiert beslutningsnotat samler spørsmål, svar og henvisninger for videre dokumentasjon etter virksomhetens rutiner.</dd></div>
+        </dl>
+        <p class="design-basis">Dette er vår anvendelse av Nasjonalarkivets råd om <a href="https://www.nasjonalarkivet.no/veiledere/etablere-internkontroll-med-dokumentasjonsforvaltningen/" rel="noreferrer">regelverksforståelse, ansvar og kontroll ↗</a>. Appen erstatter ikke virksomhetens dokumentasjonsrutiner.</p>
+      </section>
 
       <section class="source-maintenance-notice source-maintenance-method" aria-labelledby="source-maintenance-title">
         <h2 id="source-maintenance-title" tabindex="-1">Regel for søk og oppdatering av kildene</h2>

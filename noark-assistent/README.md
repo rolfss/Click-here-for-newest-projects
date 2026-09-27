@@ -16,6 +16,12 @@ Den offentlige Worker-adressen er konfigurert i `api-config.mjs`; ingen hemmelig
 
 ## Kildegrunnlag
 
+### Designvalg og arkivfaglig praksis
+
+Grensesnittets «Kilder og metode» forklarer fire valg: kontrollerbare originalhenvisninger, kildenes virkeområde og versjon, synlig KI-bruk og usikkerhet, og brukerens faglige kontroll før svaret tas i bruk. Dette støtter etterprøvbarhet, kontekst og tydelig ansvar. Koblingen er vår anvendelse av [Nasjonalarkivets veiledning om internkontroll](https://www.nasjonalarkivet.no/veiledere/etablere-internkontroll-med-dokumentasjonsforvaltningen/), ikke en godkjenning av appen. Et kopiert beslutningsnotat må håndteres etter virksomhetens dokumentasjonsrutiner.
+
+### Innhold og vedlikehold
+
 **Fast vedlikeholdsregel:** Søk etter nye og reviderte, relevante dokumenter hver tirsdag og torsdag kl. 09.00 norsk tid. Kunnskapsbasen endres bare når **GPT-6 Astra med ultra** vurderer det nødvendig. Kontrollen kjøres via eierens Codex og krever at maskinen er på og appen kjører. Regelen vises i brukergrensesnittet. Se [fremgangsmåte, vurderingskrav og publisering](SOURCE_MAINTENANCE.md).
 
 164 kildeposter fra 20 offisielle kilder, inkludert 65 formatoppføringer. Materialet omfatter Noark, regelverk, avlevering, internkontroll, fysisk sikring, dokumentasjonskartlegging, bevaringskriterier, mediekonvertering, kassasjon og Arkade. Etter [Astra Ultra-vurderingen 26.09.2026](maintenance/2026-09-26.md) er en post om Arkade 2.13.1 lagt til, mappeID-kravet presisert og én kildehenvisning rettet. Kontrollen undersøkte alle 19 daværende kilder og nye relevante publikasjoner. Kildenes publiseringsdatoer skilles fra kontrolldatoer; ukjente veilederdatoer forblir ubekreftet.
