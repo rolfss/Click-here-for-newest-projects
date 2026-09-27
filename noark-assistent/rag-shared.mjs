@@ -1,7 +1,7 @@
 import { answerQuestion, searchRecords, findIntent, tokenize, getRecord, getSource, sourceUrl } from './engine.mjs';
 
-export const MODEL_ID = 'gpt-5.6-luna';
-export const MODEL_LABEL = 'GPT-5.6 Luna';
+export const MODEL_ID = 'gpt-6-luna';
+export const MODEL_LABEL = 'GPT-6 Luna';
 export const MAX_QUESTION = 1000;
 export const MAX_HISTORY = 4;
 export const ANSWER_LIMITS = Object.freeze({ claims: 6, claimChars: 1000, words: 650 });

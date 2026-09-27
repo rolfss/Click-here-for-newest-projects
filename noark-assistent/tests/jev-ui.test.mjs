@@ -156,11 +156,15 @@ test('retrieval metadata validates method and status pairs and accepts old Luna 
 });
 
 test('actual answer and relevance provider must agree with the exact allowed model', () => {
+  const cloud = validateUiAnswer(answer());
+  assert.equal(cloud.model, 'gpt-6-luna');
+  assert.equal(answerModeLabel(cloud), 'GPT-6 Luna · medium');
   const local = validateUiAnswer(answer('bonsai'));
   assert.equal(local.model, BONSAI_MODEL_ID);
   assert.match(answerModeLabel(local), /Bonsai/);
   assert.doesNotMatch(answerModeLabel(local), /Luna/);
   for (const invalid of [
+    { ...answer(), model: 'gpt-5.6-luna' },
     { ...answer('bonsai'), model: MODEL_ID },
     { ...answer(), model: BONSAI_MODEL_ID },
     { ...answer('bonsai'), model: 'bonsai-unknown' },

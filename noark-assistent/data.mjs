@@ -8,7 +8,7 @@ import { GUIDANCE_SOURCES, GUIDANCE_RECORDS, FORMAT_RECORDS } from './guidance-d
 import { PRESERVATION_PLAN_SOURCES, PRESERVATION_PLAN_RECORDS } from './preservation-plan-data.mjs';
 import { ARCHIVAL_MAINTENANCE_RECORDS } from './archival-maintenance-data.mjs';
 
-export const BUILD_INFO = Object.freeze({ ...BASE_BUILD, version: '1.4.0', corpusVersion: '2026-09-26' });
+export const BUILD_INFO = Object.freeze({ ...BASE_BUILD, version: '1.5.0', corpusVersion: '2026-09-26' });
 // Explicit, temporary compatibility for the already-deployed Worker. Never accept arbitrary versions.
 export const LEGACY_CORPUS_VERSION = '2026-09-02';
 const originalRecords = [...RECORDS_1, ...RECORDS_2, ...RECORDS_3, ...RECORDS_4];

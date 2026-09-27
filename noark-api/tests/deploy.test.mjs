@@ -16,12 +16,12 @@ test('the deployed September 2 Worker must not be reported as successfully updat
   assert.throws(() => assertDeploymentHealth({
     configured: true, model: 'gpt-5.6-luna', reasoning: 'medium', siteKey: 'public-key',
     corpusVersion: '2026-09-02', dailyBudgetUsd: 2, monthlyBudgetUsd: 6, trialBudgetUsd: 6,
-  }), /corpusVersion, answerVersion/);
+  }), /model, corpusVersion, answerVersion/);
 });
 
 test('missing configuration, wrong model and changed budget fail verification', async () => {
   const good = await health();
-  for (const change of [{ configured: false }, { siteKey: '' }, { model: 'wrong-model' },
+  for (const change of [{ configured: false }, { siteKey: '' }, { model: 'wrong-model' }, { model: 'gpt-5.6-luna' },
     { dailyBudgetUsd: 3 }, { monthlyBudgetUsd: 7 }, { trialBudgetUsd: 7 }]) {
     assert.throws(() => assertDeploymentHealth({ ...good, ...change }));
   }

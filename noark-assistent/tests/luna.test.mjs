@@ -137,7 +137,7 @@ test('decision note preserves all citations and actual generation mode', () => {
   const p = response(); p.claims[0].recordIds.push(candidates[1].record.id);
   const a = finalizeAnswer(q, p, candidates);
   const text = buildDecisionNote(a);
-  assert.match(text, /\[1\] \[2\]/); assert.match(text, /GPT-5.6 Luna/);
+  assert.match(text, /\[1\] \[2\]/); assert.match(text, /GPT-6 Luna/);
   assert.equal(fallbackAnswer(q).mode, 'local');
 });
 test('public backend configuration forbids credentials, HTTP and paths', () => {

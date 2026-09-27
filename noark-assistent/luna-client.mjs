@@ -43,7 +43,7 @@ export function aiDisclosure(status) {
 
 export function answerModeLabel(answer) {
   if (answer.mode === 'bonsai') return 'Bonsai · på eierens PC';
-  if (answer.mode === 'luna') return 'GPT-5.6 Luna · medium';
+  if (answer.mode === 'luna') return 'GPT-6 Luna · medium';
   return answer.mode === 'unavailable' ? 'KI-svar utilgjengelig' : 'Lokalt kildesøk';
 }
 

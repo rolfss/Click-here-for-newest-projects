@@ -53,7 +53,7 @@ export function buildDecisionNote(answer, { generatedAt = new Date() } = {}) {
     '## Beslutningsregel',
     'Dette notatet er fagstøtte. Kontroller ordlyden i originalkildene før juridiske, tekniske, anskaffelsesmessige eller operative beslutninger.',
     '',
-    answer.mode === 'luna' ? 'Svar fra GPT-5.6 Luna (medium); notatet er satt sammen lokalt.' :
+    answer.mode === 'luna' ? 'Svar fra GPT-6 Luna (medium); notatet er satt sammen lokalt.' :
       answer.mode === 'bonsai' ? 'Svar fra Bonsai på eierens PC; notatet er satt sammen lokalt.' :
       'Generert lokalt i Noark 5-arkivassistenten.',
     ...(answer.retrieval?.method === 'jev' ? ['JEV valgte kildegrunnlaget. Dette er ikke en kontroll av påstandenes riktighet.'] : []),

@@ -1,7 +1,7 @@
 import { TITLE_PROMPT_VERSION } from './engine.mjs';
 import { sampleTextForAi } from './extract.mjs';
 
-export const MODEL_ID = 'gpt-5.6-luna';
+export const MODEL_ID = 'gpt-6-luna';
 export const REASONING_EFFORT = 'medium';
 export const BACKEND_ORIGIN = 'https://noark-luna-api.rolfsselas.workers.dev';
 const MAX_REMOTE_TEXT = 12000;
@@ -94,7 +94,7 @@ export function parseAiAnalysisResponse(raw = '') {
     documentDate: cleanString(parsed.documentDate, 20),
     description: cleanString(parsed.description, 320),
     keywords: Array.isArray(parsed.keywords) ? parsed.keywords.map(item => cleanString(item, 60)).filter(Boolean).slice(0, 6) : [],
-    rationale: cleanString(parsed.rationale || parsed.reason, 240) || 'GPT-5.6 Luna vurderte dokumentinnholdet og tilgjengelige metadata.',
+    rationale: cleanString(parsed.rationale || parsed.reason, 240) || 'GPT-6 Luna vurderte dokumentinnholdet og tilgjengelige metadata.',
     confidence
   };
 }

@@ -6,7 +6,7 @@ Korte, kildebaserte svar og konkrete henvisninger til Noark 5 versjon 6.0, arkiv
 
 **Lokalt kildesøk** virker uten konto, server eller API-nøkkel. Appen rangerer kuraterte kildeposter og setter sammen forhåndskontrollerte sammendrag.
 
-**GPT-5.6 Luna**, med resonneringsnivå `medium`, tilpasser svarene til spørsmålet og oppgitt situasjon. Enkle spørsmål besvares kort; forklaringer, sammenligninger og sjekklister får normalt 150–350 ord med begrunnelse og kildehenvisninger. Oppfølgingsspørsmål beholder temaet fra samtalen. API-bruken er separat fra ChatGPT-abonnementet.
+**GPT-6 Luna**, med resonneringsnivå `medium`, tilpasser svarene til spørsmålet og oppgitt situasjon. Enkle spørsmål besvares kort; forklaringer, sammenligninger og sjekklister får normalt 150–350 ord med begrunnelse og kildehenvisninger. Oppfølgingsspørsmål beholder temaet fra samtalen. API-bruken er separat fra ChatGPT-abonnementet.
 
 Når Luna er valgt, erstattes ikke feil med et ferdig lokalt standardsvar. Appen viser «Luna svarte ikke», forklarer årsaken og lar spørsmålet stå klart for nytt forsøk. Brukeren kan velge lokalt søk selv. Kildeoversikten og relevansprosentene beholdes til høyre.
 

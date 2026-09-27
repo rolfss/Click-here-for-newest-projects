@@ -92,7 +92,7 @@ node noark-api/evals/evaluate-jev.mjs --live --compare-luna --max-requests 40
 ```
 
 Denne varianten gjør ekstra betalte OpenAI-kall. Den gjenbruker appens faktiske
-`buildPayload`, `gpt-5.6-luna`, medium resonnering, `store: false`, svarskjema og
+`buildPayload`, `gpt-6-luna`, medium resonnering, `store: false`, svarskjema og
 siteringsvalidering. Den ber ikke Cloudflare om å utlevere en lagret nøkkel.
 Rapporten lagrer kilde-ID-er, skårer, summerte tokens og tidsbruk; rå leverandørsvar
 og genererte svartekster lagres ikke.

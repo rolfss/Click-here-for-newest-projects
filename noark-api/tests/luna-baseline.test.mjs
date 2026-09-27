@@ -37,7 +37,7 @@ test('Luna comparison reuses the exact production payload and normalizes real ca
     assert.ok(options.signal instanceof AbortSignal);
     const payload = JSON.parse(options.body);
     assert.deepEqual(payload, buildPayload(question, history, candidates).body);
-    assert.equal(payload.model, 'gpt-5.6-luna');
+    assert.equal(payload.model, 'gpt-6-luna');
     assert.deepEqual(payload.reasoning, { effort: 'medium' });
     assert.equal(payload.store, false);
     return Response.json(completed());

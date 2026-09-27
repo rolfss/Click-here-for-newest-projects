@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildArchivePayload, cleanArchiveRequest } from '../worker.mjs';
+import { MODEL_ID as ARCHIVE_CLIENT_MODEL_ID } from '../../archive-assist/ai.mjs';
 
 const request = () => cleanArchiveRequest({
   requestId: '123e4567-e89b-12d3-a456-426614174000',
@@ -15,9 +16,10 @@ const request = () => cleanArchiveRequest({
   }
 });
 
-test('Archive Assist bruker GPT-5.6 Luna med medium reasoning og uten lagring', () => {
+test('Archive Assist bruker GPT-6 Luna med medium reasoning og uten lagring', () => {
   const { body, reserve } = buildArchivePayload(request());
-  assert.equal(body.model, 'gpt-5.6-luna');
+  assert.equal(body.model, 'gpt-6-luna');
+  assert.equal(body.model, ARCHIVE_CLIENT_MODEL_ID);
   assert.equal(body.reasoning.effort, 'medium');
   assert.equal(body.store, false);
   assert.equal(body.tools, undefined);

@@ -11,10 +11,10 @@ export const LIMITS = Object.freeze({ bodyBytes: 12000, promptBytes: 48000, outp
 const ARCHIVE_BODY_BYTES = 30000;
 const ARCHIVE_TEXT_CHARS = 12000;
 const ARCHIVE_OUTPUT_TOKENS = 3072;
-// Preserve the existing trial's conservative price assumptions; this is not an invoice.
+// Keep the trial's conservative reservation rates for GPT-6 Luna; this is not an invoice.
 export const estimatedCost = (input, output) => Math.ceil(input * 0.25 + output * 1.2);
 const encoder = new TextEncoder();
-export const ANSWER_VERSION = '2026-09-26-jev-bonsai-v2';
+export const ANSWER_VERSION = '2026-09-27-gpt6-luna-v1';
 export const BONSAI_MODEL_ID = 'Bonsai-2-27B-PQ2_0';
 export const BONSAI_CONSENT = '2026-09-26-bonsai-v1';
 const bonsaiEnabled = (env) => env.BONSAI_ENABLED === 'true' && Boolean(env.BONSAI);

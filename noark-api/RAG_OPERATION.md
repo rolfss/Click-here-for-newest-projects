@@ -1,7 +1,7 @@
 # NOARK med JEV, Luna og Bonsai
 
 Appen søker i sitt kuraterte kildegrunnlag, lar JEV velge opptil 12 av 24
-kandidatposter og lar GPT-5.6 Luna skrive et svar med kontrollerte kilde-ID-er.
+kandidatposter og lar GPT-6 Luna skrive et svar med kontrollerte kilde-ID-er.
 JEV velger kilder; det er ikke en garanti for at svaret er riktig. Semantisk
 kontroll av påstander er fortsatt bare en evaluering, fordi den første målingen
 feilaktig avviste en støttet påstand.
