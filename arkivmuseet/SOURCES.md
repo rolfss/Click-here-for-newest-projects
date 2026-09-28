@@ -1,6 +1,6 @@
 # Kilder til Arkivmuseet
 
-Kontrollert 8. september 2026. Originalkildene er lenket. Førstesiden av rapportene om Osen og NPE vises også som merkede faksimiler, med originalkilden tilgjengelig.
+Historiske saksutstillinger: kildekontroll 8. september 2026. Lederoversikt: ny gjennomgang 26. september 2026. Datoene gjelder ulike deler av innholdet. Originalkildene er lenket. Førstesiden av rapportene om Osen og NPE vises også som merkede faksimiler, med originalkilden tilgjengelig.
 
 ## osen25: Endelig tilsynsrapport og pålegg – Osen kommune
 
@@ -70,4 +70,15 @@ Osen-rapporten gjelder et tilsyn i 2025 selv om saksreferansen starter med 2024.
 
 Det ble også søkt i rapportene om Statistisk sentralbyrå (5.–6. mars 2024), Helseklage (5.–6. november 2024), Ibestad (12.–13. juni 2024) og Sauda (24. og 30. september 2024). De er utelatt fra denne utgaven for å holde antallet historier avgrenset. Tilsynsrapportene finnes i [statlig katalog](https://www.nasjonalarkivet.no/offentlig-forvaltning/om_tilsyn/tilsynsrapporter-fra-statlig-sektor/) og [kommunal katalog](https://www.nasjonalarkivet.no/offentlig-forvaltning/om_tilsyn/tilsynsrapporter-fra-kommunal-sektor/).
 
-Lovdata ble kontrollert ved direkte henting av konsolidert lov- og forskriftstekst. Alle fem historiske hovedkilder og begge Lovdata-tekster ga HTTP 200.
+Kildekontrollen i den opprinnelige saksutstillingen beholdes som historikk; et nytt bygg er ikke en ny nett- eller innholdskontroll. For gjennomgangen 26. september 2026 ble lovtekst hos Nasjonalarkivet, forskriftstekst gjengitt fra Lovdata hos ESA, bevaringsforskrifta og oppdaterte offentlige veiledere brukt. Lovdata-lenkene er fortsatt kanoniske henvisninger; direkte Lovdata-henting var ikke tilgjengelig under denne gjennomgangen. Se LEADER-PURPOSE.md.
+
+## Lederoversikt – gjennomgått 2026-09-26
+
+- **Lovtekst: Arkivlova § 1 – formål** — https://www.nasjonalarkivet.no/offentlig-forvaltning/regelverk-og-standarder/lover-og-forskrifter/lov-om-dokumentasjon-og-arkiv-arkivlova/
+- **Lovtekst: Arkivlova – §§ 3, 5, 8, 12–14 og ikraftsetting** — https://lovdata.no/dokument/NL/lov/2025-06-20-96 (lest i tilgjengelig gjengivelse: https://www.nasjonalarkivet.no/offentlig-forvaltning/regelverk-og-standarder/lover-og-forskrifter/lov-om-dokumentasjon-og-arkiv-arkivlova/)
+- **Forskrift: Arkivforskrifta – §§ 3, 12–15** — https://lovdata.no/dokument/SF/forskrift/2025-12-17-2647 (lest i tilgjengelig gjengivelse: https://www.eftasurv.int/cms/sites/default/files/documents/gopro/2025-9024-NO.pdf)
+- **Offentlig veiledning: Nasjonalarkivet: Hvilken dokumentasjon skal forvaltes som arkiv?** — https://www.nasjonalarkivet.no/veiledere/veileder-for-a-vurdere-hvilken-dokumentasjon-som-skal-forvaltes-som-arkiv/
+- **Offentlig veiledning: Nasjonalarkivet: Internkontroll med dokumentasjonsforvaltningen** — https://www.nasjonalarkivet.no/veiledere/etablere-internkontroll-med-dokumentasjonsforvaltningen/
+- **Offentlig veiledning: Nasjonalarkivet: Informasjonssystemer – krav og muligheter** — https://www.nasjonalarkivet.no/offentlig-forvaltning/dokumentasjonsforvaltning/informasjonssystemer-nytt-regelverk-gir-nye-muligheter/
+- **Offentlig veiledning: Sivilombudets innsynsguide – oppdatert 5. mai 2026** — https://www.sivilombudet.no/veiledere/innsynsguiden/
+- **Forskrift: Bevaringsforskrifta – FOR-2025-12-19-2729** — https://www.nasjonalarkivet.no/offentlig-forvaltning/forskrift-om-kva-dokumentasjon-som-skal-takast-vare-pa-for-ettertida-bevaringsforskrifta/

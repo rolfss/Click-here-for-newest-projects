@@ -5,13 +5,15 @@
   "type": "module",
   "packageManager": "pnpm@11.19.0",
   "scripts": {
-    "dev": "vite --host 127.0.0.1 --port 5196 --strictPort",
-    "build": "node scripts/validate-cases.mjs && node scripts/make-text-version.mjs && node scripts/make-investigation-text.mjs && tsc --noEmit && vite build",
+    "dev": "pnpm content && vite --host 127.0.0.1 --port 5196 --strictPort",
+    "build": "pnpm content && tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1 --port 4196 --strictPort",
-    "test": "node --experimental-strip-types --test tests/*.test.mjs",
+    "test": "pnpm content && node --experimental-strip-types --test tests/*.test.mjs",
     "test:browser": "node scripts/verify-browser.mjs",
     "test:investigation": "node scripts/verify-investigation.mjs",
-    "test:visit-ui": "node scripts/verify-visit-ui.mjs"
+    "test:visit-ui": "node scripts/verify-visit-ui.mjs && node scripts/verify-leadership.mjs",
+    "test:leadership": "node scripts/verify-leadership.mjs",
+    "content": "node scripts/validate-cases.mjs && node --experimental-strip-types scripts/make-text-version.mjs && node --experimental-strip-types scripts/make-leader-version.mjs && node scripts/make-investigation-text.mjs"
   },
   "dependencies": {
     "@dimforge/rapier3d": "0.20.0",

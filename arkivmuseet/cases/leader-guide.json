@@ -1,0 +1,137 @@
+{
+  "reviewed": "2026-09-26",
+  "title": "Arkiv gir handlingsrom",
+  "intro": "Når dokumentasjon kan finnes, forstås og etterprøves, kan den brukes til mer enn å forklare fortiden. Den gir et grunnlag for neste beslutning.",
+  "framing": "Mulighetene nedenfor er museets faglige perspektiv, ikke målte gevinster i de fem sakene. Lovens formål knytter arkiv til etterprøvbar forvaltning, rettssikkerhet, forskning og kulturarv.",
+  "benefits": [
+    {
+      "id": "handle",
+      "title": "Handle med kunnskap",
+      "opportunity": "Nye medarbeidere kan overta en oppgave uten å måtte gjette seg til tidligere vurderinger. Beslutningsgrunnlag kan undersøkes, gjenbrukes og utfordres.",
+      "pitfall": "En filsamling uten opphav og sammenheng kan gi et misvisende bilde. Mye lagret informasjon er ikke det samme som god dokumentasjon.",
+      "question": "Kan en kollega som ikke var med, finne grunnlaget for én viktig beslutning?",
+      "sourceIds": ["purpose", "capture"]
+    },
+    {
+      "id": "rights",
+      "title": "Gjøre rettigheter brukbare",
+      "opportunity": "Dokumentasjon gjør det mulig å undersøke hva som er avtalt, besluttet og gjort. Den kan gi grunnlag for innsyn, klage og kontroll.",
+      "pitfall": "Åpenhet betyr ikke å publisere alt. Manglende gjenfinning og utilstrekkelig skjerming kan ramme på hver sin måte.",
+      "question": "Kan vi finne riktig underlag og samtidig beskytte opplysningene som skal skjermes?",
+      "sourceIds": ["purpose", "access"]
+    },
+    {
+      "id": "future",
+      "title": "Beholde muligheter for fremtiden",
+      "opportunity": "Kunnskap kan følge virksomheten gjennom systembytter og omorganisering. Utvalgte arkiver kan senere bli kilder til forskning og felles historie.",
+      "pitfall": "Bevaring er ikke å la alt bli liggende. Uavklart oppbevaring, sletting og lesbarhet skyver beslutningene foran oss.",
+      "question": "Hva må fortsatt kunne brukes når dagens system, leverandør eller nøkkelperson er borte?",
+      "sourceIds": ["purpose", "systems", "retention"]
+    }
+  ],
+  "lenses": [
+    {
+      "caseId": "osen",
+      "theme": "Fra ferdig dokument til brukbar åpenhet",
+      "opportunity": "En oppdatert journal kan gjøre virksomhetens arbeid lettere å finne og undersøke – også for dem som ikke kjenner saksbehandlingen.",
+      "risk": "At et dokument er ferdigstilt, forteller ikke alene om det er kvalitetssikret, registrert og mulig å finne gjennom journalen.",
+      "question": "Hvem følger opp overgangen fra ferdigstilt dokument til en kvalitetssikret journalpost?",
+      "dutyId": "journal"
+    },
+    {
+      "caseId": "tokke",
+      "theme": "Forny systemene uten å miste hukommelsen",
+      "opportunity": "Et systembytte kan rydde opp i informasjonen og gjøre den lettere å bruke videre, når historikk og lesbarhet følger med.",
+      "risk": "Å ha en kopi av en database er ikke i seg selv bevis på at mennesker kan finne og forstå innholdet etter at systemet er stengt.",
+      "question": "Hvem har faktisk prøvd å finne og lese et representativt utvalg etter uttrekket?",
+      "dutyId": "systems"
+    },
+    {
+      "caseId": "innsyn",
+      "theme": "Gjør en avgjørelse mulig å kontrollere",
+      "opportunity": "Et etterprøvbart saksforløp gir både innbyggeren og virksomheten et grunnlag for å forstå avgjørelsen, oppdage feil og lære.",
+      "risk": "Et svarbrev alene viser ikke nødvendigvis hva som ble vurdert eller hva som skjedde med en klage.",
+      "question": "Kan en annen følge én innsynsklage fra kravet til avgjørelsen og oversendelsen?",
+      "dutyId": "access"
+    },
+    {
+      "caseId": "hanekleiv",
+      "theme": "La kunnskapen følge leveransen",
+      "opportunity": "Når drift får et forståelig og kontrollerbart underlag, kan tidligere vurderinger brukes i vedlikehold, kontroll og senere endringer.",
+      "risk": "En fysisk leveranse kan være på plass mens kunnskapen om den fortsatt ligger hos enkeltpersoner eller en tidligere leverandør.",
+      "question": "Hva må drift kunne finne og forstå før vi regner overleveringen som fullført?",
+      "dutyId": "capture"
+    },
+    {
+      "caseId": "npe",
+      "theme": "Gjør opplysningene rundt filen pålitelige",
+      "opportunity": "Datoer, sakstilknytning og opphav kan gjøre dokumenter lettere å sortere, tolke og kontrollere. Kvalitetsarbeid kan rettes mot det som faktisk har betydning.",
+      "risk": "En fil kan være bevart selv om opplysningene rundt den mangler. Omvendt sier et avvik i et felt ikke alene hvor alvorlig følgen er.",
+      "question": "Hvilke metadata trenger vi, og hva viser en stikkprøve om både kvalitet og faktisk betydning?",
+      "dutyId": "journal"
+    }
+  ],
+  "scope": "Dette er en oversikt for ledere i virksomheter som omfattes av arkivlova. Stat, fylkeskommuner og kommuner er omfattet, med lovens unntak. Andre rettssubjekter omfattes i saker der de treffer enkeltvedtak eller gir forskrift. Avklar særregler og egen virksomhets virkeområde; kravene gjelder ikke automatisk alle private virksomheter.",
+  "commencement": "Arkivlovas §§ 1–10 og 12–25 trådte i kraft 1. januar 2026. § 11 har særskilt ikraftsetting; overgangsregelen om utførsel av arkiv må kontrolleres før slike løsninger vurderes. Denne oversikten godkjenner ikke skylagring eller lagring i utlandet.",
+  "boundary": "Rettslige hovedtrekk, ikke en fullstendig juridisk vurdering eller en bekreftelse på etterlevelse. Historiske funn vurderes etter datidens regler. Se alltid bestemmelsene, virkeområdet og eventuelle særregler for den konkrete oppgaven.",
+  "duties": [
+    {
+      "id": "capture",
+      "title": "Dokumenter det virksomheten gjør",
+      "requirement": "Dokumentasjon som skal forvaltes som arkiv må sikres med kjent opphav og sammenheng. Vurderingen gjelder virksomhetens oppgaver og dokumentasjonsbehov, ikke bare filer i et sak-/arkivsystem.",
+      "distinction": "Arkivplikt er ikke det samme som journalplikt. Et internt notat eller data i et fagsystem kan ha arkivverdi selv om det ikke skal på offentlig journal.",
+      "ask": "Be fag, arkiv og IT kartlegge én viktig arbeidsprosess: hva må dokumenteres, i hvilke kanaler, og hvem sørger for at det blir sikret?",
+      "sourceIds": ["capture", "law"]
+    },
+    {
+      "id": "control",
+      "title": "Gjør arkiv til en ledelsesoppgave",
+      "requirement": "Virksomheten skal ha en oppdatert dokumentasjonsplan og internkontroll. Arkivforskrifta § 13 viser til kommuneloven § 25-1 for kommuner og fylkeskommuner. For andre omfattede organer har øverste ledelse ansvaret; dokumentasjonsplanen skal legges frem minst årlig.",
+      "distinction": "Oppgaver kan fordeles, men en plan eller en leverandør erstatter ikke ledelsens oppfølging av risiko og avvik.",
+      "ask": "Avtal hvem som eier risikoen, hvilke ressurser som trengs, og når ledelsen skal se dokumenterte resultater – ikke bare en aktivitetsliste.",
+      "sourceIds": ["control", "regulation"]
+    },
+    {
+      "id": "journal",
+      "title": "Før journal – med riktige metadata",
+      "requirement": "Arkivforskrifta §§ 14–15 regulerer hvilke dokumenter som skal journalføres og den løpende registreringen av metadata. Inngående og utgående saksdokumenter omfattes når vilkårene om saksbehandling og dokumentasjonsverdi er oppfylt; interne dokumenter har særregler.",
+      "distinction": "Vanlige innsynssaker er unntatt fra journalplikt etter § 14 tredje ledd, med særskilte unntak blant annet for nærmere begrunnelse og klage. Arkivplikt må vurderes separat.",
+      "ask": "Prøv en stikkprøve fra ferdigstilt dokument til journal. Undersøk datoer, tittel, sakssammenheng og skjerming, og avklar ansvar for restansene.",
+      "sourceIds": ["regulation"]
+    },
+    {
+      "id": "access",
+      "title": "Legg til rette for innsyn – og beskytt det som skal skjermes",
+      "requirement": "Offentleglova § 3 gir hovedregelen om innsyn i saksdokumenter og journaler. Unntak trenger hjemmel. Taushetsbelagte opplysninger skal unntas etter § 13; merinnsyn etter § 11 vurderes ved skjønnsmessige unntak, ikke i taushetsbelagte opplysninger.",
+      "distinction": "Manglende journalføring opphever ikke innsynsretten. Å arkivere, å journalføre og å publisere er tre forskjellige handlinger.",
+      "ask": "Be om en prøve som viser både gjenfinning og en begrunnet innsynsvurdering. Kontroller at skjerming ikke skjuler mer enn det er grunnlag for.",
+      "sourceIds": ["access"]
+    },
+    {
+      "id": "systems",
+      "title": "Still krav til systemet – og til veien ut",
+      "requirement": "Arkivforskrifta §§ 5–7 stiller funksjonskrav til systemer, systembeskrivelser og vedlikehold. Blant kravene er metadata, vern mot uautoriserte endringer, sporbarhet, gjenfinning og kontrollert eksport.",
+      "distinction": "Teknologinøytrale krav gir rom for ulike løsninger, men et produktnavn eller en sikkerhetskopi dokumenterer ikke alene at kravene er oppfylt.",
+      "ask": "Legg en faktisk prøve av eksport, sammenheng, fullstendighet og lesbarhet inn i anskaffelse og avvikling. Avklar hvem som lukker feil før tilgangen forsvinner.",
+      "sourceIds": ["systems"]
+    },
+    {
+      "id": "retention",
+      "title": "Velg hva som skal vare – og styr slettingen",
+      "requirement": "Arkivlova §§ 12–14 og bevaringsforskrifta regulerer bevaring for ettertiden, kassasjon og langtidsbevaring. For dokumentasjon som ikke skal bevares for ettertiden, må oppbevaringstiden vurderes etter arkivforskrifta § 3 og andre relevante behov og regler.",
+      "distinction": "Arkiv betyr ikke å beholde alt for alltid. Personvern er heller ikke en generell tillatelse til å slette bevaringspliktig dokumentasjon.",
+      "ask": "Be om dokumenterte bevarings- og oppbevaringsvalg før automatisert sletting. Avklar hvordan materialet skal kunne finnes og brukes gjennom hele oppbevaringstiden.",
+      "sourceIds": ["retention", "law", "regulation"]
+    }
+  ],
+  "sources": [
+    {"id":"purpose","label":"Arkivlova § 1 – formål","url":"https://www.nasjonalarkivet.no/offentlig-forvaltning/regelverk-og-standarder/lover-og-forskrifter/lov-om-dokumentasjon-og-arkiv-arkivlova/","kind":"Lovtekst"},
+    {"id":"law","label":"Arkivlova – §§ 3, 5, 8, 12–14 og ikraftsetting","url":"https://lovdata.no/dokument/NL/lov/2025-06-20-96","kind":"Lovtekst","verificationUrl":"https://www.nasjonalarkivet.no/offentlig-forvaltning/regelverk-og-standarder/lover-og-forskrifter/lov-om-dokumentasjon-og-arkiv-arkivlova/"},
+    {"id":"regulation","label":"Arkivforskrifta – §§ 3, 12–15","url":"https://lovdata.no/dokument/SF/forskrift/2025-12-17-2647","kind":"Forskrift","verificationUrl":"https://www.eftasurv.int/cms/sites/default/files/documents/gopro/2025-9024-NO.pdf"},
+    {"id":"capture","label":"Nasjonalarkivet: Hvilken dokumentasjon skal forvaltes som arkiv?","url":"https://www.nasjonalarkivet.no/veiledere/veileder-for-a-vurdere-hvilken-dokumentasjon-som-skal-forvaltes-som-arkiv/","kind":"Offentlig veiledning"},
+    {"id":"control","label":"Nasjonalarkivet: Internkontroll med dokumentasjonsforvaltningen","url":"https://www.nasjonalarkivet.no/veiledere/etablere-internkontroll-med-dokumentasjonsforvaltningen/","kind":"Offentlig veiledning"},
+    {"id":"systems","label":"Nasjonalarkivet: Informasjonssystemer – krav og muligheter","url":"https://www.nasjonalarkivet.no/offentlig-forvaltning/dokumentasjonsforvaltning/informasjonssystemer-nytt-regelverk-gir-nye-muligheter/","kind":"Offentlig veiledning"},
+    {"id":"access","label":"Sivilombudets innsynsguide – oppdatert 5. mai 2026","url":"https://www.sivilombudet.no/veiledere/innsynsguiden/","kind":"Offentlig veiledning"},
+    {"id":"retention","label":"Bevaringsforskrifta – FOR-2025-12-19-2729","url":"https://www.nasjonalarkivet.no/offentlig-forvaltning/forskrift-om-kva-dokumentasjon-som-skal-takast-vare-pa-for-ettertida-bevaringsforskrifta/","kind":"Forskrift"}
+  ]
+}

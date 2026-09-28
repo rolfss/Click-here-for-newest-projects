@@ -7,3 +7,8 @@ public/sak17.html
 qa-visit/
 qa-logs/
 public/etterforskning.html
+
+# Generated from the same editorial data as the interactive exhibition.
+public/tekst.html
+public/leder.html
+public/leader-guide.css

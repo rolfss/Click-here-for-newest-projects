@@ -1,0 +1,88 @@
+/* Shared exhibition typography; no fixed overlays or extra permanent HUD controls. */
+.leader-guide,.case-leader-lens{--guide-accent:#d9bd83;--guide-rule:#d9bd8345;--guide-wash:#d9bd8310;--guide-muted:#c5ccbd;overflow-wrap:anywhere}
+.guide-lead{font:1.22rem/1.5 Georgia,serif;margin-bottom:1rem}
+.guide-kicker{font-size:.67rem;letter-spacing:.12em;line-height:1.6;color:var(--guide-accent);margin-bottom:.65rem}
+.guide-boundary{font-size:.8rem;line-height:1.6;color:var(--guide-muted);margin:.75rem 0 1.1rem}
+.benefit-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin:1.3rem 0}
+.benefit-card{border-top:2px solid var(--guide-accent);padding:1.1rem .2rem 0;min-width:0}
+.benefit-card h3{font:1.45rem/1.2 Georgia,serif;margin-bottom:.85rem}
+.benefit-card p{font-size:.92rem;line-height:1.65}
+.benefit-card .guide-kicker{font-size:.65rem}
+.benefit-card details{border-top:1px solid var(--guide-rule);margin-top:.7rem}
+.leader-guide summary{cursor:pointer;min-height:44px;padding:.8rem 0;font-size:.91rem;line-height:1.5}
+.leader-guide summary:focus-visible{outline:3px solid var(--guide-accent);outline-offset:3px}
+.guide-question{font:italic 1.06rem/1.6 Georgia,serif;border-left:2px solid var(--guide-accent);padding:.2rem 0 .2rem 1rem;margin:1.2rem 0}
+.guide-references{padding-left:1.1rem;margin:.85rem 0 1.2rem;font-size:.73rem;line-height:1.65}
+.guide-references li{margin:.5rem 0}
+.guide-references a{overflow-wrap:anywhere;text-decoration-thickness:1px;text-underline-offset:3px}
+.guide-references span{color:var(--guide-muted)}
+.guide-duty{border-top:1px solid var(--guide-rule);scroll-margin-top:1rem}
+.guide-duty:last-child{border-bottom:1px solid var(--guide-rule)}
+.guide-duty>summary{display:flex;gap:1rem;align-items:baseline;padding:1.1rem .2rem;list-style:none;font:1.15rem/1.4 Georgia,serif}
+.guide-duty>summary::-webkit-details-marker{display:none}
+.guide-duty>summary::after{content:'+';font:1.3rem/1.1 system-ui;margin-left:auto;flex:none;color:var(--guide-accent)}
+.guide-duty[open]>summary::after{content:'−'}
+.duty-number{font:.7rem/1.5 system-ui;color:var(--guide-accent);flex:none}
+.duty-content{padding:0 .25rem 1rem 2.15rem}
+.duty-content>p{font-size:.94rem;line-height:1.75}
+.guide-distinction{background:var(--guide-wash);padding:1rem;border-left:2px solid var(--guide-rule)}
+.guide-action{border-top:1px solid var(--guide-rule);padding-top:1rem}
+.guide-action p:last-child{font-size:.94rem;line-height:1.7}
+.guide-transition{margin-top:1.25rem}
+.guide-transition p{font-size:.85rem;line-height:1.7}
+.case-leader-lens{border-top:2px solid var(--guide-accent);padding-top:1.2rem;margin:1.2rem 0}
+.case-leader-lens h3{font:1.55rem/1.25 Georgia,serif;margin-bottom:1rem}
+.case-leader-lens dl{margin:0}
+.case-leader-lens dl>div{margin:1rem 0}
+.case-leader-lens dt{font-size:.79rem;font-weight:650;color:var(--guide-accent);margin-bottom:.35rem}
+.case-leader-lens dd{font-size:.94rem;line-height:1.7;margin:0}
+.leader-case-actions{display:flex;flex-wrap:wrap;gap:.65rem;margin:1rem 0}
+.leader-case-actions button{font-size:.83rem}
+.leader-room-promise{margin:1.2rem 0;padding:1rem;border-top:2px solid #d9bd83;background:#d9bd8310}
+.leader-room-promise p{margin:.45rem 0;font-size:.95rem}
+.leader-room-promise strong{color:#d9bd83}
+#leader-meaning{font-size:.85rem;margin-top:.8rem}
+.evidence-figure button{border:0;padding:0;width:100%;position:relative;background:transparent;display:block}
+.evidence-figure button img{display:block}
+.evidence-figure button>span{position:absolute;bottom:.6rem;right:.6rem;background:#162721ef;color:#ede7d9;padding:.45rem .65rem;font-size:.74rem;border:1px solid #d9bd8380}
+.guide-reading-link{margin:1rem 0;font-size:.85rem}
+@media(max-width:700px){.benefit-grid{grid-template-columns:1fr}.benefit-card{padding-top:.9rem}.benefit-card h3{font-size:1.45rem}.duty-content{padding-left:.2rem}.guide-duty>summary{gap:.7rem}.leader-case-actions{flex-direction:column}.leader-case-actions button{width:100%;text-align:left}.guide-references{font-size:.78rem}}
+@media(prefers-reduced-motion:reduce){.leader-guide,.case-leader-lens{scroll-behavior:auto}}
+/* The display wordmark must not enlarge the mobile layout viewport behind a modal.
+   Reading text still follows the user's text-size setting; no clipping or zoom lock. */
+@media(max-width:800px){#intro h1{font-size:min(clamp(4.8rem,15vw,7rem),calc((100vw - 3rem)*.27))}}
+/* Keep the header outside the scrolling region, including long titles and enlarged text. */
+dialog[open]{display:flex;flex-direction:column;overflow:hidden}
+.dialog-header{position:relative;top:auto;flex:0 0 auto;min-width:0}
+.dialog-header h2{flex:1;min-width:0;overflow-wrap:anywhere}
+#dialog-close{flex:0 0 44px;align-self:flex-start}
+#dialog-body{flex:1 1 auto;min-height:0;min-width:0;overflow-y:auto;overscroll-behavior:contain}
+/* Dialogs share the paper palette; light museum accents are not readable on paper. */
+dialog .leader-guide{--guide-accent:#765e2c;--guide-rule:#9a895366;--guide-wash:#d6cfb94d;--guide-muted:#495b4d}
+/* Action-plan privacy and calendar instructions are essential, not decorative. */
+#dialog #plan-storage,#dialog #calendar-help{color:#495b4d}
+/* Static reading routes use the same component markup in a paper-like palette. */
+.guide-page{background:#ece8dc;color:#182c26;font:18px/1.75 system-ui;scroll-behavior:smooth}
+.guide-page body{max-width:1060px;margin:auto;padding:2rem 1.3rem 5rem}
+.guide-page h1,.guide-page h2,.guide-page h3{font-family:Georgia,serif;font-weight:400;line-height:1.25}
+.guide-page h1{font-size:clamp(2.35rem,7vw,4.2rem);max-width:17ch;margin:1.25rem 0}
+.guide-page h2{font-size:clamp(1.9rem,5vw,2.65rem);margin:0 0 1.25rem}
+.guide-page a{color:#345b4c;text-underline-offset:4px}
+.guide-page a:focus-visible{outline:3px solid #70582c;outline-offset:3px}
+.guide-page .leader-guide,.guide-page .case-leader-lens{--guide-accent:#765e2c;--guide-rule:#9a895366;--guide-wash:#d6cfb94d;--guide-muted:#495b4d}
+.guide-page .guide-section{border-top:1px solid #b5ab8e;padding:2rem 0;scroll-margin-top:1rem}
+.guide-page .guide-nav{display:flex;flex-wrap:wrap;gap:.6rem 1.5rem;padding:1rem 0 2rem}
+.guide-page .guide-nav a{min-height:44px;display:inline-flex;align-items:center}
+.guide-page .guide-back{display:inline-block;min-height:44px}
+.guide-page .case-index{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.guide-page .case-index article{padding:1rem;border:1px solid #b5ab8e}
+.guide-page .case-index h3{margin-top:.4rem}
+.guide-page .case-index p{font-size:.93rem}
+.guide-page .guide-action-sheet{background:#e0dbc9;padding:1.4rem;border-left:3px solid #765e2c}
+.guide-page .guide-action-sheet li{margin:1rem 0}
+.guide-page footer{border-top:1px solid #b5ab8e;padding-top:1.5rem;font-size:.85rem}
+.text-version .leader-guide,.text-version .case-leader-lens{--guide-accent:#765e2c;--guide-rule:#9a895366;--guide-wash:#d6cfb94d;--guide-muted:#495b4d}
+.text-version .leader-guide section,.text-version .case-leader-lens{padding-top:1rem}
+.text-version .benefit-grid{grid-template-columns:1fr}
+@media(max-width:600px){.guide-page .case-index{grid-template-columns:1fr}.guide-page body{padding:1.4rem 1rem 3rem}}
+@media print{.guide-page .guide-nav,.guide-page .guide-back,.guide-page footer{display:none}.guide-page{background:white;color:black;font-size:11pt}.guide-page body{max-width:none;padding:0}.guide-page a{color:inherit}.guide-page .guide-section{break-before:page}.guide-page .benefit-grid,.guide-page .case-index{display:block}.guide-page .guide-duty{break-inside:avoid}.guide-page .guide-duty::details-content,.guide-page .benefit-card details::details-content,.guide-page .guide-transition::details-content{content-visibility:visible!important;display:block!important}.guide-page details>*:not(summary){display:block!important}}

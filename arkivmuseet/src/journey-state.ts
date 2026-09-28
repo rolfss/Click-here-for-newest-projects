@@ -34,7 +34,7 @@ export function restoreJourney(raw:string|null,missions:Mission[]):JourneyState{
         state.attempts[m.id]=next;
       }
       const p=value.plan?.[m.id];
-      if(p&&typeof p==='object')state.plan[m.id]={selected:p.selected===true,owner:typeof p.owner==='string'?p.owner.slice(0,100):'',due:typeof p.due==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(p.due)?p.due:''};
+      if(p&&typeof p==='object')state.plan[m.id]={selected:p.selected===true,owner:typeof p.owner==='string'?p.owner.slice(0,100):'',due:validPlanDate(p.due)?p.due:''};
     }
   }catch{/* Damaged or unavailable browser storage must never prevent a visit. */}
   return state;
@@ -45,4 +45,56 @@ export function planText(missions:Mission[],state:JourneyState){
     ...selected.flatMap((m,i)=>[`${i+1}. ${m.badge}`,`Bestilling: ${m.action}`,`Ansvarlig rolle: ${state.plan[m.id].owner||'Avklares i ledermøtet'}`,`Oppfølging: ${state.plan[m.id].due||'Avklares i ledermøtet'}`,`Be om å få se: ${m.proof}`,'']),
     'Første møte: Velg en konkret sak eller leveranse. Avtal hvem som prøver gjenfinning, når dere følger opp, og hvordan avvik lukkes.',
     'Læringsøvelse, ikke en vurdering av virksomhetens etterlevelse. Ingen faktiske saksopplysninger er nødvendige.'].join('\n');
+}
+
+/** Select a practical action without awarding or changing any exercise progress. */
+export function selectPlanItem(state:JourneyState,missions:Mission[],id:string):boolean{
+  if(!missions.some(m=>m.id===id))return false;
+  const item=state.plan[id]??={selected:false,owner:'',due:''};
+  item.selected=true;
+  return true;
+}
+
+
+export function validPlanDate(value: unknown): value is string {
+  if (typeof value !== 'string' || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value) || value.startsWith('0000')) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+export function datedPlan(missions: Mission[], state: JourneyState) {
+  return missions.filter(m => state.plan[m.id]?.selected && validPlanDate(state.plan[m.id].due));
+}
+
+// RFC 5545 sections 3.1, 3.3.11 and 3.6.1: escape TEXT, fold UTF-8 at
+// <=75 octets, use CRLF, and make DATE-only events one day without a timezone.
+const text = (value: string) => value.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '')
+  .replace(/\\/g, '\\\\').replace(/\r\n|\r|\n/g, '\\n').replace(/;/g, '\\;').replace(/,/g, '\\,');
+function fold(line: string) {
+  const encoder = new TextEncoder();
+  let result = '', octets = 0;
+  for (const character of line) {
+    const size = encoder.encode(character).length;
+    if (octets + size > 75) { result += '\r\n '; octets = 1; }
+    result += character; octets += size;
+  }
+  return result;
+}
+
+/** A local file only: no calendar account, invitations, alerts or network calls. */
+export function planCalendar(missions: Mission[], state: JourneyState, now = new Date(), uid = crypto.randomUUID()) {
+  const selected = datedPlan(missions, state);
+  if (!selected.length) throw new Error('Velg minst ett tiltak med gyldig oppfølgingsdato.');
+  if (!Number.isFinite(now.getTime()) || !/^[0-9a-f-]{36}$/i.test(uid)) throw new Error('Ugyldig kalenderidentifikator.');
+  const stamp = now.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Arkivmuseet//Lederbestilling//NO', 'CALSCALE:GREGORIAN'];
+  selected.forEach((m, index) => {
+    const item = state.plan[m.id];
+    const description = [`Ansvarlig rolle: ${item.owner || 'Avklares i ledermøtet'}`, `Bestilling: ${m.action}`,
+      `Be om å få se: ${m.proof}`, 'Tiltaket må tilpasses virksomheten. Ikke en vurdering av etterlevelse.'].join('\n');
+    lines.push('BEGIN:VEVENT', `UID:${uid}-${index}@arkivmuseet.invalid`, `DTSTAMP:${stamp}`,
+      `DTSTART;VALUE=DATE:${item.due.replace(/-/g, '')}`, `SUMMARY:${text(`Følg opp: ${m.badge}`)}`,
+      `DESCRIPTION:${text(description)}`, 'TRANSP:TRANSPARENT', 'CLASS:PRIVATE', 'END:VEVENT');
+  });
+  return [...lines, 'END:VCALENDAR'].map(fold).join('\r\n') + '\r\n';
 }

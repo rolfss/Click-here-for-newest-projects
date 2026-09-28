@@ -1,6 +1,6 @@
 # Historisk og gjeldende regelverk
 
-Kontrolldato: **8. september 2026**. Begge konsoliderte tekster er hentet direkte fra Lovdata, med HTTP 200, og relevante bestemmelser er lest. Dette er historisk formidling, ikke en fullstendig juridisk veileder.
+Historiske saksutstillinger: **8. september 2026**. Den opprinnelige kontrolloppføringen beholdes som historikk, ikke som en påstand om ny direktehenting. Ny lederoversikt: **26. september 2026**, kontrollert mot tilgjengelig lovtekst hos Nasjonalarkivet, forskriftstekst gjengitt fra Lovdata hos ESA og oppdaterte offentlige veiledere. Direkte Lovdata-henting var ikke tilgjengelig under den nye gjennomgangen. Se [LEADER-PURPOSE.md](./LEADER-PURPOSE.md) og [SOURCES.md](./SOURCES.md). Dette er formidling, ikke en fullstendig juridisk vurdering eller kontroll av en virksomhets etterlevelse.
 
 - [Arkivlova, LOV-2025-06-20-96](https://lovdata.no/dokument/NL/lov/2025-06-20-96): § 5 (arkivplikt), § 8 (dokumentasjonsplan og internkontroll), § 24 (ikraftsetting og overgang). §§ 1–10 og 12–25 trådte i kraft 1. januar 2026. § 11 er unntatt fra denne ikraftsettingen og brukes ikke som gjeldende plikt her.
 - [Arkivforskrifta, FOR-2025-12-17-2647](https://lovdata.no/dokument/SF/forskrift/2025-12-17-2647): §§ 5–7 (systemer og vedlikehold), § 13 (internkontroll), §§ 14–15 (journalføring). Ikraftsetting 1. januar 2026.
@@ -31,3 +31,10 @@ De fem nye oppdragene bruker fiktive virksomheter, dokumentkort og handlingsforl
 Fotografier fra Tokke og Hanekleivtunnelen viser stedene på de angitte datoene, ikke de omtalte hendelsene. Faksimilene fra Osen og NPE er faktiske rapportsider. NPE-bildets rapportdato er 22. januar 2025, selv om tilsynet fant sted i 2024.
 
 Lederbestillingen er en lokal arbeidsstøtte for å avtale rolle, frist og bevis på gjennomført kontroll. Den er ingen komplett lovsjekkliste eller automatisk beslutning om bevaring eller kassasjon.
+
+
+## Lederoversikt · 26. september 2026
+
+De seks hovedtrekkene dekker dokumentasjon, internkontroll, journalføring, innsyn/skjerming, systemer og bevaring/sletting. Hvert tema viser kilder og skiller rettslig beskrivelse fra museets foreslåtte ledergrep. Arkivplikt, journalplikt og publisering sidestilles ikke. Privates virkeområde omtales med forbehold, kommunal internkontroll skilles fra andre organer, og § 11 brukes ikke som generelt grunnlag for lagring i utlandet.
+
+De tre mulighetene og fem saksperspektivene er faglige tolkninger, ikke målte gevinster eller nye historiske funn. De endrer ikke de opprinnelige case-dataene eller kildekontroll-datoene. Alle vises fra samme datagrunnlag i 3D-grensesnittet og tekstversjonene.
