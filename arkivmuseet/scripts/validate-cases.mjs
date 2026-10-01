@@ -1,5 +1,6 @@
 import {readFileSync} from 'node:fs';
 import {pathToFileURL} from 'node:url';
+import {validateLearning} from './validate-learning.mjs';
 export function validateCases(cases,legal){
  if(!Array.isArray(cases)||cases.length<1)throw Error('Ingen utstillinger');
  const ids=new Set(),sourceIds=new Set(legal.map(x=>x.id));
@@ -20,4 +21,4 @@ export function validateCases(cases,legal){
  }
  return true;
 }
-if(import.meta.url===pathToFileURL(process.argv[1]).href){validateCases(JSON.parse(readFileSync('cases/cases.json','utf8')),JSON.parse(readFileSync('cases/legal-sources.json','utf8')));console.log('Alle utstillinger har strukturerte påstander, gyldige kildereferanser og tydelig tidsavgrensning.');}
+if(import.meta.url===pathToFileURL(process.argv[1]).href){const read=name=>JSON.parse(readFileSync(`cases/${name}.json`,'utf8'));const cases=read('cases');validateCases(cases,read('legal-sources'));validateLearning(read('missions'),read('leader-scenarios'),read('investigation'),cases);console.log('Utstillinger og oppgaver har sporbare kilder, tydelige vurderingskriterier og sammenhengende tidslinje.');}

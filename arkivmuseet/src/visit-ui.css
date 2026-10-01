@@ -122,3 +122,31 @@
 }
 
 .journey-hud.is-expanded ~ #touch-controls { visibility: hidden; }
+
+/* Match the architecture without changing the compact navigation footprint. */
+.room-tag {
+  background: #1b2422ed;
+  border-left-color: #d1b27b;
+  box-shadow: 0 4px 20px #070d0b1a;
+  backdrop-filter: blur(12px);
+}
+.room-tag span { color: #dfc99e; }
+.room-tag strong { color: #f0e9da; }
+.journey-hud {
+  background: #1b2422f7;
+  border-color: #c6a86f66;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px #07100c40, inset 0 1px 0 #f1dab514;
+}
+.journey-hud .visit-dock button { border-radius: 4px; }
+#visit-toggle { color: #eae3d5; }
+#visit-details { border-bottom-color: #c6a86f40; scrollbar-color: #a89b7d #1b2422; }
+#visit-details h2 { color: #f0e5cf; }
+.visit-route span, #visit-details .visit-note { color: #ccd0c2; }
+.journey-hud .visit-controls button, #visit-optional button { border-color: #c6a86f55; border-radius: 3px; }
+.visit-optional { border-top-color: #c6a86f40; }
+.bottom-bar { background: #1b2422e0; color: #dddccf; border-radius: 4px; }
+#controls-hint { color: #d7d9cc; }
+@media (pointer: coarse) {
+  #touch-controls button { background: #1b2422e6; border-color: #c6a86f66; border-radius: 6px; }
+}

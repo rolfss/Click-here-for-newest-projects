@@ -1,4 +1,30 @@
-# Validering av lederreisen · versjon 1.1
+# Validering av oppgaver og læringsskår
+
+27. september 2026. Produksjonsbygg testet med installert Microsoft Edge på Windows, Node og Playwright.
+
+- 54 automatiske tester bestått. De dekker blant annet alle kombinasjoner av sporkort, vurderingskriterier, første/nyeste skår, øvre poenggrense, repetisjon, gjenoppretting fra eldre lagring og alle 64 kombinasjoner av Auroras ledervalg.
+- Kilde- og innholdsvalidering, TypeScript og Vite-bygg bestått. Alle fem historiske hovedkilder og oppgitte lovbestemmelser er kontrollert på nytt; se [EDITORIAL-NOTES.md](./EDITORIAL-NOTES.md).
+- 22 nye nettleserkontroller bestått på det endelige bygget. De følger alle fem oppgavene gjennom feil sporvalg, delvis tiltak, sammenligning, forbedring, læringsmerke og gjenopptakelse. De kontrollerer også 320/390 px, dialog- og tastaturfokus, unike ID-er i kildevisningen, sladdingens tilgjengelige navn, lederbestilling og ulike Aurora-resultater. Resultater og skjermbilder finnes i `qa-learning` og GitHub-artifaktet `museum-qa`.
+- Eksisterende museum-, etterforsknings- og besøkskontroller bestod henholdsvis 61, 47 og 72 kontroller. De ble kjørt før siste avgrensede rettelser av dialogfokus, scenariofokus og sladdingens tilgjengelige navn; disse verifiseres særskilt i læringstesten og samlet i GitHub Actions.
+- Testene avdekket og verifiserte en rettelse av en oppstartsfeil: Tidlig bruk uten 3D kan ikke lenger bytte materialer mens Three.js kompilerer dem.
+
+Skjermbilder er visuelt kontrollert. Skåren er redaksjonelt utformet læringsstøtte, ikke en validert kompetansetest. Mobilbreddene er emulert; fysisk iOS/Safari og en full WCAG-revisjon er ikke gjennomført. Ingen produksjonspublisering inngår i kontrollen.
+
+## Historikk: visuell oppgradering
+
+26. september 2026. Kontrollert med Node 24 og installert Microsoft Edge via Playwright på Windows.
+
+- 40 automatiske tester bestått. Navigasjon gjennom alle seks portaler, kollisjoner, bevegelsestiming, alle oppdrag, lagring og kildesporbarhet er kontrollert.
+- TypeScript og Vite-produksjonsbygg bestått.
+- Produksjonsbygget på `http://127.0.0.1:4196/`: 61 museumskontroller, 47 etterforskningskontroller og 72 besøks-/grensesnittkontroller bestått. Ingen registrerte JavaScript-feil eller manglende museumsressurser.
+- Egne integrerte kontroller viser GTAO på stor skrivebordsskjerm, uten GTAO med lav bildekvalitet, tilbake til GTAO ved normal kvalitet og uten GTAO på emulert berøringsenhet.
+- Originale saksdata, kilder, kildebilder, tekstversjon, spill- og lagringsmoduler er uendret. Faglige påstander er ikke redigert eller vurdert på nytt som del av den visuelle oppgraderingen.
+- Blender 4.5.9 LTS eksporterte syv navngitte prototyper med kompatible dimensjoner. Modellpakken er 1 285 736 byte, har 22 mesh-primitiver og fire innebygde teksturer uten eksterne ressurslenker. Prototypene inneholder samlet 32 808 trekanter før instansiering.
+- JavaScript er ca. 221 kB gzip. Modellpakken og renderingskostnaden er større enn i første utgave; telefoner og strømsparingsvalg beholder en enklere renderingsvei. Tegnekall og trekanter i diagnostikken teller nå alle renderingspass, også skygger og kontaktskygger, og kan ikke sammenlignes direkte med gamle tall for siste pass.
+
+Skjermbilder av inngang, hovedhall, utstilling og mobil er visuelt kontrollert. Mobilprøvene er emulering; fysisk iOS/Safari og en full WCAG-revisjon er ikke gjennomført.
+
+## Historikk: lederreisen · versjon 1.1
 
 8. september 2026.
 

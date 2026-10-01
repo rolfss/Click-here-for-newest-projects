@@ -3,33 +3,42 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {Sky} from 'three/addons/objects/Sky.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
+import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
+import {GTAOPass} from 'three/addons/postprocessing/GTAOPass.js';
+import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
 import type {MuseumCase} from './types';
 
 type Settings={reduced:boolean;sensitivity:number;quality:number};
 type Box={x:number;z:number;w:number;d:number};
-const stone=new T.MeshStandardMaterial({color:0xc4b89b,roughness:.86});
-const pale=new T.MeshStandardMaterial({color:0xd5ccba,roughness:.78});
-const trim=new T.MeshStandardMaterial({color:0x958369,roughness:.7});
-const wood=new T.MeshStandardMaterial({color:0x261b14,roughness:.7});
-const brass=new T.MeshStandardMaterial({color:0xa68c52,metalness:.8,roughness:.32});
-const slate=new T.MeshStandardMaterial({color:0x263c39,roughness:.84});
+const stone=new T.MeshStandardMaterial({color:0xc9bea7,roughness:.82});
+const pale=new T.MeshStandardMaterial({color:0xe0d6c1,roughness:.64});
+const trim=new T.MeshStandardMaterial({color:0xa79a81,roughness:.74});
+const wood=new T.MeshStandardMaterial({color:0x38291f,roughness:.48});
+const brass=new T.MeshStandardMaterial({color:0xb99a58,metalness:.84,roughness:.28});
+const slate=new T.MeshStandardMaterial({color:0x193731,roughness:.68});
 const paper=new T.MeshStandardMaterial({color:0xe7deca,roughness:.9});
+const floorStone=new T.MeshPhysicalMaterial({color:0xcfc7b6,roughness:.36,metalness:.04,clearcoat:.24,clearcoatRoughness:.32});
+const floorLight=new T.MeshPhysicalMaterial({color:0xe0d8c8,roughness:.4,metalness:.025,clearcoat:.2,clearcoatRoughness:.36});
+const marble=new T.MeshPhysicalMaterial({color:0x233e37,roughness:.3,metalness:.12,clearcoat:.3});
+const glow=new T.MeshBasicMaterial({color:0xffe0a0,toneMapped:false});
 
 export class MuseumWorld {
  scene=new T.Scene(); camera=new T.PerspectiveCamera( sixty(),innerWidth/innerHeight,.08,420); renderer:T.WebGLRenderer;
- kit!:T.Group; keys=new Set<string>(); yaw=Math.PI; pitch=.04; active=false; paused=false; guided=false;
+ kit!:T.Group; keys=new Set<string>(); yaw=Math.PI+.14; pitch=.09; active=false; paused=false; guided=false;
  settings:Settings={reduced:matchMedia('(prefers-reduced-motion: reduce)').matches,sensitivity:1,quality:1};
  solids:Box[]=[]; moving=false; loaded=new Set<string>(); rooms=new Map<string,T.Group>(); artifacts=new Map<string,T.Group>();
  startTime=performance.now(); lastTime=performance.now(); sun!:T.DirectionalLight; nearest:string|null=null; doors:T.Group[]=[];
  target:T.Vector3|null=null; targetYaw=0; targetPitch=0; flight=0; from=new T.Vector3(); fromYaw=0; fromPitch=0;
  pointer:{id:number;x:number;y:number}|null=null; onNear:(id:string|null)=>void; onActivate:(id:string)=>void; onStep:()=>void; onMenu:()=>void;
  dragDistance=0; disposed=false; stepAt=0; frameCount=0; fps=60; lastRenderAt=-Infinity; renderDirty=true;
+ composer:EffectComposer|null=null; effectSize=''; ambientOcclusion=false;
  constructor(canvas:HTMLCanvasElement,cases:MuseumCase[],callbacks:{near:(id:string|null)=>void;activate:(id:string)=>void;step:()=>void;menu:()=>void}){
   this.onNear=callbacks.near;this.onActivate=callbacks.activate;this.onStep=callbacks.step;this.onMenu=callbacks.menu;this.cases=cases;
   this.renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));this.renderer.setSize(innerWidth,innerHeight);
-  this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=T.PCFSoftShadowMap;this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.13;
-  this.scene.fog=new T.Fog(0xb5b6ab,65,210);this.scene.background=new T.Color(0xaab9bb);
-  this.camera.position.set(0,2.15,-9);this.camera.rotation.order='YXZ';this.look();
+  this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=T.PCFSoftShadowMap;this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.02;
+  this.scene.fog=new T.Fog(0xaebdb9,80,230);this.scene.background=new T.Color(0xaab9bb);
+  this.camera.position.set(-3.6,2.35,-3.5);this.camera.rotation.order='YXZ';this.look();
   canvas.addEventListener('pointerdown',e=>{if(!this.active||this.paused||this.guided)return;this.dragDistance=0;this.pointer={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);});
   canvas.addEventListener('pointermove',e=>{if(!this.active||this.paused||this.guided)return;if(document.pointerLockElement===canvas){this.dragDistance+=Math.abs(e.movementX)+Math.abs(e.movementY);this.turn(e.movementX,e.movementY);}else if(this.pointer?.id===e.pointerId){this.dragDistance+=Math.abs(e.clientX-this.pointer.x)+Math.abs(e.clientY-this.pointer.y);this.turn(e.clientX-this.pointer.x,e.clientY-this.pointer.y);this.pointer={id:e.pointerId,x:e.clientX,y:e.clientY};}});
   canvas.addEventListener('pointerup',()=>{this.pointer=null;});canvas.addEventListener('pointercancel',()=>{this.pointer=null;});
@@ -44,19 +53,68 @@ export class MuseumWorld {
  cases:MuseumCase[];
  async init(){
   this.kit=(await new GLTFLoader().loadAsync(import.meta.env.BASE_URL+'assets/museum-kit.glb')).scene;
-  this.scene.add(new T.HemisphereLight(0xeaf0ee,0x615c4e,1.7));
-  this.sun=new T.DirectionalLight(0xffe3ab,3.1);this.sun.position.set(-27,39,8);this.sun.target.position.set(0,0,24);this.scene.add(this.sun,this.sun.target);
+  this.scene.add(new T.HemisphereLight(0xd9e7ef,0x514333,1.15));
+  this.sun=new T.DirectionalLight(0xffe4bd,2.65);this.sun.position.set(-27,39,8);this.sun.target.position.set(0,0,24);this.scene.add(this.sun,this.sun.target);
   this.sun.castShadow=true;this.sun.shadow.mapSize.set(2048,2048);Object.assign(this.sun.shadow.camera,{left:-42,right:42,top:44,bottom:-44,near:1,far:105});this.sun.shadow.bias=-.0003;this.sun.shadow.normalBias=.035;
-  const pmrem=new T.PMREMGenerator(this.renderer);const env=new RoomEnvironment();this.scene.environment=pmrem.fromScene(env,.05).texture;env.dispose();pmrem.dispose();this.scene.environmentIntensity=.25;
-  this.addMaterialDetail();this.buildExterior();this.buildHall();this.buildRoomShells();this.mergeStatic(this.scene);this.loadRoom(this.cases[0]);
+  const pmrem=new T.PMREMGenerator(this.renderer);const env=new RoomEnvironment();this.scene.environment=pmrem.fromScene(env,.05).texture;env.dispose();pmrem.dispose();this.scene.environmentIntensity=.48;
+  this.addMaterialDetail();this.buildExterior();this.buildHall();this.buildRoomShells();this.mergeStatic(this.scene);this.addContactShadows();this.loadRoom(this.cases[0]);
   await this.renderer.compileAsync(this.scene,this.camera);this.tick();
  }
  addMaterialDetail(){
   const stoneMap=this.surfaceTexture('stone'),woodMap=this.surfaceTexture('wood');
-  for(const m of [stone,pale,trim]){m.map=stoneMap;m.bumpMap=stoneMap;m.bumpScale=.006;m.needsUpdate=true;}
+  for(const m of [stone,pale,trim,floorStone,floorLight,marble]){m.map=stoneMap;m.bumpMap=stoneMap;m.bumpScale=.025;m.needsUpdate=true;}
   wood.map=woodMap;wood.bumpMap=woodMap;wood.bumpScale=.018;wood.needsUpdate=true;
+  // Blender supplies the geometry; shared tactile finishes keep it in the same lighting space.
+  this.kit.traverse(o=>{if(o instanceof T.Mesh&&!Array.isArray(o.material)){
+   const m=o.material as T.MeshStandardMaterial;
+   if(!m.map&&/stone|limestone/i.test(m.name)){m.map=stoneMap;m.bumpMap=stoneMap;m.bumpScale=.018;}
+   if(!m.map&&/oak|wood/i.test(m.name)){m.map=woodMap;m.bumpMap=woodMap;m.bumpScale=.014;}
+   m.needsUpdate=true;
+  }});
  }
- surfaceTexture(kind:string){const c=document.createElement('canvas');c.width=c.height=256;const ctx=c.getContext('2d')!;const im=ctx.createImageData(256,256);let seed=3729;for(let y=0;y<256;y++)for(let x=0;x<256;x++){seed=(seed*1664525+1013904223)>>>0;const noise=seed/4294967296;const vein=Math.sin(x*.065+Math.sin(y*.025)*4+Math.sin(x*.013+y*.02)*5);const grain=Math.sin(x*.3+Math.sin(y*.03+x*.025)*3);const v=kind==='wood'?194+grain*13+noise*12:242+noise*4+Math.pow(Math.abs(vein),18)*3;const i=(y*256+x)*4;im.data[i]=v;im.data[i+1]=v;im.data[i+2]=v;im.data[i+3]=255;}ctx.putImageData(im,0,0);const t=new T.CanvasTexture(c);t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(2,2);t.colorSpace=T.SRGBColorSpace;return t;}
+ surfaceTexture(kind:string){
+  const size=512,c=document.createElement('canvas');c.width=c.height=size;const ctx=c.getContext('2d')!,im=ctx.createImageData(size,size);let seed=3729;
+  const noiseAt=(x:number,y:number,f:number)=>{const hash=(a:number,b:number)=>{let n=Math.imul((a%f)+1,374761393)^Math.imul((b%f)+1,668265263);n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295;};const px=x/size*f,py=y/size*f,ix=Math.floor(px),iy=Math.floor(py),sx=px-ix,sy=py-iy,u=sx*sx*(3-2*sx),v=sy*sy*(3-2*sy);return T.MathUtils.lerp(T.MathUtils.lerp(hash(ix,iy),hash(ix+1,iy),u),T.MathUtils.lerp(hash(ix,iy+1),hash(ix+1,iy+1),u),v);};
+  for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+   seed=(seed*1664525+1013904223)>>>0;const noise=seed/4294967296;
+   const cloud=(noiseAt(x,y,5)*.55+noiseAt(x,y,13)*.3+noiseAt(x,y,37)*.15-.5)*2;
+   const grain=Math.sin(x*.22+Math.sin(y*.016)*2+Math.sin(x*.03)*4);
+   const v=kind==='wood'?188+grain*15+cloud*9+noise*10:233+cloud*16+noise*9-(noise>.996?18:0);
+   const i=(y*size+x)*4;im.data[i]=v;im.data[i+1]=v;im.data[i+2]=v;im.data[i+3]=255;
+  }
+  ctx.putImageData(im,0,0);const t=new T.CanvasTexture(c);t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(2,2);t.anisotropy=Math.min(8,this.renderer.capabilities.getMaxAnisotropy());t.colorSpace=T.SRGBColorSpace;return t;
+ }
+ addContactShadows(){
+  // A single instanced draw adds soft ambient contact, including in the low-power mode.
+  const cv=document.createElement('canvas');cv.width=cv.height=128;const ctx=cv.getContext('2d')!;
+  const fade=ctx.createRadialGradient(64,64,8,64,64,64);fade.addColorStop(0,'rgba(25,19,11,.65)');fade.addColorStop(.35,'rgba(25,19,11,.28)');fade.addColorStop(1,'rgba(25,19,11,0)');ctx.fillStyle=fade;ctx.fillRect(0,0,128,128);
+  const tx=new T.CanvasTexture(cv);tx.colorSpace=T.SRGBColorSpace;
+  const mesh=new T.InstancedMesh(new T.PlaneGeometry(1,1),new T.MeshBasicMaterial({map:tx,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,toneMapped:false}),15);
+  const o=new T.Object3D();o.rotation.x=-Math.PI/2;let n=0;
+  for(const x of [-7.6,7.6])for(const z of [-3,3,15,21,33,39,51]){o.position.set(x,.064,z);o.scale.set(3.1,3.1,1);o.updateMatrix();mesh.setMatrixAt(n++,o.matrix);}
+  o.position.set(0,.091,20);o.scale.set(6,6,1);o.updateMatrix();mesh.setMatrixAt(n,o.matrix);this.scene.add(mesh);
+ }
+ renderScene(){
+  // Desktop contact shading is optional; touch devices and the power-saving setting use one render.
+  this.ambientOcclusion=this.settings.quality===1&&innerWidth>=1000&&matchMedia('(pointer: fine)').matches;
+  this.renderer.info.autoReset=false;this.renderer.info.reset();
+  if(!this.ambientOcclusion){this.renderer.render(this.scene,this.camera);return;}
+  if(!this.composer){
+   const target=new T.WebGLRenderTarget(1,1,{type:T.HalfFloatType});target.samples=4;
+   this.composer=new EffectComposer(this.renderer,target);this.composer.addPass(new RenderPass(this.scene,this.camera));
+   const ao=new GTAOPass(this.scene,this.camera);ao.blendIntensity=.72;ao.updateGtaoMaterial({radius:.65,thickness:1,distanceFallOff:1,scale:1,samples:8});ao.updatePdMaterial({radius:5,samples:8});
+   // Transparent display glass must never become an opaque occluder in the normal/depth pass.
+   const render=ao.render.bind(ao);
+   ao.render=(renderer,writeBuffer,readBuffer,deltaTime,maskActive)=>{
+    const hidden:T.Object3D[]=[];this.scene.traverse(o=>{if(o instanceof T.Mesh&&o.visible){const mats=Array.isArray(o.material)?o.material:[o.material];if(mats.some(m=>m.transparent)){hidden.push(o);o.visible=false;}}});
+    try{render(renderer,writeBuffer,readBuffer,deltaTime,maskActive);}finally{hidden.forEach(o=>o.visible=true);}
+   };
+   this.composer.addPass(ao);this.composer.addPass(new OutputPass());
+  }
+  const ratio=Math.min(this.renderer.getPixelRatio(),1.25),size=`${innerWidth}:${innerHeight}:${ratio}`;
+  if(size!==this.effectSize){this.composer.setPixelRatio(ratio);this.composer.setSize(innerWidth,innerHeight);this.effectSize=size;}
+  this.composer.render();
+ }
  mergeStatic(root:T.Object3D){root.updateMatrixWorld(true);const inverse=root.matrixWorld.clone().invert();const buckets=new Map<string,{mat:T.Material;geos:T.BufferGeometry[];objects:T.Mesh[]}>();root.traverse(o=>{let ancestor:T.Object3D|null=o;while(ancestor&&ancestor!==root){if(!ancestor.visible)return;ancestor=ancestor.parent;}if(!(o instanceof T.Mesh)||o instanceof T.InstancedMesh||Array.isArray(o.material)||o.material.transparent||this.doors.some(d=>o.parent===d))return;const mat=o.material;if(!(mat instanceof T.MeshStandardMaterial))return;const g=o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone();g.applyMatrix4(inverse.clone().multiply(o.matrixWorld));for(const key of Object.keys(g.attributes))if(!['position','normal','uv'].includes(key))g.deleteAttribute(key);if(!g.getAttribute('uv'))g.setAttribute('uv',new T.BufferAttribute(new Float32Array(g.getAttribute('position').count*2),2));let b=buckets.get(mat.uuid);if(!b){b={mat,geos:[],objects:[]};buckets.set(mat.uuid,b);}b.geos.push(g);b.objects.push(o);});for(const b of buckets.values()){const geo=mergeGeometries(b.geos);if(!geo)continue;const mesh=new T.Mesh(geo,b.mat);mesh.castShadow=mesh.receiveShadow=true;root.add(mesh);b.objects.forEach(o=>o.removeFromParent());b.geos.forEach(g=>g.dispose());}}
  invalidate(){this.renderDirty=true;}
  frameReading(reading:boolean){this.invalidate();if(reading&&innerWidth>800)this.camera.setViewOffset(innerWidth,innerHeight,innerWidth*.17,0,innerWidth,innerHeight);else this.camera.clearViewOffset();this.camera.updateProjectionMatrix();}
@@ -74,9 +132,10 @@ export class MuseumWorld {
   for(let i=0;i<3;i++)this.box(12+i*1.2,.15,1.1,0,-.08-i*.12,-12-i*.8,pale);
  }
  buildHall(){
-  const tiles=new T.InstancedMesh(new T.BoxGeometry(1.98,.12,1.98),pale,300);const tiles2=new T.InstancedMesh(new T.BoxGeometry(1.98,.12,1.98),new T.MeshStandardMaterial({color:0xb3ad9d,roughness:.68}),300);const d=new T.Object3D();let a=0,b=0;
+  const tiles=new T.InstancedMesh(new T.BoxGeometry(1.988,.12,1.988),floorLight,300);const tiles2=new T.InstancedMesh(new T.BoxGeometry(1.988,.12,1.988),floorStone,300);const d=new T.Object3D();let a=0,b=0;
   for(let x=-9;x<=9;x+=2)for(let z=-7;z<=51;z+=2){d.position.set(x,-.03,z);d.updateMatrix();((x+z)%4===0?tiles:tiles2).setMatrixAt((x+z)%4===0?a++:b++,d.matrix);}tiles.count=a;tiles2.count=b;tiles.receiveShadow=tiles2.receiveShadow=true;this.scene.add(tiles,tiles2);
   for(const x of [-7.3,7.3])this.box(.06,.015,60,x,.055,22,brass);
+  for(const x of [-7,7])this.box(.32,.014,60,x,.056,22,marble);
   // Repeated Blender columns use instancing for every shared primitive.
   const columns:T.Object3D[]=[];for(const x of [-7.6,7.6])for(const z of [-3,3,15,21,33,39,51]){const o=this.model('column',x,0,z);columns.push(o);this.solids.push({x,z,w:1.7,d:1.7});}this.instanceObjects(columns);
   for(const side of [-1,1]){
@@ -99,8 +158,8 @@ export class MuseumWorld {
   for(const x of [-3.4,0,3.4])this.box(.12,.15,60,x,16.5,22,brass);
   for(const side of [-1,1])for(const z of [-4,4,14,22,32,40,50]){const glass=new T.Mesh(new T.PlaneGeometry(5.2,3.7),new T.MeshPhysicalMaterial({color:0xb3d6dd,transparent:true,opacity:.07,roughness:.12,metalness:.1,side:T.DoubleSide,depthWrite:false}));glass.position.set(side*10,9.1,z);glass.rotation.y=Math.PI/2;this.scene.add(glass);}
   this.box(20,17,.7,0,8.5,54,stone,this.scene,true);
-  this.label('LA MÉMOIRE PUBLIQUE','HUKOMMELSE · RETTIGHETER · TILLIT',0,8.4,53.6,10,Math.PI,'#4e4839');
-  this.label('Hva skjer når samfunnet mister sporene?','ARKIVMUSEET',0,5.8,53.55,12,Math.PI,'#4e4839');
+  this.label('LA MÉMOIRE PUBLIQUE','HUKOMMELSE · RETTIGHETER · TILLIT',0,8.4,53.3,10,Math.PI,'#4e4839');
+  this.label('Hva skjer når samfunnet mister sporene?','ARKIVMUSEET',0,5.8,53.28,12,Math.PI,'#4e4839');
   // Rotunda: round inlay and a sculptural stack of unmarked leaves.
   const disc=new T.Mesh(new T.CylinderGeometry(3.8,3.8,.03,96),slate);disc.position.set(0,.07,20);disc.receiveShadow=true;this.scene.add(disc);
   for(const r of [3.55,3.72]){const ring=new T.Mesh(new T.TorusGeometry(r,.022,6,96),brass);ring.rotation.x=Math.PI/2;ring.position.set(0,.1,20);this.scene.add(ring);}
@@ -112,6 +171,51 @@ export class MuseumWorld {
   for(const side of [-1,1]){const hinge=new T.Group();hinge.position.set(side*3.45,0,-6);this.scene.add(hinge);this.box(3.4,6.8,.2,-side*1.7,3.4,0,wood,hinge);for(const y of [1.7,5])this.box(2.95,2.65,.23,-side*1.7,y,0,trim,hinge);this.box(.07,.7,.32,-side*3.1,3.1,-.1,brass,hinge);this.doors.push(hinge);}
   // Start screen reveals the hall through the slightly open doorway.
   this.doors[0].rotation.y=-1.23;this.doors[1].rotation.y=1.23;
+  this.buildArchitecturalDetail();
+ }
+ buildArchitecturalDetail(){
+  // Relief masonry, shadow gaps and three-part cornices give the hall a human scale.
+  for(const side of [-1,1]){
+   for(const [z,len] of [[-3,12],[18,12],[36,12],[51,6]]){
+    this.box(.14,.32,len-.06,side*9.61,.25,z,trim);
+    this.box(.12,.06,len-.06,side*9.58,.47,z,brass);
+    for(const y of [1.35,2.7,4.05,5.4])this.box(.012,.018,len-.08,side*9.667,y,z,trim);
+    for(let dz=-len/2+1.5;dz<len/2;dz+=3){
+     for(let row=0;row<4;row++){const offset=row%2?1.5:0;if(dz+offset<len/2)this.box(.013,1.32,.018,side*9.665,.69+row*1.35,z+dz+offset,trim);}
+    }
+    for(const dz of [-len/2+.7,len/2-.7])this.box(.17,4.7,.14,side*9.55,3.05,z+dz,pale);
+    for(const y of [.72,5.38])this.box(.17,.14,len-1.3,side*9.55,y,z,pale);
+   }
+   for(const [y,w,h] of [[6.08,1,.12],[6.36,1.12,.13],[6.53,.93,.09],[11.73,.9,.1]])this.box(w,h,61,side*9.95,y,22,pale);
+   for(const z of [9,27,45]){
+    for(const dz of [-3.35,3.35]){
+     this.box(.3,1.25,.22,side*9.46,3.55,z+dz,brass);
+     this.box(.32,.84,.13,side*9.43,3.58,z+dz,glow);
+    }
+   }
+  }
+  // Recessed vault coffers follow the existing barrel; no new collision geometry.
+  for(let z=-4;z<53;z+=6)for(const side of [-1,1])for(let j=0;j<6;j++){
+   const angle=.13+j*.16,n=Math.hypot(Math.cos(angle),2*Math.sin(angle)),nx=side*Math.cos(angle)/n,ny=2*Math.sin(angle)/n;
+   const x=side*Math.cos(angle)*10-nx*.24,y=11.8+Math.sin(angle)*5-ny*.24;
+   const inset=this.box(.08,1.14,4.55,x,y,z,trim);inset.rotation.z=side*Math.atan(2*Math.tan(angle));
+   const panel=this.box(.085,.99,4.38,x-nx*.045,y-ny*.045,z,pale);panel.rotation.z=inset.rotation.z;
+  }
+  const glass=new T.Mesh(new T.PlaneGeometry(6.65,60),new T.MeshPhysicalMaterial({color:0xb8dae0,transparent:true,opacity:.12,roughness:.18,metalness:.12,side:T.DoubleSide,depthWrite:false}));
+  glass.rotation.x=Math.PI/2;glass.position.set(0,16.56,22);this.scene.add(glass);
+  // Suspended brass luminaires draw the eye into the long axis of the gallery.
+  for(const [z,r,y] of [[6,2.1,10.7],[20,3.15,10.2],[38,2.1,10.7]]){
+   for(const [dy,tube,mat] of [[0,.055,brass],[-.075,.032,glow],[.15,.035,brass]] as [number,number,T.Material][]){
+    const ring=new T.Mesh(new T.TorusGeometry(r,tube,8,96),mat);ring.rotation.x=Math.PI/2;ring.position.set(0,y+dy,z);this.scene.add(ring);
+   }
+   for(let i=0;i<6;i++){const a=i*Math.PI/3;this.box(.016,16.45-y,.016,Math.cos(a)*r,(16.45+y)/2,z+Math.sin(a)*r,brass);}
+  }
+  const sculptureLight=new T.PointLight(0xffdba1,80,16,2);sculptureLight.position.set(0,7.4,20);this.scene.add(sculptureLight);
+  // Dark marble surround makes the educational inscriptions legible at the far end.
+  this.box(13.2,7.7,.16,0,6.15,53.52,marble);
+  for(const x of [-6.65,6.65])this.box(.045,7.85,.06,x,6.15,53.4,brass);
+  for(const y of [2.22,10.08])this.box(13.3,.045,.06,0,y,53.4,brass);
+  for(let i=0;i<25;i++)this.box(.06,2.4,.11,-6+i*.5,11.5,53.39,trim);
  }
  instanceObjects(objects:T.Object3D[]){const buckets=new Map<T.BufferGeometry,{mat:T.Material|T.Material[];matrices:T.Matrix4[]}>();for(const o of objects){o.updateMatrixWorld(true);o.traverse(m=>{if(m instanceof T.Mesh){let b=buckets.get(m.geometry);if(!b){b={mat:m.material,matrices:[]};buckets.set(m.geometry,b);}b.matrices.push(m.matrixWorld.clone());}});this.scene.remove(o);}for(const [g,b] of buckets){const m=new T.InstancedMesh(g,b.mat,b.matrices.length);b.matrices.forEach((v,i)=>m.setMatrixAt(i,v));m.castShadow=true;m.receiveShadow=true;this.scene.add(m);}}
  buildRoomShells(){
@@ -125,6 +229,15 @@ export class MuseumWorld {
    const light=new T.PointLight(0xffdfa6,55,19,2);light.position.set(x,4.4,z+1);group.add(light);
    this.box(.1,.045,13,side*27.42,.2,z,brass,group);
    const strip=new T.Mesh(new T.BoxGeometry(.05,.08,12),new T.MeshBasicMaterial({color:c.accent}));strip.position.set(side*27.4,6.5,z);group.add(strip);
+   // Timber wall battens, perimeter coves and framed panels continue the gallery finish.
+   for(const dz of [-7.63,7.63]){
+    this.box(17.5,.25,.09,x,.25,z+dz,wood,group);
+    this.box(17.5,.045,.09,x,6.8,z+dz,glow,group);
+    for(let dx=-7.8;dx<8;dx+=.65)this.box(.075,5.8,.075,x+dx,3.25,z+dz,wood,group);
+   }
+   for(const dz of [-5.8,5.8])this.box(15,.09,.07,x,7.1,z+dz,brass,group);
+   for(const dx of [-6,6])this.box(.07,.09,11.6,x+dx,7.1,z,brass,group);
+   const pendant=new T.Mesh(new T.CylinderGeometry(1.6,1.6,.075,64),glow);pendant.position.set(x,6.9,z);group.add(pendant);
   }
  }
  loadRoom(c:MuseumCase){if(this.loaded.has(c.id))return;this.loaded.add(c.id);const [x,z]=c.position;const group=new T.Group();group.position.set(x,0,z);this.artifacts.set(c.id,group);this.rooms.get(c.id)!.add(group);const side=Math.sign(x);
@@ -210,8 +323,8 @@ export class MuseumWorld {
   // Static reading panels must not compete with input for GPU time.
   // Scene changes, resizing and navigation explicitly invalidate their background.
   if((!this.active||this.paused)&&!this.renderDirty)return;
-  this.renderDirty=false;this.lastRenderAt=now;this.renderer.render(this.scene,this.camera);this.frameCount++;if(elapsed>0)this.fps=this.fps*.97+(1/elapsed)*.03;
+  this.renderDirty=false;this.lastRenderAt=now;this.renderScene();this.frameCount++;if(elapsed>0)this.fps=this.fps*.97+(1/elapsed)*.03;
  };
- diagnostics(){return {position:this.camera.position.toArray(),yaw:this.yaw,fps:Math.round(this.fps),drawCalls:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,rooms:[...this.loaded],frameCount:this.frameCount,paused:this.paused};}
+ diagnostics(){return {position:this.camera.position.toArray(),yaw:this.yaw,fps:Math.round(this.fps),drawCalls:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,rooms:[...this.loaded],frameCount:this.frameCount,paused:this.paused,ambientOcclusion:this.ambientOcclusion};}
 }
 function sixty(){return 60;}

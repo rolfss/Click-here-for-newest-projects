@@ -11,3 +11,108 @@
 /* The entrance remains scrollable with browser zoom and enlarged fonts. */
 body:not(.playing){overflow-y:auto}body:not(.playing) #intro{padding-bottom:4rem}
 @media(max-height:600px){body:not(.playing) .masthead{position:absolute}body:not(.playing) .intro-footer{display:none}}
+
+/* Museum identity: warm paper, patinated brass and quiet, readable ink surfaces. */
+:root {
+  --gold: #e0c18a;
+  --ink: #252b27;
+  --museum-paper: #f4eee1;
+  --museum-muted: #cfc9bb;
+  --museum-panel: #1b2422;
+  --museum-rule: #d4b77940;
+  color: var(--museum-paper);
+  background: #171e1d;
+  text-rendering: optimizeLegibility;
+}
+body { -webkit-font-smoothing: antialiased; }
+button, .button { border-color: var(--museum-rule); border-radius: 2px; }
+button:hover, .button:hover { background: #dec48e16; border-color: #e0c18aab; }
+button.primary, .button.primary {
+  color: #242b25;
+  background: linear-gradient(120deg, #ead4a5, #ceab71);
+  border-color: #e6c995;
+  box-shadow: inset 0 1px 0 #fff6, 0 5px 18px #0000001f;
+}
+button.primary:hover, .button.primary:hover { background: linear-gradient(120deg, #f3dfb6, #dfbd85); }
+::selection { color: #16231e; background: #e0c18a; }
+#shade {
+  background: linear-gradient(90deg, #101a19f5 0%, #111b1ae6 24%, #111b1a99 43%, #111b1a18 68%, transparent 85%),
+    linear-gradient(0deg, #10181799, transparent 32%, transparent 76%, #10181733);
+}
+#shade.playing { background: linear-gradient(0deg, #0e17164d, transparent 18%, transparent 83%, #0e171638); }
+.masthead { padding: 1.75rem 3.25rem; }
+.brand { gap: .9rem; color: var(--museum-paper); letter-spacing: .19em; }
+.brand small { color: #c7c6b9; letter-spacing: .025em; }
+.monogram { color: #eed6a6; border-color: #c9aa73; background: #bd9e6210; }
+.edition { color: #e0d6c1; letter-spacing: .14em; }
+.edition i { box-shadow: 0 0 12px #e0c18a66; }
+#intro { margin: clamp(132px, 16vh, 190px) 0 0 7%; width: 42%; max-width: 610px; }
+#intro > .eyebrow { font-size: .76rem; letter-spacing: .14em; line-height: 1.7; }
+#intro .line { width: 28px; background: #b99b62; }
+#intro h1 {
+  font-family: 'Baskerville', 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  font-size: clamp(4.8rem, 6.2vw, 7.6rem);
+  line-height: .92;
+  font-weight: 400;
+  letter-spacing: -.055em;
+  color: #f6f0e2;
+  margin: 1.65rem 0 1.8rem;
+  text-shadow: 0 6px 36px #08121033;
+}
+#intro h1 span { color: #e9d9b8; }
+#intro h2 { font-size: clamp(1.7rem, 2.15vw, 2.2rem); line-height: 1.28; color: #f0e6d2; margin-bottom: 1.15rem; }
+body #intro .intro-copy { color: #dddcd2; max-width: 27rem; line-height: 1.7; }
+body #intro .entry-note { color: #c9ccbf; max-width: 28rem; line-height: 1.6; }
+#intro .entry-actions { margin-top: 1.6rem; }
+#intro .entry-actions button { min-height: 54px; padding: 1rem 1.3rem; gap: 2.7rem; }
+#intro .about-link { color: #e3d9c4; border-bottom-color: #cdbb8e66; letter-spacing: .035em; }
+body #loading { color: #bfc9b9; font-size: .8rem; }
+.ready-dot { background: #b9c2a3; box-shadow: 0 0 8px #c5cea833; }
+body .intro-footer { padding: 1.5rem 3.25rem; color: #cacabb; letter-spacing: .095em; }
+.intro-footer span:last-child { color: #dccfaf; }
+body.playing .masthead { background: linear-gradient(180deg, #16201ff5, #1b2523ed); border-bottom-color: var(--museum-rule); }
+#toolbar button { background: #151f1ebd; border-color: #cfbb8a4d; color: #f0e8d9; }
+#toolbar button:hover { background: #d9bd8320; border-color: #d8ba7c; }
+body #story { background: var(--museum-panel); color: #f1eee5; border-color: #c3a66e73; box-shadow: 0 18px 70px #050b0a73; }
+body #story .story-top { background: #242e2a; border-bottom-color: var(--museum-rule); }
+body #story-content { scrollbar-color: #a89b7d #1b2422; }
+body #story h2 { color: #f5ecdb; }
+body #story .case-question { color: #e2cda6; border-bottom-color: var(--museum-rule); }
+body #story .case-meta, body #story .caption, body #story .evidence-label { color: #c4ccbf; }
+body #story-nav { background: #17211f; border-top-color: var(--museum-rule); }
+.step-dots button.selected { background: #c8a76f16; }
+body dialog { color: var(--ink); background: var(--museum-paper); border-color: #b79c6b; box-shadow: 0 28px 100px #050a0966; }
+body dialog::backdrop { background: #091412ad; backdrop-filter: blur(9px); }
+body .dialog-header { background: #f4eee1; border-bottom-color: #a9926140; }
+body dialog h2, body dialog h3 { color: #29342c; }
+body dialog a { color: #365b47; }
+body dialog .primary { background: #304b3b; border-color: #304b3b; color: #fff9eb; box-shadow: inset 0 1px 0 #ffffff1f; }
+body dialog .primary:hover { background: #42604a; }
+body dialog .room-list button { background: #e9e2d3; border-color: #b3a38366; }
+body dialog .room-list button:hover { background: #ded5c2; border-color: #89754e; }
+body dialog .room-number { color: #7d663e; }
+body .sound-caption { background: #1b2422ed; color: #dadbcb; }
+#curtain { background: #16201e; }
+@media (min-width: 1500px) {
+  #intro { margin-top: 17vh; }
+}
+@media (max-height: 800px) and (min-width: 801px) {
+  #intro { margin-top: 120px; }
+  #intro h1 { font-size: clamp(4.6rem, 6.1vw, 6.2rem); margin: 1.1rem 0 1.25rem; }
+  #intro h2 { font-size: 1.8rem; margin-bottom: .8rem; }
+}
+@media (max-width: 800px) {
+  .masthead { padding: 1.25rem 1.5rem; }
+  #intro { margin: 132px 1.5rem 0; width: calc(100% - 3rem); max-width: 440px; }
+  #intro h1 { font-size: clamp(4.35rem, 16.6vw, 7rem); margin: 1.4rem 0 1.55rem; }
+  #intro h2 { font-size: 1.75rem; }
+  #intro > .eyebrow { font-size: .7rem; letter-spacing: .08em; }
+  #intro .line { width: 20px; margin-right: 8px; }
+  #shade { background: linear-gradient(90deg, #101a19ec, #101a19c7 48%, #101a1978), linear-gradient(0deg, #10181799, transparent 55%); }
+  body .intro-footer { padding: 1.5rem; font-size: .75rem; }
+}
+@media (max-height: 740px) and (max-width: 800px) {
+  #intro { margin-top: 112px; }
+  #intro h1 { margin: 1rem 0 1.2rem; }
+  #intro h2 { font-size: 1.6rem; }
+}
