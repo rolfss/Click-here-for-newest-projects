@@ -78,7 +78,7 @@ class PocketGame {
   if(this.remaining<=0){this.player.inv=0;this.hurt('time');}
   if(this.mode!=='play')return;
   const k=key(pc.x,pc.y),item=this.items[k];if(item){delete this.items[k];if(item.type==='bomb')this.stats.bombs=Math.min(5,this.stats.bombs+1);if(item.type==='range')this.stats.range=Math.min(6,this.stats.range+1);if(item.type==='speed')this.stats.speed=Math.min(3,this.stats.speed+1);if(item.type==='shield')this.stats.shield=1;this.score+=50;this.event('pickup',{item:item.type});}
-  if(pc.x===this.exit.x&&pc.y===this.exit.y&&this.tile(pc.x,pc.py)===0&&this.enemies.length===0){const bonus=Math.max(0,Math.ceil(this.remaining))*5;this.score+=bonus;this.bonus=bonus;this.mode=this.level===5?'won':'clear';this.input=-1;this.event('clear');}
+  if(pc.x===this.exit.x&&pc.y===this.exit.y&&this.tile(pc.x,pc.y)===0&&this.enemies.length===0){const bonus=Math.max(0,Math.ceil(this.remaining))*5;this.score+=bonus;this.bonus=bonus;this.mode=this.level===5?'won':'clear';this.input=-1;this.event('clear');}
   for(const p of this.particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=7*dt;p.life-=dt;}this.particles=this.particles.filter(p=>p.life>0);
  }
 }
