@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#222820"><meta name="description" content="An original Game Boy-style bomb maze arcade game. Five stages, touch controls, chain reactions, and power-ups. No installation.">
+<title>Pocket Bomber · Play</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23c7d89b'/%3E%3Ccircle cx='15' cy='19' r='10' fill='%2321392f'/%3E%3Cpath d='M17 9V5h6V2' fill='none' stroke='%2321392f' stroke-width='3'/%3E%3Crect x='10' y='13' width='4' height='4' fill='%23c7d89b'/%3E%3C/svg%3E">
+<style>
+:root{color-scheme:light;--ink:#21392f;--lcd:#c7d89b;--body:#e5e1d5;--red:#922f54}*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;min-height:100%;overscroll-behavior:none}body{background:#222820;color:#2c3630;font-family:ui-monospace,"Courier New",monospace;display:grid;place-items:center;padding:12px max(10px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));min-height:100svh}button{font:inherit;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none}button:focus-visible{outline:3px solid #db923d;outline-offset:4px}.handheld{width:min(100%,438px);background:var(--body);border:1px solid #efeee4;border-radius:22px 22px 58px 22px;padding:18px 17px 20px;box-shadow:inset 3px 3px 0 #faf8ef,inset -5px -6px 0 #babcb1,0 20px 70px #0007;position:relative}.brand{display:flex;align-items:center;justify-content:space-between;margin:0 2px 15px;gap:10px}.logo{font-family:Arial,Helvetica,sans-serif;font-size:20px;font-style:italic;font-weight:900;letter-spacing:-1px}.logo span{font-style:normal;display:block;letter-spacing:3px;font-size:9px;font-family:monospace;margin-top:3px;font-weight:700}.top-actions{display:flex;gap:7px}.top-actions button{border:1px solid #aeb6a5;background:#d4d6c9;border-radius:7px;color:#3d493e;min-width:44px;min-height:44px;font-weight:bold;font-size:10px;padding:4px}.bezel{background:#555c54;border-radius:11px 11px 32px 11px;padding:12px 12px 17px;box-shadow:inset 0 2px 5px #0008;border:1px solid #424941;position:relative}.bezel-label{display:flex;align-items:center;gap:8px;color:#e0e4d7;font:8px monospace;letter-spacing:2px;margin:0 0 8px}.bezel-label:before,.bezel-label:after{content:"";height:2px;background:#a2ad8e;flex:1}.screen{position:relative;background:var(--lcd);border:3px solid #344331;overflow:hidden;box-shadow:inset 2px 2px 8px #0005;aspect-ratio:1}.screen:after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,#21392f0d 0px,#21392f0d 1px,transparent 1px,transparent 3px);z-index:3}canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none}.bezel-foot{display:flex;justify-content:space-between;align-items:center;color:#e0e4d7;font-size:8px;letter-spacing:2px;margin:9px 5px -4px}.power{display:inline-flex;align-items:center;gap:5px}.power:before{content:"";width:6px;height:6px;border-radius:50%;background:#d08066;box-shadow:0 0 6px #ef8a6770}.tip{min-height:36px;font-size:10px;line-height:1.4;text-align:center;display:flex;align-items:center;justify-content:center;margin:10px 0 1px;padding:0 6px;color:#445043}.controls{display:flex;justify-content:space-between;align-items:center;padding:2px 13px 0 2px;gap:10px}.dpad{width:156px;height:156px;flex-shrink:0;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);position:relative;touch-action:none;filter:drop-shadow(0 4px 0 #171d18);user-select:none}.dpad button,.dpad .hub{background:#343b35;border:0;box-shadow:inset 1px 1px 0 #596156;color:#a7b09d;min-height:44px;min-width:44px;touch-action:none;display:grid;place-items:center;font-size:23px;font-weight:bold;line-height:1}.dpad button.pressed{background:#1e2a20;color:#d6e0bb;box-shadow:inset 1px 2px 5px #0009}.dpad [data-dir="0"]{grid-area:1/2;border-radius:6px 6px 0 0}.dpad [data-dir="1"]{grid-area:2/3;border-radius:0 6px 6px 0}.dpad [data-dir="2"]{grid-area:3/2;border-radius:0 0 6px 6px}.dpad [data-dir="3"]{grid-area:2/1;border-radius:6px 0 0 6px}.dpad .hub{grid-area:2/2;box-shadow:none}.hub:after{content:"";width:22px;height:22px;border-radius:50%;box-shadow:inset 1px 2px 4px #0006;background:#2d362e}.bomb-side{display:flex;flex-direction:column;align-items:center;gap:9px;transform:rotate(-10deg)}#bomb{width:89px;height:89px;border-radius:50%;background:var(--red);border:2px solid #7a2044;color:#f9dae6;box-shadow:inset 3px 3px 0 #b75677,inset -3px -3px 0 #6b2640,0 6px 0 #591b35,0 8px 12px #0003;touch-action:none;font-family:Arial,sans-serif;font-size:38px;font-weight:900}#bomb.pressed{transform:translateY(4px);box-shadow:inset 2px 3px 4px #501830,0 2px 0 #591b35}.bomb-side span{font-size:10px;font-weight:bold;letter-spacing:3px}.bottom{display:flex;align-items:center;justify-content:center;gap:15px;margin-top:14px;min-height:44px}.pill{background:#798275;color:#f4f4e8;border:1px solid #64725f;border-radius:14px;min-height:44px;padding:8px 16px;font-size:10px;letter-spacing:1px;box-shadow:0 2px 0 #4c5748}.speaker{display:flex;gap:4px;transform:rotate(-24deg);position:absolute;right:23px;bottom:25px;pointer-events:none}.speaker i{height:24px;width:3px;border-radius:4px;background:#aaaF9e;box-shadow:1px 0 #f8f7ee}.desktop-note{text-align:center;font-size:10px;color:#a3ad9b;margin:15px 0 0;letter-spacing:1px}.overlay{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:13px;background:#c7d89bf5;color:var(--ink);overflow:auto}.overlay[hidden]{display:none}.kicker{font-size:9px;letter-spacing:2px;font-weight:bold;margin:0 0 8px}.overlay h1{font-size:clamp(26px,8vw,40px);line-height:.98;letter-spacing:-2px;margin:0 0 12px;font-weight:900;text-shadow:2px 2px #8fac62}.overlay h2{font-size:25px;line-height:1;margin:4px 0 10px;font-weight:900;letter-spacing:-1px}.overlay p{font-size:11px;line-height:1.5;margin:4px 0 10px;max-width:28em}.play{min-height:46px;border:2px solid var(--ink);background:var(--ink);color:var(--lcd);font-weight:900;font-size:13px;padding:11px 21px;box-shadow:3px 3px #829d5c;margin:7px 0 2px;letter-spacing:1px}.ghost{min-height:44px;font-size:10px;border:0;background:transparent;color:var(--ink);text-decoration:underline;padding:8px 12px;font-weight:bold}.mascot{width:45px;height:45px;margin:0 0 8px;image-rendering:pixelated}.help-text{text-align:left;font-size:11px;line-height:1.45;margin:4px 0 6px}.help-text p{margin:0 0 7px}.statline{padding:8px 6px;border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);font-size:12px;font-weight:bold;width:90%;margin:7px 0}.hidden{display:none!important}@media(max-width:370px){.handheld{padding:12px 12px 16px}.brand{margin-bottom:10px}.bezel{padding:9px 9px 14px}.dpad{width:144px;height:144px}#bomb{width:80px;height:80px}.controls{padding-right:5px}.speaker{display:none}.kicker{font-size:8px;letter-spacing:1px}.overlay{padding:10px}.overlay p,.help-text{font-size:10px}.overlay h1{font-size:29px}.mascot{width:32px;height:32px}.desktop-note{display:none}}@media(max-height:760px) and (orientation:portrait){body{padding-top:7px;padding-bottom:7px}.handheld{max-width:385px;padding-top:12px;padding-bottom:14px}.brand{margin-bottom:8px}.brand .logo{font-size:18px}.bezel{padding:8px 9px 13px}.dpad{width:144px;height:144px}.tip{margin-top:6px;min-height:29px;font-size:9px}.bottom{margin-top:7px}.desktop-note{display:none}.speaker{display:none}}@media(orientation:landscape) and (max-height:580px){body{padding:8px}.handheld{width:min(96vw,860px);display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,1fr);gap:0 18px;padding:12px 20px 15px;border-radius:22px 22px 42px 22px}.brand{grid-column:1/-1;margin-bottom:8px}.bezel{grid-column:1;grid-row:2/5;width:min(100%,calc(100svh - 114px));justify-self:center;padding:7px 9px 12px}.bezel-label{display:none}.bezel-foot{font-size:7px}.controls{grid-column:2;grid-row:3;padding:0;gap:20px;align-self:center}.tip{grid-column:2;grid-row:2;margin:0;font-size:10px}.bottom{grid-column:2;grid-row:4;margin:0}.speaker,.desktop-note{display:none}.dpad{width:144px;height:144px}#bomb{width:78px;height:78px}.overlay{padding:8px}.overlay h1{font-size:27px}.overlay h2{font-size:22px}.overlay p{font-size:10px}.kicker{font-size:8px;margin-bottom:5px}.mascot{height:25px;width:25px;margin-bottom:5px}.play{min-height:44px;padding:8px 15px;margin:4px 0 0}.ghost{min-height:40px;padding:6px 8px}.help-text p{font-size:9px;margin-bottom:4px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<main class="handheld" aria-label="Pocket Bomber game">
+ <header class="brand"><div class="logo">pocket bomber<span>MONOCHROME ARCADE</span></div><div class="top-actions"><button id="sound" aria-label="Mute sound effects">SFX<br>ON</button><button id="full" aria-label="Enter fullscreen">FULL<br>SCREEN</button></div></header>
+ <section class="bezel" aria-label="Game screen"><div class="bezel-label">DOT MATRIX / 01</div><div class="screen"><canvas id="game" width="208" height="208" aria-label="Bomb maze. Use the D-pad or arrow keys to move; B or Space to place a bomb."></canvas><div class="overlay" id="overlay" role="dialog" aria-modal="false" aria-labelledby="dialog-title"></div></div><div class="bezel-foot"><span class="power">POWER</span><span>4 SHADES. ALL GAME.</span></div></section>
+ <div class="tip" id="tip" role="status" aria-live="polite">Break the blocks. Beat the enemies. Find the exit.</div>
+ <div class="controls"><div class="dpad" id="dpad" aria-label="Movement controls"><button data-dir="0" aria-label="Move up">&#9650;</button><button data-dir="3" aria-label="Move left">&#9664;</button><span class="hub" aria-hidden="true"></span><button data-dir="1" aria-label="Move right">&#9654;</button><button data-dir="2" aria-label="Move down">&#9660;</button></div><div class="bomb-side"><button id="bomb" aria-label="Place bomb">B</button><span>BOMB</span></div></div>
+ <div class="bottom"><button class="pill" id="pause" aria-label="Pause or resume game">PAUSE</button><button class="pill" id="help" aria-label="How to play">HELP</button></div><div class="speaker" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+</main>
+<p class="desktop-note">ARROWS / WASD &nbsp; MOVE &nbsp;&middot;&nbsp; SPACE &nbsp; BOMB &nbsp;&middot;&nbsp; P &nbsp; PAUSE</p>
+<script>
+/* Pocket Bomber: original, dependency-free grid action engine. */
+(function(root){
+'use strict';
+const W=13,H=11,DIRS=[[0,-1],[1,0],[0,1],[-1,0]];
+class Game {
+ constructor(seed=Date.now()){
+  this.seed=seed>>>0; this.level=1; this.lives=3; this.score=0;
+  this.capacity=1; this.range=2; this.boots=0; this.shield=0;
+  this.events=[]; this.phase='title'; this.load(); this.phase='title';
+ }
+ rand(){ this.seed=(Math.imul(this.seed,1664525)+1013904223)>>>0; return this.seed/4294967296; }
+ emit(type,data={}){this.events.push({type,...data});}
+ load(){
+  this.map=Array.from({length:H},(_,y)=>Array.from({length:W},(_,x)=>
+   x===0||y===0||x===W-1||y===H-1||(x%2===0&&y%2===0)?1:(this.rand()<.49+this.level*.022?2:0)));
+  for(const [x,y] of [[1,1],[2,1],[1,2],[1,3],[2,3],[3,3]])this.map[y][x]=0;
+  this.map[1][3]=2; this.map[4][1]=2;
+  this.player={x:1,y:1,px:1,py:1,anim:1,dir:2};
+  this.bombs=[];this.flames=[];this.pickups=[];this.debris=[];this.hidden={};
+  this.moveClock=0;this.enemyClock=.7;this.invuln=1.6;this.timer=180;this.age=0;
+  const spawns=[[11,9],[11,1],[1,9],[7,5],[9,7],[5,9]];
+  this.enemies=spawns.slice(0,Math.min(2+this.level,6)).map(([x,y],i)=>{
+   this.map[y][x]=0;
+   const open=DIRS.map(([dx,dy])=>[x+dx,y+dy]).filter(([nx,ny])=>this.map[ny]?.[nx]!==1);
+   if(open.length){const [nx,ny]=open[0];this.map[ny][nx]=0;}
+   return {x,y,px:x,py:y,anim:1,dir:i%4,kind:(i+this.level)%3,alive:true};
+  });
+  this.exit={x:11,y:7};this.map[7][11]=2;
+  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++)if(this.map[y][x]===2&&this.rand()<.18)
+   this.hidden[x+','+y]=['bomb','fire','boot','shield'][Math.floor(this.rand()*4)];
+  this.hidden['3,1']='bomb';this.hidden['1,4']='fire';delete this.hidden['11,7'];
+  this.phase='playing';
+ }
+ at(x,y){return this.map[y]?.[x]??1;}
+ bombAt(x,y){return this.bombs.find(b=>b.x===x&&b.y===y&&!b.dead);}
+ walkable(x,y){return this.at(x,y)===0&&!this.bombAt(x,y);}
+ start(){if(this.phase==='title')this.phase='playing';}
+ move(d){
+  if(this.phase!=='playing'||d<0||d>3||this.moveClock>0)return false;
+  const p=this.player,[dx,dy]=DIRS[d];p.dir=d;
+  if(!this.walkable(p.x+dx,p.y+dy))return false;
+  p.px=p.x;p.py=p.y;p.x+=dx;p.y+=dy;p.anim=0;
+  this.moveClock=.165-this.boots*.017;
+  this.hazards();this.collect();this.checkExit();return true;
+ }
+ plant(){
+  if(this.phase!=='playing'||this.bombs.length>=this.capacity)return false;
+  const p=this.player;if(this.bombAt(p.x,p.y))return false;
+  this.bombs.push({x:p.x,y:p.y,fuse:2.35,range:this.range,dead:false});
+  this.emit('plant');return true;
+ }
+ blastCells(b,board=this.map){
+  const cells=[[b.x,b.y]];
+  for(const [dx,dy]of DIRS)for(let n=1;n<=b.range;n++){
+   const x=b.x+dx*n,y=b.y+dy*n,v=board[y]?.[x]??1;
+   if(v===1)break;cells.push([x,y]);if(v===2||this.bombAt(x,y))break;
+  }return cells;
+ }
+ explode(first){
+  // One snapshot for the whole chain: a destroyed crate still blocks this blast.
+  const board=this.map.map(r=>r.slice()),queue=[first],seen=new Set(),cells=new Map();
+  while(queue.length){
+   const b=queue.shift();if(seen.has(b)||b.dead)continue;seen.add(b);
+   for(const [x,y]of this.blastCells(b,board)){
+    cells.set(x+','+y,[x,y]);const next=this.bombAt(x,y);if(next&&!seen.has(next))queue.push(next);
+   }
+  }
+  for(const b of seen)b.dead=true;
+  this.bombs=this.bombs.filter(b=>!b.dead);
+  for(const [x,y]of cells.values()){
+   if(this.at(x,y)===2){
+    this.map[y][x]=0;this.score+=10;this.debris.push({x,y,t:.45});
+    const type=this.hidden[x+','+y];if(type)this.pickups.push({x,y,type,safe:.75});
+    delete this.hidden[x+','+y];
+   }else this.pickups=this.pickups.filter(p=>p.x!==x||p.y!==y||p.safe>0);
+   this.flames.push({x,y,t:.62});
+  }
+  this.emit('boom');this.hazards();
+ }
+ hazards(){
+  if(this.phase!=='playing')return;
+  const burning=(x,y)=>this.flames.some(f=>f.x===x&&f.y===y&&f.t>0);
+  for(const e of this.enemies)if(e.alive&&burning(e.x,e.y)){
+   e.alive=false;this.score+=100+e.kind*50;this.emit('enemy',{x:e.x,y:e.y});
+  }
+  const p=this.player;
+  if(this.invuln<=0&&(burning(p.x,p.y)||this.enemies.some(e=>e.alive&&e.x===p.x&&e.y===p.y))){
+   if(this.shield){this.shield=0;this.invuln=2;this.emit('shield');}
+   else this.die('Caught in the blast or by an enemy.');
+  }
+ }
+ collect(){
+  const p=this.player;
+  this.pickups=this.pickups.filter(a=>{
+   if(a.x!==p.x||a.y!==p.y)return true;
+   if(a.type==='bomb')this.capacity=Math.min(5,this.capacity+1);
+   if(a.type==='fire')this.range=Math.min(6,this.range+1);
+   if(a.type==='boot')this.boots=Math.min(3,this.boots+1);
+   if(a.type==='shield')this.shield=1;
+   this.score+=25;this.emit('pickup',{item:a.type});return false;
+  });
+ }
+ die(reason){
+  if(this.phase!=='playing')return;
+  this.lives--;this.phase=this.lives>0?'dead':'over';this.reason=reason;this.emit('die');
+ }
+ retry(){if(this.phase==='dead'){this.load();this.emit('stage');}}
+ checkExit(){
+  if(this.phase==='playing'&&!this.enemies.some(e=>e.alive)&&this.at(this.exit.x,this.exit.y)===0&&
+   this.player.x===this.exit.x&&this.player.y===this.exit.y){
+   this.score+=Math.ceil(this.timer)*5+this.level*200;
+   this.phase=this.level>=5?'won':'clear';this.emit('clear');
+  }
+ }
+ next(){if(this.phase==='clear'){this.level++;this.load();this.emit('stage');}}
+ enemyStep(){
+  for(const e of this.enemies){
+   if(!e.alive)continue;
+   let choices=[0,1,2,3].filter(d=>{
+    const [dx,dy]=DIRS[d],x=e.x+dx,y=e.y+dy;
+    return this.walkable(x,y)&&!this.enemies.some(o=>o!==e&&o.alive&&o.x===x&&o.y===y);
+   });
+   if(!choices.length)continue;
+   if(e.kind===2){
+    const safe=choices.filter(d=>{const[dx,dy]=DIRS[d];return!this.flames.some(f=>f.x===e.x+dx&&f.y===e.y+dy);});
+    if(safe.length)choices=safe;
+   }
+   let d=choices[Math.floor(this.rand()*choices.length)];
+   if(e.kind===1&&this.rand()<.7){
+    choices.sort((a,b)=>{
+     const distance=v=>Math.abs(e.x+DIRS[v][0]-this.player.x)+Math.abs(e.y+DIRS[v][1]-this.player.y);
+     return distance(a)-distance(b);
+    });d=choices[0];
+   }else if(choices.includes(e.dir)&&this.rand()<.66)d=e.dir;
+   e.px=e.x;e.py=e.y;e.x+=DIRS[d][0];e.y+=DIRS[d][1];e.dir=d;e.anim=0;
+   // Catch actors crossing in opposite directions, too.
+   const p=this.player;
+   if(e.x===p.px&&e.y===p.py&&e.px===p.x&&e.py===p.y&&p.anim<1&&this.invuln<=0){
+    if(this.shield){this.shield=0;this.invuln=2;this.emit('shield');}else this.die('An enemy caught you.');
+   }
+   this.hazards();if(this.phase!=='playing')break;
+  }
+ }
+ step(dt,dir=-1){
+  if(this.phase!=='playing')return;
+  dt=Math.max(0,Math.min(.05,dt));this.age+=dt;this.timer-=dt;
+  this.invuln=Math.max(0,this.invuln-dt);this.moveClock=Math.max(0,this.moveClock-dt);
+  this.player.anim=Math.min(1,this.player.anim+dt/.115);
+  for(const e of this.enemies)e.anim=Math.min(1,e.anim+dt/.23);
+  this.flames.forEach(f=>f.t-=dt);this.flames=this.flames.filter(f=>f.t>0);
+  this.debris.forEach(f=>f.t-=dt);this.debris=this.debris.filter(f=>f.t>0);
+  this.pickups.forEach(p=>p.safe-=dt);
+  // Damage is resolved before input so a new explosion cannot be escaped retroactively.
+  for(const b of [...this.bombs]){if(b.dead)continue;b.fuse-=dt;if(b.fuse<=0)this.explode(b);}
+  if(this.phase!=='playing')return;
+  if(this.timer<=0){this.timer=0;this.die('Time ran out.');return;}
+  this.hazards();if(this.phase!=='playing')return;
+  if(dir>=0)this.move(dir);
+  if(this.phase!=='playing')return;
+  this.enemyClock-=dt;if(this.enemyClock<=0){this.enemyClock=.43-this.level*.022;this.enemyStep();}
+  this.collect();this.checkExit();
+ }
+}
+if(typeof module!=='undefined'&&module.exports)module.exports={Game,W,H,DIRS};
+else root.BomberEngine={Game,W,H,DIRS};
+})(typeof window!=='undefined'?window:globalThis);
+
+(()=>{'use strict';
+const {Game,W,H}=BomberEngine, $=id=>document.getElementById(id);
+const canvas=$('game'),ctx=canvas.getContext('2d',{alpha:false}),C=['#c7d89b','#8fac62','#4d6947','#21392f'];
+let g=new Game(),best=0,sound=true,audio=null,input=-1,overlayMode='',lastPhase='',lastTime=0,shake=0,tipTimer=0,wasPlaying=false;
+try{best=Number(localStorage.getItem('pocket-bomber-best')||0)||0;}catch{}
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const font={
+'A':'010101111101101','B':'110101110101110','C':'011100100100011','D':'110101101101110','E':'111100110100111','F':'111100110100100','G':'011100101101011','H':'101101111101101','I':'111010010010111','J':'001001001101010','K':'101101110101101','L':'100100100100111','M':'101111111101101','N':'101111111111101','O':'010101101101010','P':'110101110100100','Q':'010101101111011','R':'110101110101101','S':'011100010001110','T':'111010010010010','U':'101101101101111','V':'101101101101010','W':'101101111111101','X':'101101010101101','Y':'101101010010010','Z':'111001010100111','0':'111101101101111','1':'010110010010111','2':'110001010100111','3':'110001010001110','4':'101101111001001','5':'111100110001110','6':'011100111101111','7':'111001010010010','8':'111101111101111','9':'111101111001110',':':'000010000010000','/':'001001010100100','-':'000000111000000','+':'000010111010000','!':'010010010000010','.':'000000000000010',' ':'000000000000000'};
+function rect(x,y,w,h,c){ctx.fillStyle=C[c];ctx.fillRect(Math.round(x),Math.round(y),w,h);}
+function text(str,x,y,c=3,scale=1){for(const a of String(str).toUpperCase()){const bits=font[a]||font[' '];for(let n=0;n<15;n++)if(bits[n]==='1')rect(x+(n%3)*scale,y+Math.floor(n/3)*scale,scale,scale,c);x+=4*scale;}}
+function sprite(rows,x,y,scale=1){for(let j=0;j<rows.length;j++)for(let i=0;i<rows[j].length;i++)if(rows[j][i]!=='.')rect(x+i*scale,y+j*scale,scale,scale,Number(rows[j][i]));}
+const hero=['.....3333.....','....310013....','...31000013...','..3300000033..','..3022222203..','..3020330203..','..3020330203..','...30000003...','..3332222333..','.303322233303.','.303322233303.','..3333333333..','...32233223...','...333..333...'];
+const orb=['....33333....','..331111133..','.31100000113.','3310303030133','3100303030013','3100000000013','3100033300013','3311000001133','.33111111133.','..333333333..','...33...33...'];
+const crab=['.33.......33.','3133.....3313','.31333333313.','..321111123..','.32201110223.','3323030303233','3223000003223','.3321111233..','..333333333..','.33..3.3..33.'];
+const ghost=['....33333....','...3111113...','..310000013..','.31000000013.','.31033033013.','.31033033013.','.31000000013.','.31100300113.','.32111111123.','.32323232323.','..3.3.3.3.3..'];
+const bombSprite=['.........13...','........3103..','.......31.3...','.....3333.....','...33111133...','..3100333333..','.310033333333.','.310333333333.','.313333333333.','.313333333333.','.313333333333.','..3333333333..','...33333333...','.....3333.....'];
+function beep(f,d=.1,type='square',volume=.035,end){
+ if(!sound||!audio||audio.state!=='running')return;
+ const o=audio.createOscillator(),v=audio.createGain();o.type=type;o.frequency.setValueAtTime(f,audio.currentTime);
+ if(end)o.frequency.exponentialRampToValueAtTime(end,audio.currentTime+d);
+ v.gain.setValueAtTime(volume,audio.currentTime);v.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+d);
+ o.connect(v);v.connect(audio.destination);o.start();o.stop(audio.currentTime+d);
+}
+function unlock(){try{if(!audio)audio=new(window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume().catch(()=>{});}catch{}}
+function fx(t){
+ if(t==='plant')beep(190,.1,'square',.03,95);
+ if(t==='boom'){beep(70,.26,'sawtooth',.045,20);shake=reduced?0:3;}
+ if(t==='enemy')beep(440,.18,'square',.025,110);
+ if(t==='pickup'||t==='shield'){beep(660,.14);setTimeout(()=>beep(990,.2),80);}
+ if(t==='die')beep(300,.7,'sawtooth',.035,35);
+ if(t==='clear'||t==='stage')[330,440,554,660].forEach((f,i)=>setTimeout(()=>beep(f,.2),i*90));
+}
+function save(){if(g.score>best){best=g.score;try{localStorage.setItem('pocket-bomber-best',String(best));}catch{}}}
+function notify(t,d=3){$('tip').textContent=t;tipTimer=d;}
+function draw(){
+ ctx.save();ctx.imageSmoothingEnabled=false;rect(0,0,208,208,0);
+ text('SCORE '+String(g.score).padStart(6,'0'),5,4);text('STAGE '+g.level+'/5',161,4);
+ text('LIFE '+g.lives,5,15);text('B '+g.capacity,43,15);text('FIRE '+g.range,69,15);text(g.shield?'SHIELD':'',109,15);
+ text('TIME '+String(Math.ceil(g.timer)).padStart(3,'0'),171-4,15,g.timer<30&&Math.floor(g.age*3)%2?2:3);
+ rect(0,25,208,1,3);text('FOES '+g.enemies.filter(e=>e.alive).length,5,27,2);text('EXIT: '+(!g.enemies.some(e=>e.alive)?'OPEN':'LOCKED'),130,27,2);
+ if(shake>0){ctx.translate(Math.round(Math.sin(g.age*91)*shake),0);shake*=.83;if(shake<.2)shake=0;}
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+  const sx=x*16,sy=32+y*16,v=g.at(x,y);
+  if(v===1){
+   rect(sx,sy,16,16,3);rect(sx+1,sy+1,14,14,2);rect(sx+2,sy+1,12,2,1);rect(sx+1,sy+3,2,10,1);
+   rect(sx+4,sy+5,8,7,2);rect(sx+13,sy+4,1,10,3);rect(sx+4,sy+13,9,1,3);rect(sx+4,sy+4,2,1,0);
+  }else if(v===2){
+   rect(sx+1,sy+1,14,14,3);rect(sx+2,sy+2,12,12,1);rect(sx+2,sy+2,12,1,0);
+   rect(sx+2,sy+7,12,1,3);rect(sx+7,sy+2,1,5,2);rect(sx+4,sy+8,1,6,3);rect(sx+11,sy+8,1,6,2);rect(sx+2,sy+13,12,1,2);
+   if(x===g.exit.x&&y===g.exit.y){rect(sx+9,sy+2,5,5,3);rect(sx+11,sy+3,1,3,0);rect(sx+10,sy+4,3,1,0);}
+  }else{
+   rect(sx,sy,16,16,0);if((x+y)%3===0){rect(sx+3,sy+5,1,1,1);rect(sx+11,sy+12,1,1,1);}
+  }
+ }
+ const ex=g.exit.x*16,ey=g.exit.y*16+32,open=!g.enemies.some(e=>e.alive);
+ if(g.at(g.exit.x,g.exit.y)===0){
+  rect(ex+2,ey+1,12,15,3);rect(ex+4,ey+3,8,11,open?1:2);rect(ex+10,ey+8,1,2,0);
+  if(open){rect(ex+5,ey+4,6,9,0);sprite(['.3.','333','.3.','.3.'],ex+6,ey+6);}
+ }
+ for(const p of g.pickups){
+  const x=p.x*16+3,y=p.y*16+35;rect(x,y,11,11,3);rect(x+1,y+1,9,9,0);
+  text({bomb:'B',fire:'F',boot:'S',shield:'+'}[p.type],x+3,y+3,3);
+ }
+ for(const d of g.debris){let k=(.45-d.t)*14;for(let i=0;i<4;i++)rect(d.x*16+7+(i%2?1:-1)*k,d.y*16+39+(i<2?-1:1)*k,2,2,2);}
+ for(const b of g.bombs){const pulse=!reduced&&Math.floor(g.age*(b.fuse<.8?10:4))%2;sprite(bombSprite,b.x*16+1,b.y*16+33-pulse);if(b.fuse<.7)rect(b.x*16+10,b.y*16+32,2,2,0);}
+ for(const f of g.flames){
+  let x=f.x*16,y=f.y*16+32;rect(x+5,y,6,16,3);rect(x,y+5,16,6,3);rect(x+6,y,4,16,1);rect(x,y+6,16,4,1);
+  rect(x+6,y+3,4,10,0);rect(x+3,y+6,10,4,0);if(Math.floor(g.age*8)%2){rect(x+2,y+2,2,2,2);rect(x+12,y+12,2,2,2);}
+ }
+ for(const e of g.enemies)if(e.alive){const x=(e.px+(e.x-e.px)*e.anim)*16+1,y=(e.py+(e.y-e.py)*e.anim)*16+35;
+  sprite([orb,crab,ghost][e.kind],x,y+(!reduced?Math.floor(g.age*3+e.x)%2:0));}
+ const p=g.player;if(g.phase!=='dead'&&g.phase!=='over'&&(g.invuln<=0||Math.floor(g.age*9)%2===0)){
+  const x=(p.px+(p.x-p.px)*p.anim)*16+1,y=(p.py+(p.y-p.py)*p.anim)*16+33;
+  if(g.shield){rect(x,y-1,14,1,2);rect(x,y+14,14,1,2);}sprite(hero,x,y);
+ }
+ ctx.restore();
+}
+const mascot='<svg class="mascot" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><path fill="#21392f" d="M9 0h4v2h-2v3h2v2h2v6h-2v2H4v-2H2V7h2V5h4V2h1z"/><path fill="#8fac62" d="M5 6h4v2H6v3H4V8h1z"/><path fill="#c7d89b" d="M5 6h2v2H5z"/></svg>';
+function show(mode){
+ overlayMode=mode;const el=$('overlay');input=-1;clearHeld();
+ if(!mode){el.hidden=true;return;}el.hidden=false;
+ let html='';
+ if(mode==='title')html=`<div class="kicker">THE LITTLE BLAST THAT COULD</div>${mascot}<h1 id="dialog-title">POCKET<br>BOMBER</h1><p>Blast blocks. Dodge trouble.<br>Five stages. One tiny hero.</p><button class="play" data-act="start">START GAME</button><button class="ghost" data-act="help">HOW TO PLAY</button><div class="kicker">BEST ${String(best).padStart(6,'0')}</div>`;
+ if(mode==='help')html=`<div class="kicker">FIELD MANUAL</div><h2 id="dialog-title">BOMB &amp; RUN</h2><div class="help-text"><p><b>MOVE:</b> Hold or slide on the D-pad.</p><p><b>B:</b> Drop a bomb. It bursts after 2.35 seconds. Your own blasts hurt!</p><p><b>HIDE:</b> Turn a corner behind stone. Blasts travel in straight lines.</p><p><b>COLLECT:</b> B = more bombs; F = longer fire; S = speed; + = shield.</p><p><b>ESCAPE:</b> Beat every enemy, break the + marked crate, enter its door.</p></div><button class="play" data-act="back">GOT IT</button>`;
+ if(mode==='pause')html=`<div class="kicker">TAKE A BREATHER</div>${mascot}<h2 id="dialog-title">PAUSED</h2><p>Stage ${g.level} / 5 &nbsp; · &nbsp; ${g.lives} lives</p><button class="play" data-act="resume">KEEP PLAYING</button><button class="ghost" data-act="help">HOW TO PLAY</button>`;
+ if(mode==='dead'||mode==='over')html=`<div class="kicker">${mode==='dead'?'CAUGHT IN THE CHAOS':'END OF THE RUN'}</div>${mascot}<h2 id="dialog-title">${mode==='dead'?'ONE LIFE DOWN':'GAME OVER'}</h2><p>${g.reason}<br>${mode==='dead'?g.lives+' lives left. Watch your escape route.':'Another run. Another chance.'}</p><div class="statline">SCORE ${g.score} &nbsp; BEST ${best}</div><button class="play" data-act="${mode==='dead'?'retry':'restart'}">${mode==='dead'?'TRY STAGE AGAIN':'PLAY AGAIN'}</button>`;
+ if(mode==='clear'||mode==='won')html=`<div class="kicker">${mode==='won'?'ALL FIVE STAGES COMPLETE':'EXIT SECURED'}</div>${mascot}<h2 id="dialog-title">${mode==='won'?'POCKET LEGEND!':'STAGE CLEAR!'}</h2><p>${mode==='won'?'You turned a tiny fuse into a big win.':'Bigger mazes. Shorter tempers.'}</p><div class="statline">SCORE ${g.score} &nbsp; LIVES ${g.lives}</div><button class="play" data-act="${mode==='won'?'restart':'next'}">${mode==='won'?'PLAY AGAIN':'STAGE '+(g.level+1)+' →'}</button>`;
+ el.innerHTML=html;
+}
+function pause(){if(g.phase==='playing'){g.phase='pause';show('pause');}else if(g.phase==='pause'){g.phase='playing';show('');}}
+function help(){wasPlaying=g.phase==='playing'||g.phase==='pause';if(g.phase==='playing')g.phase='pause';show('help');}
+$('overlay').addEventListener('click',e=>{
+ const b=e.target.closest('[data-act]');if(!b)return;unlock();
+ const a=b.dataset.act;
+ if(a==='start'){g.start();show('');notify('B drops a bomb. Get around a stone corner before it bursts!',7);}
+ if(a==='help')help();
+ if(a==='back'){if(wasPlaying){g.phase='playing';show('');}else show(g.phase==='title'?'title':g.phase);}
+ if(a==='resume'){g.phase='playing';show('');}
+ if(a==='retry'){g.retry();show('');}
+ if(a==='restart'){g=new Game();g.start();show('');notify('A fresh maze. Leave yourself an escape route.',4);}
+ if(a==='next'){g.next();show('');}
+});
+const held=new Map();let padPointer=null;
+function clearHeld(){held.clear();input=-1;padPointer=null;document.querySelectorAll('.pressed').forEach(b=>b.classList.remove('pressed'));}
+function setDir(d){input=d;document.querySelectorAll('[data-dir]').forEach(b=>b.classList.toggle('pressed',Number(b.dataset.dir)===d));}
+const pad=$('dpad');
+function padDir(e){const r=pad.getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2;
+ if(Math.max(Math.abs(dx),Math.abs(dy))<15)return -1;
+ return Math.abs(dx)>Math.abs(dy)?dx>0?1:3:dy>0?2:0;
+}
+pad.addEventListener('pointerdown',e=>{e.preventDefault();if(padPointer!==null)return;padPointer=e.pointerId;pad.setPointerCapture(e.pointerId);setDir(padDir(e));if(input>=0)g.move(input);});
+pad.addEventListener('pointermove',e=>{if(e.pointerId===padPointer){e.preventDefault();setDir(padDir(e));}});
+function releasePad(e){if(e.pointerId===padPointer){padPointer=null;setDir(-1);}}
+pad.addEventListener('pointerup',releasePad);pad.addEventListener('pointercancel',releasePad);pad.addEventListener('lostpointercapture',releasePad);
+$('bomb').addEventListener('pointerdown',e=>{e.preventDefault();unlock();$('bomb').setPointerCapture(e.pointerId);$('bomb').classList.add('pressed');g.plant();});
+for(const name of ['pointerup','pointercancel','lostpointercapture'])$('bomb').addEventListener(name,()=>$('bomb').classList.remove('pressed'));
+$('bomb').addEventListener('click',e=>{if(e.detail===0){unlock();g.plant();}});
+// Semantic buttons also work with keyboard activation and assistive technology.
+pad.querySelectorAll('button').forEach(b=>b.addEventListener('click',e=>{if(e.detail===0)g.move(Number(b.dataset.dir));}));
+const keys={ArrowUp:0,w:0,W:0,ArrowRight:1,d:1,D:1,ArrowDown:2,s:2,S:2,ArrowLeft:3,a:3,A:3};
+window.addEventListener('keydown',e=>{
+ if(e.altKey||e.ctrlKey||e.metaKey)return;
+ if(e.key in keys){e.preventDefault();held.delete(e.code);held.set(e.code,keys[e.key]);setDir(keys[e.key]);if(!e.repeat)g.move(input);}
+ if([' ','z','Z','b','B'].includes(e.key)&&g.phase==='playing'){e.preventDefault();if(!e.repeat){unlock();g.plant();}}
+ if(['p','P','Escape'].includes(e.key)&&!e.repeat){e.preventDefault();pause();}
+});
+window.addEventListener('keyup',e=>{if(e.key in keys){held.delete(e.code);setDir(held.size?[...held.values()].at(-1):-1);}});
+$('pause').onclick=()=>pause();$('help').onclick=()=>help();
+$('sound').onclick=()=>{sound=!sound;unlock();$('sound').innerHTML='SFX<br>'+(sound?'ON':'OFF');$('sound').setAttribute('aria-label',sound?'Mute sound effects':'Enable sound effects');if(sound)beep(440);};
+$('full').onclick=()=>{try{const p=document.fullscreenElement?document.exitFullscreen?.():document.documentElement.requestFullscreen?.();if(p)p.catch(()=>notify('Fullscreen is not available in this browser.'));else notify('Fullscreen is not available in this browser.');}catch{notify('Fullscreen is not available in this browser.');}};
+function suspend(){clearHeld();if(g.phase==='playing'){g.phase='pause';show('pause');}save();}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)suspend();});window.addEventListener('blur',suspend);
+for(const el of [pad,$('bomb'),canvas])el.addEventListener('contextmenu',e=>e.preventDefault());
+function frame(now){
+ const dt=Math.min(.05,(now-(lastTime||now))/1000);lastTime=now;g.step(dt,input);
+ for(const e of g.events){fx(e.type);if(e.type==='pickup')notify({bomb:'BOMB UP! You can place '+g.capacity+' bombs.',fire:'FIRE UP! Blasts reach '+g.range+' tiles. Watch out!',boot:'SPEED UP! Quicker feet, same fuse.',shield:'SHIELD! One hit absorbed.'}[e.item]);if(e.type==='shield')notify('Shield used. Brief protection — get clear!');if(e.type==='clear'||e.type==='die')save();}
+ g.events.length=0;
+ if(g.phase!==lastPhase){lastPhase=g.phase;if(!['playing','pause'].includes(g.phase)&&overlayMode!=='help')show(g.phase);}
+ if(g.phase==='playing'){
+  tipTimer-=dt;if(tipTimer<=0){const left=g.enemies.filter(e=>e.alive).length;
+   const t=left?left+' enemies left. Hold D-pad to move. Tap B to bomb.':'EXIT OPEN! Break the + crate and enter the door.';
+   if($('tip').textContent!==t)$('tip').textContent=t;
+  }
+ }
+ draw();requestAnimationFrame(frame);
+}
+show('title');requestAnimationFrame(frame);
+// A read-only accessor helps inspect the live engine in browser tests.
+Object.defineProperty(window,'pocketBomber',{get:()=>g});
+})();
+
+</script>
+</body></html>
