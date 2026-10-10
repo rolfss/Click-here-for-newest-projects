@@ -137,7 +137,22 @@ export const ARKADE_RELEASE_SOURCE = Object.freeze({
   status: "tool-documentation",
 });
 
-const sourceIds = new Set([...SOURCES.map((source) => source.id), ARKADE_RELEASE_SOURCE.id]);
+export const RAYVN_SOURCE = Object.freeze({
+  id: 'na-rayvn',
+  title: 'Arkivering og journalføring fra RAYVN',
+  shortTitle: 'RAYVN – arkivering og journalføring',
+  publisher: 'Nasjonalarkivet og DSB',
+  published: '16.09.2026',
+  updated: '02.10.2026',
+  verifiedAt: '2026-10-10',
+  type: 'Offisiell veiledning',
+  status: 'current-guidance',
+  scope: 'RAYVN-bruk, primært hos statsforvaltere og kommuner',
+  url: 'https://www.nasjonalarkivet.no/veiledere/arkivering-og-journalforing-fra-rayvn/',
+  note: 'Praktiske eksempler krever konkrete vurderinger; ingen generell fritaksregel.',
+});
+
+const sourceIds = new Set([...SOURCES.map((source) => source.id), ARKADE_RELEASE_SOURCE.id, RAYVN_SOURCE.id]);
 
 export function record({
   id,

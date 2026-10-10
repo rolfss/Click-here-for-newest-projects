@@ -20,7 +20,7 @@ test("kildebasen har forventet omfang og entydige ID-er", () => {
   const stats = corpusStats();
   assert.equal(BUILD_INFO.standardVersion, "Noark 5 versjon 6.0");
   assert.ok(stats.records >= 70);
-  assert.equal(stats.sources, 20);
+  assert.equal(stats.sources, 21);
   assert.ok(stats.requirements >= 35);
   assert.ok(stats.topics >= 15);
   assert.equal(new Set(RECORDS.map(({ id }) => id)).size, RECORDS.length);

@@ -28,7 +28,7 @@ for (const [q, expected] of fixtures) test(`guidance retrieval: ${q}`, () => {
 });
 
 test('new catalogue has section-level provenance and unique IDs', () => {
-  assert.equal(RECORDS.length, 164); assert.equal(SOURCES.length, 20); assert.equal(FORMAT_ROWS.length, 65);
+  assert.equal(RECORDS.length, 170); assert.equal(SOURCES.length, 21); assert.equal(FORMAT_ROWS.length, 65);
   assert.equal(new Set(RECORDS.map((r) => r.id)).size, RECORDS.length);
   for (const source of GUIDANCE_SOURCES) {
     assert.equal(new URL(source.url).protocol, 'https:'); assert.equal(source.verifiedAt, '2026-09-07');
