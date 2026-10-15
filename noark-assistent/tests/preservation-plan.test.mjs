@@ -7,14 +7,15 @@ import { answerQuestion, searchRecords, sourceUrl } from '../engine.mjs';
 test('preservation-plan source metadata separates verification from publication', () => {
   const [source] = PRESERVATION_PLAN_SOURCES;
   assert.equal(source.id, 'na-preservation-plan');
-  assert.equal(source.verifiedAt, '2026-09-17');
-  assert.match(source.published, /ikke bekreftet/);
+  assert.equal(source.verifiedAt, '2026-10-15');
+  assert.equal(source.published, '08.09.2026');
+  assert.equal(source.updated, '14.10.2026');
   assert.equal(new URL(source.url).hostname, 'www.nasjonalarkivet.no');
   assert.match(source.scope, /Statlige/);
   assert.equal(new Set(PRESERVATION_PLAN_RECORDS.map((r) => r.id)).size, PRESERVATION_PLAN_RECORDS.length);
   for (const entry of PRESERVATION_PLAN_RECORDS) {
     assert.equal(entry.source, source.id);
-    assert.equal(entry.verifiedAt, source.verifiedAt);
+    assert.equal(entry.verifiedAt, entry.id === 'guide-preservation-plan-properties' ? '2026-10-15' : '2026-09-17');
     assert.equal(entry.scope, source.scope);
     assert.ok(entry.section);
     assert.equal(entry.page, null);

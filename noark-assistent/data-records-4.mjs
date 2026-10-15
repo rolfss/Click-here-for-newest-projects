@@ -185,8 +185,9 @@ export const RECORDS_4 = Object.freeze([
     section: "Arkivforskrifta § 5 bokstav g",
     topic: "Journalføring",
     tags: ["journaldata", "metadata", "§ 15", "journal", "postjournal", "offentlig innsyn", "eksport"],
-    summary: "Metadata som skal registreres sammen med saksdokumenter, må kunne hentes ut til en journal eller annen innsynsløsning.",
-    detail: "Systemet må kunne identifisere journalregistreringer og overføre relevante metadata til rapport, postjournal eller publiseringsløsning.",
+    summary: "Metadata som skal registreres etter § 15, må kunne hentes ut til en journal.",
+    detail: "Systemet må kunne identifisere journalregistreringer og overføre relevante metadata til en journalrapport eller annen løsning for tilgjengeliggjøring av journaldata.",
+    verifiedAt: "2026-10-15",
   }),
   record({
     id: "rules-needs-first",

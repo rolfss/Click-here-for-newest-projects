@@ -9,12 +9,13 @@ export const PRESERVATION_PLAN_SOURCES = Object.freeze([
     title: 'Veileder om bevaringsplaner for fagsaker',
     shortTitle: 'Bevaringsplaner for fagsaker',
     publisher: 'Nasjonalarkivet',
-    published: 'Publiseringsdato ikke bekreftet',
+    published: '08.09.2026',
+    updated: '14.10.2026',
     type: 'Offisiell veiledning',
     url: 'https://www.nasjonalarkivet.no/veiledere/veileder-om-bevaringsplaner-for-fagsaker/',
     note: 'Statlige bevaringsplaner: skjemaer, funksjonsbaserte vurderinger og revisjon før avlevering.',
     scope: SCOPE,
-    verifiedAt: VERIFIED_AT,
+    verifiedAt: '2026-10-15',
     status: 'current-guidance',
   }),
 ]);
@@ -32,6 +33,15 @@ const record = (entry) => Object.freeze({
 });
 
 export const PRESERVATION_PLAN_RECORDS = Object.freeze([
+  {
+    id: 'guide-preservation-plan-properties',
+    title: 'Bevar vesentlige egenskaper og grunnlaget for automatiserte beslutninger',
+    section: 'Sikre at dokumentasjonen kan brukes i framtiden; Vesentlige egenskaper å bevare',
+    verifiedAt: '2026-10-15',
+    tags: ['bevaringsplan', 'vesentlige egenskaper', 'automatisert', 'algoritmer', 'beslutninger', 'manuelle vurderinger', 'logger', 'historikk', 'konvertering', 'uttrekk', 'informasjonstap'],
+    summary: 'Bevaringsplanen bør dokumentere nødvendige egenskaper og begrunne aksepterte endringer eller tap ved uttrekk og konvertering. Ved automatisert eller blandet saksbehandling må sammenhengen mellom regelgrunnlag, data, eventuelle algoritmer, manuelle vurderinger og beslutninger kunne forstås; versjoner, historikk og logger kan være nødvendig.',
+    detail: 'Vurder konkret hva framtidig forståelse, bruk og etterprøving krever. Metadata, koblinger og visuelle egenskaper kan være vesentlige. Veiledningen gir ikke en generell plikt til å bevare alle logger eller algoritmer; begrunn prioriteringene og betydningen av eventuelle tap.',
+  },
   {
     id: 'guide-preservation-plan-approval',
     title: 'Hvem godkjenner bevaringsplanen?',
