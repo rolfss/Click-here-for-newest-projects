@@ -14,15 +14,25 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - name: Spilltester
+      - name: Spill- og lagringstester
         working-directory: fjordsprint
         run: npm test
-      - name: Arkiver spill og testgrunnlag
+      - name: Installer nettlesertestverktøy
+        run: |
+          python3 -m pip install playwright==1.57.0
+          python3 -m playwright install --with-deps chromium
+      - name: Prøv kjøring og rekordflyt på desktop og mobil
+        working-directory: fjordsprint
+        run: python3 tests/browser-smoke.py
+      - name: Arkiver kilde og faktiske skjermbilder
         if: always()
         uses: actions/upload-artifact@v4
         with:
