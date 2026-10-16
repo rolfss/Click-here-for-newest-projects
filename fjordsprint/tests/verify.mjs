@@ -12,7 +12,7 @@ import {buildRoadsideDetails} from '../dist/roadside-details.js';
 import {World} from '../dist/world.js';
 import {carveRoadClearance,groundHeight} from '../dist/terrain.js';
 const root=fileURLToPath(new URL('../',import.meta.url));
-for(const file of fs.readdirSync(path.join(root,'dist')).filter(f=>f.endsWith('.js'))){execFileSync(process.execPath,['--check',path.join(root,'dist',file)]);const source=fs.readFileSync(path.join(root,'dist',file),'utf8');for(const match of source.matchAll(/from\s+['"](\.\/[^'"]+)['"]/g))assert.ok(fs.existsSync(path.join(root,'dist',match[1])),`Missing import ${file}: ${match[1]}`);}
+for(const file of fs.readdirSync(path.join(root,'dist')).filter(f=>f.endsWith('.js'))){execFileSync(process.execPath,['--check',path.join(root,'dist',file)]);const source=fs.readFileSync(path.join(root,'dist',file),'utf8');for(const match of source.matchAll(/from\s+['"](\.\/[^'"]+)['"]/g))assert.ok(fs.existsSync(path.join(root,'dist',match[1].split(/[?#]/)[0])),`Missing import ${file}: ${match[1]}`);}
 const content=JSON.parse(fs.readFileSync(path.join(root,'dist/archive-content.json'),'utf8'));
 assert.equal(content.questions.length,30);assert.equal(new Set(content.questions.map(q=>q.id)).size,30);const ids=new Set(content.sources.map(s=>s.id));for(const q of content.questions){assert.equal(q.options.length,3);assert.ok(q.correct>=0&&q.correct<=2);assert.ok(q.explanation.length>20);assert.ok(ids.has(q.source));}for(const s of content.sources)assert.ok(s.url.startsWith('https://'));
 const hard=JSON.parse(fs.readFileSync(path.join(root,'dist/hard-questions.json'),'utf8'));

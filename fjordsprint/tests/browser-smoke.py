@@ -13,7 +13,12 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'tests' / 'screenshots'
 OUT.mkdir(exist_ok=True)
 HOOKS = """
-window.__qa={get car(){return car;},get game(){return challenge;},get mode(){return mode;},get quiz(){return quizState;},get track(){return track;},get world(){return world;},get settings(){return settings;},setCar(v){Object.assign(car,v);resetInterpolation();},setAge(v){finishAge=v;},selectCourse,toMenu,openQuiz,answerQuiz};
+import {groundHeight as qaGroundHeight} from './terrain.js';
+window.__qa={get car(){return car;},get game(){return challenge;},get mode(){return mode;},get quiz(){return quizState;},get track(){return track;},get world(){return world;},get settings(){return settings;},get raceSettings(){return raceSettings;},setCar(v){Object.assign(car,v);resetInterpolation();},setAge(v){finishAge=v;},selectCourse,toMenu,openQuiz,answerQuiz,
+ previewCampus(index){const h=world.hospitals.items[index];mode='race';car=initialState();car.s=Math.max(0,h.s-145);resetInterpolation();world.cameraInitialized=false;world.render(car,1/60,mode,{challenge:null,camera:'chase',motion:false});},
+ inspectCampuses(){const findings=[];for(const hospital of world.hospitals.items){let visible=false;for(const distance of [120,180,250]){const c={...initialState(),s:Math.max(0,hospital.s-distance)};world.cameraInitialized=false;world.render(c,1/60,'race',{challenge:null,camera:'chase',motion:false});const point=hospital.sign.position.clone();hospital.root.localToWorld(point);point.project(world.camera);if(hospital.sign.visible&&Math.abs(point.x)<1&&Math.abs(point.y)<1&&point.z<1)visible=true;}findings.push({name:hospital.data.name,visible,clearance:hospital.clearance});}return findings;},
+ checkTerrain(){let min=Infinity;for(let s=0;s<track.length;s+=7)for(const x of [-track.config.width/2,0,track.config.width/2]){const p=track.position(s,x);min=Math.min(min,p.y-qaGroundHeight(world.terrainGeometry,p.x,p.z));}return min;}
+};
 """
 class QuietHandler(SimpleHTTPRequestHandler):
     def log_message(self, *_):
@@ -22,6 +27,7 @@ server=ThreadingHTTPServer(('127.0.0.1',0),partial(QuietHandler,directory=str(RO
 Thread(target=server.serve_forever,daemon=True).start()
 url=f'http://127.0.0.1:{server.server_port}/'
 reports=[]
+page=None
 try:
     with sync_playwright() as p:
         args=['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-dev-shm-usage']
@@ -32,9 +38,17 @@ try:
             ctx=browser.new_context(viewport={'width':w,'height':h},has_touch=touch,device_scale_factor=1)
             page=ctx.new_page();errors=[]
             page.on('pageerror',lambda e:errors.append(str(e)))
+            page.on('console',lambda msg: print(label, msg.text, flush=True) if msg.type=='error' else None)
             page.route('**/main.js*',lambda route:route.fulfill(content_type='application/javascript',body=(ROOT/'dist/main.js').read_text()+HOOKS))
             page.goto(url,wait_until='networkidle');page.wait_for_selector('#menu:not(.hidden)',timeout=60000)
             assert page.evaluate('__qa.world.renderer.info.render.calls')>0
+            assert page.evaluate('__qa.world.car.userData.brandDecals')==4
+            assert page.locator('#partner-badge img').evaluate('(img)=>img.complete&&img.naturalWidth===1246')
+            page.click('#hospitals-btn')
+            assert page.locator('.hospital-directory li').count()==44
+            assert page.locator('[data-tour]').count()==3
+            page.screenshot(path=str(OUT/f'{label}-directory.png'))
+            page.click('#close-modal')
             page.screenshot(path=str(OUT/f'{label}-menu.png'))
             # SwiftShader can render much slower than real hardware. Test input
             # against simulation state, not a short wall-clock sleep.
@@ -69,9 +83,27 @@ try:
             page.screenshot(path=str(OUT/f'{label}-results.png'))
             rows=page.evaluate("JSON.parse(localStorage.getItem('fjordsprint-career-scores-v3'))")
             assert len(rows)==1 and rows[0]['expiresAt']-rows[0]['createdAt']==172800000
-            for i in [1,2]:
-                page.evaluate(f'()=>{{__qa.toMenu();__qa.settings.cup=false;__qa.selectCourse({i});}}');page.wait_for_timeout(100)
+            campuses=[]
+            for i in [0,1,2]:
+                page.evaluate(f'()=>{{__qa.toMenu();__qa.settings.cup=false;__qa.selectCourse({i});}}')
                 assert page.evaluate('__qa.world.renderer.info.render.calls')>0
+                assert page.evaluate('__qa.world.car.userData.brandDecals')==4
+                assert page.evaluate('__qa.checkTerrain()')>0
+                found=page.evaluate('__qa.inspectCampuses()')
+                campuses.extend(found)
+                page.evaluate('__qa.previewCampus(3)');page.wait_for_timeout(250)
+                page.screenshot(path=str(OUT/f'{label}-hospitals-{i+1}.png'))
+            assert len(campuses)==44
+            assert all(hospital['visible'] for hospital in campuses),[x for x in campuses if not x['visible']]
+            # The real directory action starts an automatic noncompetitive tour.
+            page.evaluate('__qa.toMenu()');page.click('#hospitals-btn');page.click('[data-tour="0"]')
+            page.wait_for_function("__qa.mode==='race'",timeout=15000)
+            assert page.evaluate('__qa.raceSettings.sightseeing')
+            assert not page.evaluate('__qa.raceSettings.quiz')
+            page.wait_for_function('__qa.car.speed>5',timeout=15000)
+            assert page.evaluate('__qa.game.fired')==0
+            assert len(page.evaluate("JSON.parse(localStorage.getItem('fjordsprint-career-scores-v3'))"))==1
+            page.evaluate('__qa.toMenu()')
             page.reload(wait_until='networkidle');page.wait_for_selector('#menu:not(.hidden)')
             page.click('#leaderboard-btn');assert 'Rolf Test' in page.locator('#leaderboard-rows').inner_text()
             ctx.add_init_script('const originalNow=Date.now;Date.now=()=>originalNow()+172800001;')
@@ -79,10 +111,16 @@ try:
             assert 'Ingen aktive resultater' in page.locator('#leaderboard-rows').inner_text()
             assert page.evaluate("localStorage.getItem('fjordsprint-career-scores-v3')")=='[]'
             assert not errors,errors
-            reports.append({'viewport':label,'errors':errors,'passed':True})
+            reports.append({'viewport':label,'errors':errors,'hospitals':campuses,'passed':True})
             ctx.close()
         browser.close()
 finally:
+    if page is not None and not page.is_closed():
+        try:
+            page.screenshot(path=str(OUT/'last-state.png'))
+            (OUT/'last-state.txt').write_text(page.locator('body').inner_text())
+        except Exception:
+            pass
     server.shutdown()
     (OUT/'report.json').write_text(json.dumps(reports,ensure_ascii=False,indent=2))
 print(json.dumps(reports,ensure_ascii=False,indent=2))
