@@ -33,7 +33,7 @@ jobs:
           staged = []
           for row in rows:
               p = Path(row['p'])
-              old = p.read_text() if p.exists() else ''
+              old = p.read_bytes().decode('utf-8') if p.exists() else ''
               assert not p.is_symlink()
               if row['before'] is None:
                   assert not p.exists(), f'New path already exists: {p}'
