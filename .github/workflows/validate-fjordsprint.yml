@@ -1,0 +1,36 @@
+name: Kontroller Fjordsprint
+on:
+  push:
+    branches: [main, 'work/fjordsprint-*']
+    paths: ['fjordsprint/**', '.github/workflows/validate-fjordsprint.yml']
+  pull_request:
+    paths: ['fjordsprint/**', '.github/workflows/validate-fjordsprint.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: fjordsprint-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Spilltester
+        working-directory: fjordsprint
+        run: npm test
+      - name: Arkiver spill og testgrunnlag
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fjordsprint-review
+          path: |
+            fjordsprint/
+            site/index.html
+            scripts/check-pages.mjs
+            .github/workflows/deploy-pages.yml
+          include-hidden-files: true
+          retention-days: 3
