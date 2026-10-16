@@ -16,44 +16,52 @@ jobs:
   public-site:
     if: github.event_name != 'workflow_run' || (github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 5
     steps:
-      - name: Kontroller offentlig spilladresse uten å sende inn resultater
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+      - name: Kontroller offentlige spillfiler mot den publiserte kildekoden
         env:
           GAME_URL: https://rolfss.github.io/Click-here-for-newest-projects/fjordsprint/
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
         run: |
           python3 - <<'PY'
           import hashlib, json, os, time
           from pathlib import Path
           from urllib.request import Request, urlopen
           base = os.environ['GAME_URL']
-          targets = {
-              'index.html': b'v2.0 / 2026',
-              'main.js': b'./leaderboard-ui.js',
-              'leaderboard.js': b'fjordsprint-scores-v2',
-              'leaderboard-ui.js': b'72',
-              'revival.css': b'Saksrally 2.0',
-              'vendor/three.module.js': b'Three.js',
-          }
+          root = Path('fjordsprint/dist')
+          # Content hashes, not a hard-coded old version label. No score writes.
+          targets = ['index.html', 'main.js', 'rally-physics.js', 'rally-world.js',
+                     'rally-rules.js', 'rally-ui.js', 'rally-questions.js',
+                     'smoothing.js', 'hso-world.js', 'hso-data.js', 'hso-ui.js',
+                     'hso.css', 'rally.css', 'assets/sykehuspartner.png',
+                     'vendor/three.module.js']
           results = []
-          for path, marker in targets.items():
-              error = None
-              for attempt in range(12):
-                  try:
-                      request = Request(base + path + '?release-check=2', headers={'User-Agent': 'Fjordsprint-publication-check'})
-                      with urlopen(request, timeout=12) as response:
-                          data = response.read()
-                          assert response.status == 200, response.status
-                          assert marker in data, f'Expected release marker missing in {path}'
-                          results.append({'url': base + path, 'status': response.status, 'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()})
-                      break
-                  except Exception as exc:
-                      error = exc
-                      if attempt == 11:
-                          raise RuntimeError(f'Public release check failed for {path}: {error}') from exc
-                      time.sleep(5)
-          Path('live-check.json').write_text(json.dumps(results, indent=2))
-          print(json.dumps(results, indent=2))
+          try:
+              for path in targets:
+                  expected = hashlib.sha256((root / path).read_bytes()).hexdigest()
+                  for attempt in range(12):
+                      try:
+                          url = base + path + '?release-check=' + os.environ['RELEASE_SHA'][:12]
+                          request = Request(url, headers={'User-Agent': 'Fjordsprint-publication-check', 'Cache-Control': 'no-cache'})
+                          with urlopen(request, timeout=12) as response:
+                              data = response.read()
+                              actual = hashlib.sha256(data).hexdigest()
+                              assert response.status == 200, response.status
+                              assert actual == expected, f'Public bytes differ for {path}: {actual} != {expected}'
+                              result = {'url': base + path, 'status': 200, 'bytes': len(data), 'sha256': actual, 'matchesSource': True}
+                              results.append(result)
+                              print(json.dumps(result), flush=True)
+                          break
+                      except Exception:
+                          if attempt == 11:
+                              raise
+                          time.sleep(5)
+          finally:
+              Path('live-check.json').write_text(json.dumps({'commit': os.environ['RELEASE_SHA'], 'checked': len(results), 'expected': len(targets), 'results': results}, indent=2))
           PY
       - name: Lagre kontrollresultat
         if: always()
