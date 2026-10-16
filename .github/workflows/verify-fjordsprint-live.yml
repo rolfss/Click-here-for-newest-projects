@@ -28,9 +28,9 @@ jobs:
           from urllib.request import Request, urlopen
           base = os.environ['GAME_URL']
           targets = {
-              'index.html': b'Saksrally 2.0',
+              'index.html': b'v2.0 / 2026',
               'main.js': b'./leaderboard-ui.js',
-              'leaderboard.js': b'259200000',
+              'leaderboard.js': b'fjordsprint-scores-v2',
               'leaderboard-ui.js': b'72',
               'revival.css': b'Saksrally 2.0',
               'vendor/three.module.js': b'Three.js',
