@@ -15,6 +15,7 @@ on:
       - "lumen-relay/**"
       - "brukerstottejakten/**"
       - "vedtak/**"
+      - "fjordsprint/**"
       - "noark-assistent/**"
       - "arkivmuseet/**"
       - ".github/workflows/deploy-pages.yml"
@@ -66,6 +67,10 @@ jobs:
         working-directory: ./brukerstottejakten
         run: npm test && npm run check
 
+      - name: Kjør tester for Fjordsprint
+        working-directory: ./fjordsprint
+        run: npm test
+
       - name: Kjør tester for VEDTAK!
         working-directory: ./vedtak
         run: npm test && npm run check
@@ -104,8 +109,7 @@ jobs:
           cp -R vedtak _site/vedtak
           cp -R noark-assistent _site/noark-assistent
           cp -R arkivmuseet/dist _site/arkivmuseet
-          # Unpublished from Pages only; the original project files are retained.
-          rm -rf _site/fjordsprint _site/fjordsprint-card.css
+          cp -R fjordsprint/dist _site/fjordsprint
           rm -rf _site/archive-assist/tests _site/archive-assist/package.json _site/archive-assist/README.md _site/archive-assist/ARKITEKTUR.md _site/archive-assist/PROSJEKTGRUNNLAG.md _site/archive-assist/SECURITY.md _site/archive-assist/LICENSE
           rm -rf _site/metaready/tests _site/metaready/package.json _site/metaready/README.md
           rm -rf _site/lumen-relay/tests _site/lumen-relay/package.json _site/lumen-relay/README.md _site/lumen-relay/DESIGN.md _site/lumen-relay/LICENSE
@@ -114,14 +118,12 @@ jobs:
           rm -rf _site/noark-assistent/tests _site/noark-assistent/package.json _site/noark-assistent/README.md
           touch _site/.nojekyll
 
-      - name: Kontroller at avpubliserte spill ikke er med
+      - name: Kontroller at Fjordsprint er publiserbart
         run: |
-          test ! -e _site/fjordsprint
-          test ! -e _site/fjordsprint-card.css
-          if grep -qi 'fjordsprint' _site/index.html; then
-            echo "::error::Fjordsprint must not be linked from the public homepage."
-            exit 1
-          fi
+          test -s _site/fjordsprint/index.html
+          test -s _site/fjordsprint/leaderboard.js
+          test -s _site/fjordsprint/vendor/three.module.js
+          grep -q './fjordsprint/' _site/index.html
 
       - name: Kontroller sidelenker og ressursstier etter bygging
         run: node scripts/check-pages.mjs

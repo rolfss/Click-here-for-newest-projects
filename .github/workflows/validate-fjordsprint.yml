@@ -1,0 +1,46 @@
+name: Kontroller Fjordsprint
+on:
+  push:
+    branches: [main, 'work/fjordsprint-*']
+    paths: ['fjordsprint/**', '.github/workflows/validate-fjordsprint.yml']
+  pull_request:
+    paths: ['fjordsprint/**', '.github/workflows/validate-fjordsprint.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: fjordsprint-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Spill- og lagringstester
+        working-directory: fjordsprint
+        run: npm test
+      - name: Installer nettlesertestverktøy
+        run: |
+          python3 -m pip install playwright==1.57.0
+          python3 -m playwright install --with-deps chromium
+      - name: Prøv kjøring og rekordflyt på desktop og mobil
+        working-directory: fjordsprint
+        run: python3 tests/browser-smoke.py
+      - name: Arkiver kilde og faktiske skjermbilder
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fjordsprint-review
+          path: |
+            fjordsprint/
+            site/index.html
+            scripts/check-pages.mjs
+            .github/workflows/deploy-pages.yml
+          include-hidden-files: true
+          retention-days: 3
