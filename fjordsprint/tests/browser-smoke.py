@@ -36,18 +36,21 @@ try:
             page.goto(url,wait_until='networkidle');page.wait_for_selector('#menu:not(.hidden)',timeout=60000)
             assert page.evaluate('__qa.world.renderer.info.render.calls')>0
             page.screenshot(path=str(OUT/f'{label}-menu.png'))
+            # SwiftShader can render much slower than real hardware. Test input
+            # against simulation state, not a short wall-clock sleep.
+            page.evaluate("__qa.world.setQuality('low')")
             page.click('#play-btn');page.click('#help-start');page.wait_for_selector('#driver-name')
             assert page.evaluate('__qa.mode')=='menu'
             page.fill('#driver-name','<img>');page.click('#driver-form button');assert page.locator('#driver-error').inner_text()
             page.fill('#driver-name','Rolf Test');page.click('#driver-form button')
             page.wait_for_function("__qa.mode==='race'",timeout=15000)
             page.keyboard.down('KeyW');page.wait_for_timeout(900);page.keyboard.up('KeyW');assert page.evaluate('__qa.car.speed')>0
-            page.evaluate("()=>{let t=__qa.game.trolls[0];__qa.setCar({s:t.s-90,x:0,heading:0,speed:18});t.phase='active';t.x=0;t.targetX=0;t.age=2;}")
+            page.evaluate("()=>{let t=__qa.game.trolls[0];__qa.setCar({s:t.s-65,x:0,heading:0,speed:0});t.phase='active';t.x=0;t.targetX=0;t.age=2;__qa.world.cameraInitialized=false;}")
             page.wait_for_timeout(500);page.screenshot(path=str(OUT/f'{label}-troll.png'))
             if touch:
-                box=page.locator('[data-drive=fire]').bounding_box();page.mouse.move(box['x']+box['width']/2,box['y']+box['height']/2);page.mouse.down();page.wait_for_timeout(1400);page.mouse.up()
+                box=page.locator('[data-drive=fire]').bounding_box();page.mouse.move(box['x']+box['width']/2,box['y']+box['height']/2);page.mouse.down();page.wait_for_function('__qa.game.cleared>=1',timeout=45000);page.mouse.up()
             else:
-                page.keyboard.down('KeyE');page.wait_for_timeout(1400);page.keyboard.up('KeyE')
+                page.keyboard.down('KeyE');page.wait_for_function('__qa.game.cleared>=1',timeout=45000);page.keyboard.up('KeyE')
             assert page.evaluate('__qa.game.cleared')>=1
             page.evaluate('__qa.openQuiz(1)');before=page.evaluate('__qa.car.time');page.wait_for_timeout(400);assert page.evaluate('__qa.car.time')==before
             page.screenshot(path=str(OUT/f'{label}-quiz.png'))
@@ -56,9 +59,9 @@ try:
             page.evaluate("()=>{Object.assign(__qa.game,{juice:140,correct:5,cleared:8,hits:16,fired:24});__qa.setCar({time:95,s:__qa.track.length-.01,speed:30,checkpoint:3});}")
             page.wait_for_function("__qa.mode==='finish'")
             page.wait_for_timeout(550);page.screenshot(path=str(OUT/f'{label}-rocket-dock.png'))
-            page.evaluate('__qa.setAge(6)');page.wait_for_timeout(350);page.screenshot(path=str(OUT/f'{label}-rocket.png'))
-            page.evaluate('__qa.setAge(11.8)');page.wait_for_timeout(300);page.screenshot(path=str(OUT/f'{label}-rocket-top.png'))
-            assert page.locator('.career-rung.reached').count()==6
+            page.evaluate('__qa.setAge(6);__qa.world.cameraInitialized=false');page.wait_for_timeout(350);page.screenshot(path=str(OUT/f'{label}-rocket.png'))
+            page.evaluate('__qa.setAge(11.8);__qa.world.cameraInitialized=false');page.wait_for_timeout(300);page.screenshot(path=str(OUT/f'{label}-rocket-top.png'))
+            page.wait_for_function("document.querySelectorAll('.career-rung.reached').length===6")
             page.click('#skip-rocket');page.wait_for_timeout(200)
             assert 'Toppleder' in page.locator('#score-entry').inner_text()
             assert 'Rolf Test' in page.locator('#result-score-rows').inner_text()

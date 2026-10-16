@@ -17,3 +17,8 @@
 #pace-note{left:auto;right:32px;transform:none;top:145px;min-width:160px}
 @media(max-width:700px){#pace-note{right:14px;left:auto;top:151px!important;min-width:140px;max-width:155px}#change-driver{display:inline-block!important}.top-actions{flex-wrap:wrap}#score-entry{max-width:100%}}
 @media(max-height:550px) and (orientation:landscape){#pace-note{top:129px!important;right:12px;left:auto;min-width:136px;max-width:155px}.topbar .preview-tag{display:none}.career-rung .insignia{height:30px}}
+
+/* Keep archive progress and feedback outside the cannon/target panels. */
+#checkpoint-status{top:244px}#toast{top:267px}
+@media(max-width:700px){#checkpoint-status{top:182px;left:14px;font-size:8px}#toast{top:286px;font-size:11px;width:90vw}}
+@media(max-height:550px) and (orientation:landscape){#checkpoint-status{top:162px;left:18px;font-size:8px}#toast{top:188px;font-size:10px}}
