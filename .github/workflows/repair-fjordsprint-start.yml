@@ -1,0 +1,52 @@
+name: Rett oppstart av Fjordsprint
+on:
+  push:
+    branches: ['work/fjordsprint-72h-20261016']
+    paths: ['.github/workflows/repair-fjordsprint-start.yml']
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Rett oppstartspausen uten å endre fysikksteg
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          p=Path('fjordsprint/dist/main.js')
+          s=p.read_bytes().decode('utf-8')
+          assert hashlib.sha256(s.encode()).hexdigest()=='dbe8cc41a28c707ecd7019b24c2699fbcc0ec5592fe6a143fb91f7267ff8dcae'
+          # Focus and visibility events still pause immediately. Shader warm-up must not pause the countdown.
+          s=s.replace("if(raw>.6&&['race','quiz','countdown'].includes(mode))pause();", "if(raw>3&&['race','quiz'].includes(mode))pause();")
+          s=s.replace("if(mode==='countdown'){countdown-=dt;", "if(mode==='countdown'){countdown-=Math.min(raw,.25);")
+          assert hashlib.sha256(s.encode()).hexdigest()=='726f2aff38acf3c9268f5952a4ec0a63be43140a29ae8ec9388cc65480ad0a12'
+          p.write_text(s)
+          PY
+          cd fjordsprint && npm test
+      - name: Lagre kontrollerte endringer på arbeidsgrenen
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add fjordsprint/dist/main.js
+          git commit -m 'Unngå automatisk pause under oppvarming av 3D-grafikken'
+          git push origin HEAD:work/fjordsprint-72h-20261016
+      - name: Installer nettleser
+        run: |
+          python3 -m pip install playwright==1.57.0
+          python3 -m playwright install --with-deps chromium
+      - name: Kjør hele nettlesertesten
+        working-directory: fjordsprint
+        run: python3 tests/browser-smoke.py
+      - name: Arkiver kilde og skjermbilder
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fjordsprint-start-review
+          path: fjordsprint/
+          retention-days: 3
