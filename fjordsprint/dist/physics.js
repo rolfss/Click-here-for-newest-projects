@@ -1,6 +1,6 @@
 import {angle} from './tracks.js';
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
-export function initialState(){return {s:0,x:0,speed:0,heading:0,steer:0,time:0,boost:40,boosting:false,turbo:0,stagger:0,air:0,vy:0,checkpoint:0,checkpointS:0,crashes:0,drift:0,airtime:0,maxSpeed:0,padCooldown:0,crashCooldown:0,jumpIndex:0,finished:false};}
+export function initialState(){return {s:0,x:0,speed:0,braking:false,heading:0,steer:0,time:0,boost:40,boosting:false,turbo:0,stagger:0,air:0,vy:0,checkpoint:0,checkpointS:0,crashes:0,drift:0,airtime:0,maxSpeed:0,padCooldown:0,crashCooldown:0,jumpIndex:0,finished:false};}
 export function stepCar(car,input,dt,track,settings={}){
  if(car.finished)return [];
  const events=[],f=track.at(car.s),oldS=car.s;
@@ -10,7 +10,7 @@ export function stepCar(car,input,dt,track,settings={}){
  car.drift=drifting?Math.min(1,car.drift+dt*3):Math.max(0,car.drift-dt*4);
  const manual=!!input.boost&&car.boost>0&&car.speed>4;car.boosting=manual||car.turbo>0;
  if(manual&&car.turbo<=0)car.boost=Math.max(0,car.boost-dt*20);
- const throttle=input.throttle?1:0,brake=input.brake?1:0;
+ const throttle=input.throttle?1:0,brake=input.brake?1:0;car.braking=!!brake;
  let acceleration=throttle*(21-Math.min(car.speed,85)*.12)-2.4-car.speed*car.speed*.0016-brake*32-f.t.y*22;
  if(car.boosting)acceleration+=car.turbo>0?34:25;
  if(car.stagger>0)acceleration=Math.min(acceleration,4);

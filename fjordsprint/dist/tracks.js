@@ -14,4 +14,4 @@ export class Track {
  curvature(s){const a=this.at(s),b=this.at(s+5);return angle(b.yaw-a.yaw)/5;}
 }
 export function angle(v){return Math.atan2(Math.sin(v),Math.cos(v));}
-export function formatTime(t){if(!Number.isFinite(t))return '—';return Math.floor(t/60).toString().padStart(2,'0')+':'+(t%60).toFixed(2).padStart(5,'0');}
+export function formatTime(t){if(!Number.isFinite(t))return '—';const c=Math.max(0,Math.round(t*100));return Math.floor(c/6000).toString().padStart(2,'0')+':'+Math.floor(c%6000/100).toString().padStart(2,'0')+'.'+(c%100).toString().padStart(2,'0');}

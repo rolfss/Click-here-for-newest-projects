@@ -1,0 +1,10 @@
+{
+  "name": "fjordsprint-scores",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "vars": { "ALLOWED_ORIGINS": "https://rolfss.github.io" },
+  "durable_objects": { "bindings": [{ "name": "LEADERBOARD", "class_name": "Leaderboard" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Leaderboard"] }],
+  "observability": { "enabled": false }
+}
