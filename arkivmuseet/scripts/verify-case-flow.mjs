@@ -9,7 +9,7 @@ const results=[];
 try{
  for(const width of [1280,390,320]){
   const page=await browser.newPage({viewport:{width,height:900}});
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const errors=[];page.on('pageerror',e=>errors.push(e.stack||e.message));
   await page.goto(url);await page.locator('#flat-enter').click();
   await page.evaluate(()=>document.documentElement.style.setProperty('--text-scale','1.3'));
   for(const [i,f] of flow.cases.entries()){
@@ -27,6 +27,8 @@ try{
   await page.locator('#leader-plan').waitFor();assert.equal(await page.locator('.leader-summary dt').count(),5);
   assert.equal(await page.locator('#passport-open').innerText(),'Øvelser 0/5');
   await page.locator('#leader-plan').click();await page.locator('#action-plan').waitFor();
+  // Text navigation is allowed during loading; also inspect late initialization errors.
+  await page.waitForFunction(()=>typeof window.museumDiagnostics==='function',null,{timeout:60000});
   assert.deepEqual(errors,[]);results.push({width,largeText:true,cases:5,chapters:25,exercisesRequired:false});await page.close();
  }
  const text=await browser.newPage({javaScriptEnabled:false,viewport:{width:390,height:844}});
