@@ -12,8 +12,8 @@ OUT.mkdir(exist_ok=True)
 HOOKS="""
 import {groundHeight as qaGroundHeight} from './terrain.js';
 window.__qa={get car(){return car;},get game(){return challenge;},get mode(){return mode;},get quiz(){return quizState;},get track(){return track;},get world(){return world;},get settings(){return settings;},get raceSettings(){return raceSettings;},get debug(){return {mode,car,keys,touch,active:document.activeElement?.outerHTML,challenge,frameAverage,drawCalls:world.renderer.info.render.calls};},setCar(v){Object.assign(car,v);resetInterpolation();},setAge(v){finishAge=v;},selectCourse,toMenu,openQuiz,answerQuiz,
- previewCampus(index){const h=world.hospitals.items[index];setMode('race');raceSettings={...settings,quiz:false};raceDemo=false;encounters=[];keys={};touch={};car=initialState();car.s=Math.max(0,h.s-145);car.checkpoint=track.checkpoints.filter(s=>s<=car.s).length;car.jumpIndex=track.jumps.filter(s=>s<=car.s).length;challenge=createChallenge(track,trackIndex);resetInterpolation();world.cameraInitialized=false;world.render(car,1/60,mode,{challenge,camera:'chase',motion:false});},
- inspectCampuses(){const findings=[],render=world.renderer.render;world.renderer.render=()=>{};try{for(const hospital of world.hospitals.items){let visible=false;for(const distance of [120,180,250]){const c={...initialState(),s:Math.max(0,hospital.s-distance)};world.cameraInitialized=false;world.render(c,1/60,'race',{challenge:null,camera:'chase',motion:false});const point=hospital.sign.position.clone();hospital.root.localToWorld(point);point.project(world.camera);if(hospital.sign.visible&&Math.abs(point.x)<1&&Math.abs(point.y)<1&&point.z<1)visible=true;}findings.push({name:hospital.data.name,visible,clearance:hospital.clearance});}return findings;}finally{world.renderer.render=render;}},
+ previewCampus(index){const h=world.hospitals.items[index];setMode('race');raceSettings={...settings,quiz:false};raceDemo=false;encounters=[];keys={};touch={};car=initialState();car.s=Math.max(0,h.s-145);car.sightseeing=true;car.checkpoint=track.checkpoints.filter(s=>s<=car.s).length;car.jumpIndex=track.jumps.filter(s=>s<=car.s).length;challenge=createChallenge(track,trackIndex);resetInterpolation();world.cameraInitialized=false;world.render(car,1/60,mode,{challenge,camera:'chase',motion:false});},
+ inspectCampuses(){const findings=[],render=world.renderer.render;world.renderer.render=()=>{};try{for(const hospital of world.hospitals.items){let visible=false;for(const distance of [120,180,250]){const c={...initialState(),s:Math.max(0,hospital.s-distance),sightseeing:world.camera.aspect<.8};world.cameraInitialized=false;world.render(c,1/60,'race',{challenge:null,camera:'chase',motion:false});world.camera.updateMatrixWorld(true);const point=hospital.sign.position.clone();hospital.root.localToWorld(point);point.project(world.camera);if(hospital.sign.visible&&Math.abs(point.x)<1&&Math.abs(point.y)<1&&point.z<1)visible=true;}findings.push({name:hospital.data.name,visible,camera:world.camera.aspect<.8?'guided-tour':'race',clearance:hospital.clearance});}return findings;}finally{world.renderer.render=render;}},
  checkTerrain(){let min=Infinity;for(let s=0;s<track.length;s+=7)for(const x of [-track.config.width/2,0,track.config.width/2]){const p=track.position(s,x);min=Math.min(min,p.y-qaGroundHeight(world.terrainGeometry,p.x,p.z));}return min;}
 };
 """
@@ -70,6 +70,7 @@ def exercise(page,label,touch):
  assert all(h['visible'] for h in campuses),[h for h in campuses if not h['visible']]
  page.evaluate('__qa.toMenu()');page.click('#hospitals-btn');page.click('[data-tour="0"]');wait(page,"__qa.mode==='race'")
  assert page.evaluate('__qa.raceSettings.sightseeing')
+ assert page.evaluate('__qa.car.sightseeing')
  assert not page.evaluate('__qa.raceSettings.quiz')
  wait(page,'__qa.car.speed>5');assert page.evaluate('__qa.game.fired')==0
  assert len(page.evaluate("JSON.parse(localStorage.getItem('fjordsprint-career-scores-v3'))"))==1
@@ -86,6 +87,7 @@ try:
   if os.environ.get('CHROMIUM_EXECUTABLE'):launch['executable_path']=os.environ['CHROMIUM_EXECUTABLE']
   browser=p.chromium.launch(**launch)
   for label,w,h,touch in [('desktop',1440,900,False),('mobile-portrait',390,844,True),('mobile-landscape',844,390,True)]:
+   if os.environ.get('FJORDSPRINT_VIEWPORT') and os.environ['FJORDSPRINT_VIEWPORT']!=label:continue
    ctx=browser.new_context(viewport={'width':w,'height':h},has_touch=touch,device_scale_factor=1)
    page=ctx.new_page();errors=[]
    page.on('pageerror',lambda e:(errors.append(str(e)),print('PAGE ERROR',str(e),flush=True)))
