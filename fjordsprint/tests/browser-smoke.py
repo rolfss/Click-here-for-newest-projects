@@ -20,13 +20,13 @@ globalThis.__rallyTest = {
   start(index=0, demo=false, quiz=true){ toMenu(); settings.cup=false; settings.quiz=quiz; settings.assist=true; selectCourse(index); startRace(demo); mode='race'; $('#countdown').textContent=''; },
   advance(ticks=1200){ const drive=createDemoDriver(); for(let n=0;n<ticks&&['race','quiz'].includes(mode);n++){ if(mode==='quiz'){answerQuiz(quizState.q.correct);closeQuiz();} step(fixedStep,drive(car,track,raceSettings.assist)); } updateHUD(); resetInterpolation(); },
   complete(index=0, demo=false, quiz=true){ this.start(index,demo,quiz);this.advance(60000);if(!car.finished)throw new Error('Testdriver failed to finish '+track.config.id);finishAge=3;setMode('results');return this.status(); },
-  freeze(){director.update(car,track,'race',1,true);mode='paused';updateHUD();},
+  freeze(){world.cameraInitialized=false;director.update(car,track,'race',1,true);mode='paused';updateHUD();},
   menu:toMenu
 };
 '''
 
 def exercise(page, mobile, errors):
-    prefix = 'mobile' if mobile else 'desktop'
+    prefix = ('mobile-landscape' if page.viewport_size['width'] > page.viewport_size['height'] else 'mobile') if mobile else 'desktop'
     page.goto(BASE, wait_until='networkidle')
     page.wait_for_selector('#menu:not(.hidden)', timeout=60000)
     page.screenshot(path=str(OUT / f'{prefix}-menu.png'), full_page=True)
@@ -40,6 +40,7 @@ def exercise(page, mobile, errors):
     page.wait_for_function("['race','paused'].includes(__rallyTest.status().mode)", timeout=30000)
     assert page.evaluate('__rallyTest.status().mode') == 'race', 'Unexpected automatic pause at race start'
     if mobile:
+        assert page.locator('#touch-controls button').evaluate_all('(buttons)=>buttons.every(b=>{const r=b.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight;})'), 'Touch control outside viewport'
         gas = page.locator('[data-drive=throttle]')
         box = gas.bounding_box()
         page.mouse.move(box['x']+box['width']/2, box['y']+box['height']/2)
@@ -103,8 +104,8 @@ try:
     results = []
     with sync_playwright() as p:
         browser = p.chromium.launch(args=['--use-angle=swiftshader', '--enable-unsafe-swiftshader'])
-        for mobile in [False, True]:
-            context = browser.new_context(viewport={'width':390 if mobile else 1440,'height':844 if mobile else 960}, is_mobile=mobile, has_touch=mobile, device_scale_factor=1, reduced_motion='reduce')
+        for mobile, width, height in [(False, 1440, 960), (True, 390, 844), (True, 844, 390)]:
+            context = browser.new_context(viewport={'width':width,'height':height}, is_mobile=mobile, has_touch=mobile, device_scale_factor=1, reduced_motion='reduce')
             page = context.new_page()
             errors = []
             def on_error(error):
@@ -119,7 +120,7 @@ try:
             try:
                 results.extend(exercise(page,mobile,errors))
             except Exception as error:
-                prefix = 'mobile' if mobile else 'desktop'
+                prefix = ('mobile-landscape' if page.viewport_size['width'] > page.viewport_size['height'] else 'mobile') if mobile else 'desktop'
                 diagnostic = {'error':str(error),'pageErrors':errors,'status':page.evaluate('globalThis.__rallyTest?.status()'),'body':page.locator('body').inner_text()}
                 print(json.dumps(diagnostic,ensure_ascii=False,indent=2),flush=True)
                 (OUT/f'{prefix}-failure.json').write_text(json.dumps(diagnostic,ensure_ascii=False,indent=2))
