@@ -1,0 +1,22 @@
+name: Hent offisiell spillprofil
+on:
+  push:
+    branches: [work/fjordsprint-grip-hso]
+    paths: [.github/workflows/fjordsprint-brand-source.yml]
+permissions:
+  contents: read
+jobs:
+  assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Hent original logo fra Helse Sør-Øst
+        run: |
+          mkdir -p assets
+          curl --fail --location --retry 2 --max-time 45 'https://www.helse-sorost.no/499152/contentassets/3e88e25ed18c497a925a0497575b2c78/sykehuspartner/sykehuspartner---rgb.png' -o assets/sykehuspartner.png
+          sha256sum assets/sykehuspartner.png > assets/SHA256.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fjordsprint-brand-source
+          path: assets/
+          retention-days: 3
