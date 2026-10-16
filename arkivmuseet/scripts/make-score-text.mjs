@@ -1,0 +1,10 @@
+import {readFileSync,writeFileSync} from 'node:fs';
+import questions from '../cases/score-questions.json' with {type:'json'};
+const file=new URL('../public/tekst.html',import.meta.url),html=readFileSync(file,'utf8');
+const marker='<section id="regelverk">';
+if(!html.includes(marker))throw new Error('Mangler innsettingspunkt for poengrunden.');
+if(html.includes('id="poengrunde"'))throw new Error('Poengrunden finnes allerede. Generer tekstversjonen på nytt først.');
+const e=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const section=`<section id="poengrunde"><h2>Valgfri poengrunde og topp 3</h2><p>Appen tilbyr ti spørsmål fra de fem sakene. Første bekreftede svar gir 10 poeng hvis det er riktig, maksimalt 100. Ingen tidspoeng. Du kan spille anonymt eller velge visningsnavn og gi samtykke til lokal topp 3 og mulig senere publisering på Viva Engage.</p><p>Bare topp 3 lagres i nettleseren på den aktuelle enheten, til listen slettes. Ingen automatisk publisering og ingen synkronisering mellom enheter. Ved poenglikhet beholdes først registrerte resultat. Bare beste resultat per visningsnavn beholdes. Arrangøren kan kopiere eller laste ned et innlegg.</p><p><a href="./">Åpne appen og velg Poengrunde og topp 3 →</a></p><p>Poengregistrering krever JavaScript. Her kan du lese alle spørsmålene uten registrering. Poengrunden er ikke en vurdering av kompetansen din på jobb.</p>${questions.map((q,i)=>`<h3>${i+1}. ${e(q.prompt)}</h3><ol>${q.options.map(o=>`<li>${e(o)}</li>`).join('')}</ol><details><summary>Vis svar og begrunnelse</summary><p><strong>${e(q.options[q.correct])}</strong></p><p>${e(q.explanation)}</p><a href="#${q.caseId}">Til saken og kildegrunnlaget</a></details>`).join('')}</section>`;
+writeFileSync(file,html.replace(marker,section+marker));
+console.log('Poengrundens spørsmål og vilkår er også tilgjengelige uten JavaScript.');

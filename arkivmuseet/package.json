@@ -6,12 +6,13 @@
   "packageManager": "pnpm@11.19.0",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5196 --strictPort",
-    "build": "node scripts/validate-cases.mjs && node scripts/make-text-version.mjs && node scripts/make-investigation-text.mjs && tsc --noEmit && vite build",
+    "build": "node scripts/validate-cases.mjs && node scripts/make-text-version.mjs && node scripts/make-investigation-text.mjs && node scripts/make-score-text.mjs && tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1 --port 4196 --strictPort",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "test:browser": "node scripts/verify-browser.mjs",
     "test:investigation": "node scripts/verify-investigation.mjs",
-    "test:visit-ui": "node scripts/verify-case-flow.mjs && node scripts/verify-visit-ui.mjs"
+    "test:visit-ui": "node scripts/verify-case-flow.mjs && node scripts/verify-visit-ui.mjs && node scripts/verify-scoreboard.mjs",
+    "test:scores": "node scripts/verify-scoreboard.mjs"
   },
   "dependencies": {
     "@dimforge/rapier3d": "0.20.0",
