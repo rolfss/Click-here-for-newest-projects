@@ -1,10 +1,10 @@
 {
   "name": "fjordsprint-archive-run",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "test": "node tests/verify.mjs && node tests/upgrade.mjs && node --test tests/revival.test.mjs tests/server.test.mjs tests/career.test.mjs"
+    "test": "node tests/verify.mjs && node tests/upgrade.mjs && node --test tests/revival.test.mjs tests/server.test.mjs tests/career.test.mjs tests/handling.test.mjs"
   }
 }
