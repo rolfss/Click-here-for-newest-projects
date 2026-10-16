@@ -11,7 +11,7 @@
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "test:browser": "node scripts/verify-browser.mjs",
     "test:investigation": "node scripts/verify-investigation.mjs",
-    "test:visit-ui": "node scripts/verify-visit-ui.mjs"
+    "test:visit-ui": "node scripts/verify-case-flow.mjs && node scripts/verify-visit-ui.mjs"
   },
   "dependencies": {
     "@dimforge/rapier3d": "0.20.0",
