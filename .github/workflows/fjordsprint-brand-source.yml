@@ -1,22 +1,30 @@
-name: Hent offisiell spillprofil
+name: Klargjør kontrollerte Fjordsprint-filer
 on:
   push:
     branches: [work/fjordsprint-grip-hso]
-    paths: [.github/workflows/fjordsprint-brand-source.yml]
+    paths: [.github/workflows/fjordsprint-brand-source.yml, .github/scripts/fjordsprint-prepare.py]
 permissions:
-  contents: read
+  contents: write
 jobs:
   assets:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 4
     steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Hent original logo fra Helse Sør-Øst
         run: |
-          mkdir -p assets
-          curl --fail --location --retry 2 --max-time 45 'https://www.helse-sorost.no/499152/contentassets/3e88e25ed18c497a925a0497575b2c78/sykehuspartner/sykehuspartner---rgb.png' -o assets/sykehuspartner.png
-          sha256sum assets/sykehuspartner.png > assets/SHA256.txt
+          test "$GITHUB_REF" = refs/heads/work/fjordsprint-grip-hso
+          mkdir -p fjordsprint/dist/assets
+          curl --fail --location --retry 2 --max-time 45 'https://www.helse-sorost.no/499152/contentassets/3e88e25ed18c497a925a0497575b2c78/sykehuspartner/sykehuspartner---rgb.png' -o fjordsprint/dist/assets/sykehuspartner.png
+          echo '5b00b00e9d911e532a9bcc94290dbff36489331c5264f30fa3a8e220a862bc96  fjordsprint/dist/assets/sykehuspartner.png' | sha256sum --check
+      - name: Opprett bare kontrollerte Git-objekter, ikke en publisering
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/fjordsprint-prepare.py
       - uses: actions/upload-artifact@v4
         with:
-          name: fjordsprint-brand-source
+          name: fjordsprint-prepared-manifest
           path: assets/
           retention-days: 3
