@@ -1,4 +1,4 @@
-name: Rett oppstart av Fjordsprint
+name: Siste skjermkontroll for Fjordsprint
 on:
   push:
     branches: ['work/fjordsprint-72h-20261016']
@@ -14,39 +14,58 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - name: Rett oppstartspausen uten å endre fysikksteg
+      - name: Bruk kontrollerte layoutrettelser
         run: |
           python3 - <<'PY'
           from pathlib import Path
           import hashlib
-          p=Path('fjordsprint/dist/main.js')
-          s=p.read_bytes().decode('utf-8')
-          assert hashlib.sha256(s.encode()).hexdigest()=='dbe8cc41a28c707ecd7019b24c2699fbcc0ec5592fe6a143fb91f7267ff8dcae'
-          # Focus and visibility events still pause immediately. Shader warm-up must not pause the countdown.
-          s=s.replace("if(raw>.6&&['race','quiz','countdown'].includes(mode))pause();", "if(raw>3&&['race','quiz'].includes(mode))pause();")
-          s=s.replace("if(mode==='countdown'){countdown-=dt;", "if(mode==='countdown'){countdown-=Math.min(raw,.25);")
-          assert hashlib.sha256(s.encode()).hexdigest()=='726f2aff38acf3c9268f5952a4ec0a63be43140a29ae8ec9388cc65480ad0a12'
-          p.write_text(s)
+          fixes = [
+          ('fjordsprint/dist/revival.css','7fed4f28fe1a51630fcb02b046c8970d7f8b36017a2e17fc0a1f5e8061bc7a71','d0ad5c208693a5b3fa8b5c9782933d4aa77039e38c22980dc548ea13022b7376',[
+          ('#touch-controls #touch-recover{position:absolute;', '#touch-controls #touch-recover{width:112px;height:44px;white-space:nowrap;position:absolute;'),
+          ('bottom:-27px;min-height:26px;', 'bottom:-52px;min-height:44px;'),
+          ('.touch #touch-controls{bottom:max(38px,calc(env(safe-area-inset-bottom) + 28px))}', '.touch #touch-controls{bottom:max(64px,calc(env(safe-area-inset-bottom) + 54px))}'),
+          ('#touch-controls button{min-width:44px;padding:10px 8px;font-size:10px}', '#touch-controls button{width:44px;min-width:44px;padding:10px 8px;font-size:10px}.race-brand>b{display:none}.timer{left:57%}'),
+          ('.touch .race-bottom{bottom:143px}', 'body.touch .race-bottom{bottom:143px}'),
+          ('.touch .race-bottom{bottom:83px}', 'body.touch .race-bottom{bottom:110px}'),
+          ('.touch #touch-controls{bottom:25px}', '.touch #touch-controls{bottom:56px}#touch-controls #touch-recover{bottom:-50px}')
+          ]),
+          ('fjordsprint/tests/browser-smoke.py','68886b46d839d1cae2de819635401a12eaa6e38f606b8173dd23308c155f5613','2cf9c26cca12b9ce4ea2366b5839aa7daa399f4f484d1a3ca51ceded7adf1651',[
+          ("freeze(){director.update(car,track,'race',1,true);mode='paused';updateHUD();}", "freeze(){world.cameraInitialized=false;director.update(car,track,'race',1,true);mode='paused';updateHUD();}"),
+          ("if mobile:\n        gas = page.locator('[data-drive=throttle]')", "if mobile:\n        assert page.locator('#touch-controls button').evaluate_all('(buttons)=>buttons.every(b=>{const r=b.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight;})'), 'Touch control outside viewport'\n        gas = page.locator('[data-drive=throttle]')"),
+          ("prefix = 'mobile' if mobile else 'desktop'", "prefix = ('mobile-landscape' if page.viewport_size['width'] > page.viewport_size['height'] else 'mobile') if mobile else 'desktop'"),
+          ('for mobile in [False, True]:', 'for mobile, width, height in [(False, 1440, 960), (True, 390, 844), (True, 844, 390)]:'),
+          ("viewport={'width':390 if mobile else 1440,'height':844 if mobile else 960}", "viewport={'width':width,'height':height}")
+          ])]
+          staged=[]
+          for name,before,after,edits in fixes:
+              p=Path(name);s=p.read_bytes().decode('utf-8')
+              assert hashlib.sha256(s.encode()).hexdigest()==before, name
+              for old,new in edits:
+                  assert old in s, old
+                  s=s.replace(old,new)
+              assert hashlib.sha256(s.encode()).hexdigest()==after, name
+              staged.append((p,s))
+          for p,s in staged: p.write_text(s)
           PY
           cd fjordsprint && npm test
-      - name: Lagre kontrollerte endringer på arbeidsgrenen
+      - name: Lagre verifiserte kildeendringer
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add fjordsprint/dist/main.js
-          git commit -m 'Unngå automatisk pause under oppvarming av 3D-grafikken'
+          git add fjordsprint/dist/revival.css fjordsprint/tests/browser-smoke.py
+          git commit -m 'Gi mobilkontrollene plass og kontroller tre skjermformater'
           git push origin HEAD:work/fjordsprint-72h-20261016
       - name: Installer nettleser
         run: |
           python3 -m pip install playwright==1.57.0
           python3 -m playwright install --with-deps chromium
-      - name: Kjør hele nettlesertesten
+      - name: Kontroller desktop og begge mobilretninger
         working-directory: fjordsprint
         run: python3 tests/browser-smoke.py
       - name: Arkiver kilde og skjermbilder
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: fjordsprint-start-review
+          name: fjordsprint-final-review
           path: fjordsprint/
           retention-days: 3
