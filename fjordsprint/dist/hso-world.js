@@ -15,7 +15,7 @@ export class HospitalWorld{
   this.root=new T.Group();this.root.name='Helse Sør-Øst – sykehusløypa';world.scene.add(this.root);
   const material=(c,extra={})=>new T.MeshStandardMaterial({color:c,roughness:.73,...extra});
   this.m={white:material(0xe9ece5),navy:material(0x17436a),glass:material(0x527f92,{metalness:.45,roughness:.25}),stone:material(0x778887),road:material(0x455868),roof:material(0x647d83),brick:material(0xa9715b),warm:material(0xd3c09c),steel:material(0xbacdd0),blue:new T.MeshBasicMaterial({color:0x84d6f5})};
-  this.cube=new T.BoxGeometry(1,1,1);this.brand=brandTexture(image);this.brandMat=new T.MeshBasicMaterial({map:this.brand,toneMapped:false});
+  this.cube=new T.BoxGeometry(1,1,1);this.planeGeometry=new T.PlaneGeometry(1,1);this.brand=brandTexture(image);this.brandMat=new T.MeshBasicMaterial({map:this.brand,toneMapped:false});
   this.facades={plain:material(0xffffff,{map:facadeTexture()}),brick:material(0xffffff,{map:facadeTexture(true)})};
   this.addCar();
   const slots=hospitalsForCourse(world.track.config.id);
@@ -25,7 +25,12 @@ export class HospitalWorld{
   this.stats={hospitalCount:this.items.length,names:this.items.map(x=>x.data.name),logoDecals:4,minimumRoadClearance:Math.min(...this.items.map(x=>x.clearance)),version:'3.1'};
  }
  box(root,w,h,d,material,x=0,y=0,z=0){const m=new T.Mesh(this.cube,material);m.scale.set(w,h,d);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;root.add(m);return m;}
- plane(root,w,h,material,x,y,z,rx=0,ry=0){const p=new T.Mesh(new T.PlaneGeometry(w,h),material);p.position.set(x,y,z);p.rotation.set(rx,ry,0);root.add(p);return p;}
+ plane(root,w,h,material,x,y,z,rx=0,ry=0){const p=new T.Mesh(this.planeGeometry,material);p.scale.set(w,h,1);p.position.set(x,y,z);p.rotation.set(rx,ry,0);root.add(p);return p;}
+ compact(root){
+  // Static campus parts with matching geometry/material share a draw call.
+  const buckets=new Map();for(const mesh of [...root.children])if(mesh.isMesh&&!mesh.isInstancedMesh){const key=mesh.geometry.uuid+mesh.material.uuid;const bucket=buckets.get(key)||[];bucket.push(mesh);buckets.set(key,bucket);}
+  for(const meshes of buckets.values()){if(meshes.length<2)continue;const batch=new T.InstancedMesh(meshes[0].geometry,meshes[0].material,meshes.length);batch.castShadow=meshes.some(m=>m.castShadow);batch.receiveShadow=meshes.some(m=>m.receiveShadow);meshes.forEach((mesh,i)=>{mesh.updateMatrix();batch.setMatrixAt(i,mesh.matrix);root.remove(mesh);});batch.computeBoundingSphere();root.add(batch);}
+ }
  addCar(){const car=this.world.car,mat=this.brandMat;
   // Bonnet, both doors, and the rear wing remain legible from chase/side views.
   this.plane(car,2.5,.625,mat,0,1.223,-1.65,-Math.PI/2);
@@ -63,7 +68,7 @@ export class HospitalWorld{
   // Roadside sign is closer than the actual campus; it does not obstruct road.
   const roadSign=new T.Group();roadSign.position.copy(this.world.track.position(site.s,site.side*19));roadSign.rotation.y=-site.yaw;
   this.box(roadSign,.18,5,.18,this.m.steel,0,2.2,0);this.plane(roadSign,8,2,nameMat,0,5,0);this.root.add(roadSign);
-  this.items.push({data:h,root,sign,roadSign,...site});
+  this.compact(root);this.items.push({data:h,root,sign,roadSign,...site});
  }
  clearScenery(){const dummy=new T.Matrix4(),position=new T.Vector3();this.world.scene.updateMatrixWorld(true);
   // Remove existing trees/rocks that would grow through the new hospital pads.
@@ -77,7 +82,7 @@ export class HospitalWorld{
  update(car,mode){
   if(mode==='countdown'&&this.lastS>car.s+10)this.visited.clear();this.lastS=car.s;
   const driving=['race','quiz','paused','countdown'].includes(mode);
-  for(const h of this.items){const d=h.s-car.s;h.root.visible=h.roadSign.visible=mode==='menu'||(driving&&d>-130&&d<720);h.sign.visible=driving&&d>-25&&d<290;if(driving&&d<25&&d>-45)this.visited.add(h.data.id);}
+  for(const h of this.items){const d=h.s-car.s;h.root.visible=h.roadSign.visible=(mode==='menu'||driving)&&d>-130&&d<720;h.sign.visible=driving&&d>60&&d<290;const signScale=clamp(d/220,.45,1);h.sign.scale.set(44*signScale,11*signScale,1);if(driving&&d<25&&d>-45)this.visited.add(h.data.id);}
   if((this.ticks++%6)!==0)return;
   const el=document.getElementById('hospital-readout');if(!el)return;
   const next=this.items.find(h=>h.s>=car.s-30&&h.s-car.s<260);el.classList.toggle('hidden',!driving||mode==='paused'||!next);
