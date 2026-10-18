@@ -52,6 +52,12 @@ try:
    assert not page.evaluate('!!__mobileQA.input.sample({}).brake')
    # The normal quiz cannot time out in the comfort class, even after 24 seconds.
    page.evaluate('__mobileQA.openQuiz(1)');page.wait_for_selector('#quiz:not(.hidden)')
+   panel=page.locator('#quiz').bounding_box();assert panel
+   assert panel['x']>=10 and panel['y']>=10 and panel['x']+panel['width']<=page.viewport_size['width']-10 and panel['y']+panel['height']<=page.viewport_size['height']-10,panel
+   for button in page.locator('#quiz-answers button').all():
+    button.scroll_into_view_if_needed()
+    assert button.evaluate('(el)=>{const r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}'),'Answer is clipped or covered'
+   page.locator('#quiz').evaluate('(el)=>el.scrollTop=0')
    page.evaluate('()=>{for(let i=0;i<2881;i++)__mobileQA.step(1/120,{});}');assert not page.evaluate('__mobileQA.quiz.answered');assert page.evaluate('__mobileQA.quiz.left')==20
    page.wait_for_selector('#mobile-controls',state='hidden');assert not page.locator('#mobile-controls').is_visible()
    page.evaluate('__mobileQA.answerQuiz(__mobileQA.quiz.q.correct)');page.evaluate('()=>{for(let i=0;i<1201;i++)__mobileQA.step(1/120,{});}');assert page.evaluate('__mobileQA.mode')=='quiz'

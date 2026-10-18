@@ -33,12 +33,14 @@ jobs:
           from urllib.request import Request, urlopen
           base = os.environ['GAME_URL']
           root = Path('fjordsprint/dist')
-          # Content hashes, not a hard-coded old version label. No score writes.
+          # Exact source hashes, including mobile controls and road graphics.
+          # These requests are read-only and never submit scores or names.
           targets = ['index.html', 'main.js', 'rally-physics.js', 'rally-world.js',
                      'rally-rules.js', 'rally-ui.js', 'rally-questions.js',
                      'smoothing.js', 'hso-world.js', 'hso-data.js', 'hso-ui.js',
                      'hso.css', 'rally.css', 'assets/sykehuspartner.png',
-                     'vendor/three.module.js']
+                     'vendor/three.module.js', 'mobile-drive.js',
+                     'mobile-controls.js', 'polish-world.js', 'polish.css']
           results = []
           try:
               for path in targets:
