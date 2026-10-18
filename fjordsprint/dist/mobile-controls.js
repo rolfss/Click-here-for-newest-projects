@@ -10,6 +10,9 @@ export function mountMobileControls({settings,onSettings,onRecover,openModal}){
   // centred reading panel must not inherit that bottom/landscape-left anchor.
   Object.assign(document.getElementById('quiz').style,{left:'50%',bottom:'auto'});
   document.getElementById('quiz-context').style.display='block';
+  const feedback=document.createElement('style');
+  feedback.textContent='body.mobile-ui #quiz-answers button.correct{background:#2c6a57;border-color:#9ddfc2;opacity:1}body.mobile-ui #quiz-answers button.wrong{background:#764b4a;border-color:#e4b3a4;opacity:1}';
+  document.head.append(feedback);
  }
  const root=document.createElement('section');root.id='mobile-controls';root.setAttribute('aria-label','Mobilstyring');
  root.innerHTML='<div id="thumb-steer" role="slider" tabindex="0" aria-label="Styr med venstre tommel. Dra til venstre eller høyre." aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0"><span class="steer-track"></span><span class="steer-arrow left">‹</span><span class="steer-arrow right">›</span><span id="steer-knob"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="13"/><circle cx="20" cy="20" r="4"/><path d="M7 18h9m8 0h9M20 24v9"/></svg></span><small>DRA FOR Å STYRE</small></div><div class="mobile-pedals"><button id="mobile-fire" data-mobile-action="fire" aria-label="Hold for å skyte vann">VANN<small id="auto-water-label">AUTOMATISK</small></button><button id="mobile-boost" data-mobile-action="boost">BOOST<small>HOLD</small></button><button id="mobile-brake" data-mobile-action="brake">BREMS<small>HOLD + SVING = SLADD</small></button><button id="mobile-gas" data-mobile-action="throttle">GASS</button></div>';
