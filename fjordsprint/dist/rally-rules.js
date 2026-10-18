@@ -1,5 +1,5 @@
 /** Saksrally 3: deterministic game rules, independent of rendering and DOM. */
-export const VERSION = '3.0.0';
+export const VERSION = '3.2.0';
 export const SCORE_TTL = 48 * 60 * 60 * 1000;
 export const SCORE_KEY = 'fjordsprint-career-scores-v3';
 export const CAREERS = Object.freeze([
@@ -61,7 +61,7 @@ export function scoreRun(game,car,par=120){
 export function rocketPose(car,elapsed,track,juice){const age=Math.max(0,elapsed),u=clamp((age-1.7)/10,0,1),height=rocketHeight(juice)*(u*u*(3-2*u));return {...car,s:track.length+Math.min(50,age*25),x:car.x*Math.exp(-age*2),heading:car.heading*Math.exp(-age*2),steer:0,speed:0,air:height,rideHeight:height,flightPitch:Math.min(1.36,Math.max(0,age-1)*1.2),boosting:false,turbo:0,stagger:0,drift:0,rocketAge:age};}
 export function cleanName(value){if(typeof value!=='string')throw Error('Skriv et navn eller kallenavn.');const name=value.normalize('NFKC').trim().replace(/ +/g,' ');if([...name].length<2||[...name].length>20||!/^[\p{L}\p{N}][\p{L}\p{N} ._\-]*$/u.test(name))throw Error('Bruk 2–20 tegn: bokstaver, tall, mellomrom, punktum, bindestrek eller understrek.');return name;}
 export function validateScore(r,now=Date.now()){
-  try{if(!r||!/^(fjord|pass|aurora)-(archive3|time3|archive31|time31)-(assist|sport)$/.test(r.board)||typeof r.id!=='string'||!/^[\w-]{8,90}$/.test(r.id))return null;
+  try{if(!r||!/^(fjord|pass|aurora)-(archive3|time3|archive31|time31|archive32touch|time32touch)-(assist|sport)$/.test(r.board)||typeof r.id!=='string'||!/^[\w-]{8,90}$/.test(r.id))return null;
     for(const [key,min,max] of [['createdAt',0,now],['timeMs',1000,1800000],['score',0,40000],['juice',0,250],['rank',0,5],['correct',0,10],['cleared',0,12],['accuracy',0,100]])if(!Number.isSafeInteger(r[key])||r[key]<min||r[key]>max)return null;
     if(r.expiresAt!==r.createdAt+SCORE_TTL||r.expiresAt<=now||r.rank!==careerIndex(r.juice))return null;
     return {id:r.id,name:cleanName(r.name),board:r.board,createdAt:r.createdAt,expiresAt:r.expiresAt,timeMs:r.timeMs,score:r.score,juice:r.juice,rank:r.rank,correct:r.correct,cleared:r.cleared,accuracy:r.accuracy};

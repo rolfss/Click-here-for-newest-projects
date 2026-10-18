@@ -22,9 +22,9 @@ export function stepCar(car,input,dt,track,settings={}){
  car.steer=follow(car.steer,rawSteer,Math.sign(rawSteer)!==Math.sign(car.steer)?30:23,dt);
  // Tap the normal brake while steering to initiate a drift. SPACE is a
  // convenient dedicated drift input; neither gives free boost by itself.
- const brakeTap=brake>.22&&!car.wasBrake;car.wasBrake=brake>.22;car.braking=brake>.08||!!input.drift;
+ const brakeTap=brake>.22&&!car.wasBrake&&!input.autoBrake;car.wasBrake=brake>.22;car.braking=brake>.08||!!input.drift;
  if(grounded&&car.speed>23&&Math.abs(car.steer)>.18&&(brakeTap||input.drift))car.driftHold=.32;
- const driftRequested=!!(grounded&&car.speed>19&&Math.abs(car.steer)>.12&&(car.driftHold>0||((brake>.12||input.drift)&&car.drift>.12)));
+ const driftRequested=!!(grounded&&car.speed>19&&Math.abs(car.steer)>.12&&(car.driftHold>0||(((brake>.12&&!input.autoBrake)||input.drift)&&car.drift>.12)));
  car.drift=follow(car.drift,Number(driftRequested),driftRequested?11:settings.assist?10:7,dt);
  const manual=!!input.boost&&car.boost>0&&car.speed>4;car.boosting=grounded&&(manual||car.turbo>0);
  if(manual&&car.turbo===0&&grounded)car.boost=Math.max(0,car.boost-20*dt);

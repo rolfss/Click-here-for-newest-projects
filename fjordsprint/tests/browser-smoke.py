@@ -34,19 +34,19 @@ def exercise(page,label,touch):
  assert page.locator('[data-tour]').count()==3
  shot(page,label+'-directory');page.click('#close-modal');shot(page,label+'-menu')
  page.evaluate("__qa.world.setQuality('low')")
- page.click('#play-btn');page.click('#help-start');page.wait_for_selector('#driver-name')
+ page.click('#play-btn');page.click('#mobile-help-start' if touch else '#help-start');page.wait_for_selector('#driver-name')
  assert page.evaluate('__qa.mode')=='menu'
  page.fill('#driver-name','<img>');page.click('#driver-form button');assert page.locator('#driver-error').inner_text()
  page.fill('#driver-name','Rolf Test');page.click('#driver-form button');wait(page,"__qa.mode==='race'")
  page.keyboard.down('KeyW');page.wait_for_timeout(900);page.keyboard.up('KeyW');assert page.evaluate('__qa.car.speed')>0
- page.evaluate("()=>{let t=__qa.game.trolls[0];__qa.setCar({s:t.s-65,x:0,heading:0,speed:0});t.phase='active';t.x=0;t.targetX=0;t.age=2;__qa.world.cameraInitialized=false;}")
+ page.evaluate("()=>{__qa.raceSettings.mobileHelp=false;let t=__qa.game.trolls[0];__qa.setCar({s:t.s-65,x:0,heading:0,speed:0});t.phase='active';t.x=0;t.targetX=0;t.age=2;__qa.world.cameraInitialized=false;}")
  page.wait_for_timeout(500);shot(page,label+'-troll')
  if touch:
-  box=page.locator('[data-drive=fire]').bounding_box();page.mouse.move(box['x']+box['width']/2,box['y']+box['height']/2);page.mouse.down();wait(page,'__qa.game.cleared>=1');page.mouse.up()
+  box=page.locator('#mobile-fire').bounding_box();page.mouse.move(box['x']+box['width']/2,box['y']+box['height']/2);page.mouse.down();wait(page,'__qa.game.cleared>=1');page.mouse.up()
  else:
   page.keyboard.down('KeyE');wait(page,'__qa.game.cleared>=1');page.keyboard.up('KeyE')
  assert page.evaluate('__qa.game.cleared')>=1
- page.evaluate('__qa.openQuiz(1)');before=page.evaluate('__qa.car.time');page.wait_for_timeout(400);assert page.evaluate('__qa.car.time')==before
+ page.evaluate('__qa.raceSettings.mobileHelp=__qa.settings.mobileHelp;__qa.openQuiz(1)');before=page.evaluate('__qa.car.time');page.wait_for_timeout(400);assert page.evaluate('__qa.car.time')==before
  shot(page,label+'-quiz');page.evaluate('__qa.answerQuiz(__qa.quiz.q.correct)');page.click('#skip-quiz');page.wait_for_timeout(300)
  assert page.evaluate('__qa.game.correct')==1
  page.evaluate("()=>{Object.assign(__qa.game,{juice:140,correct:5,cleared:8,hits:16,fired:24});__qa.setCar({time:95,s:__qa.track.length-.01,speed:30,checkpoint:3});}")
