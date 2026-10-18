@@ -1,0 +1,66 @@
+name: Klargjør Fjordsprint 3.2
+on:
+  push:
+    branches: ['prepare/fjordsprint-polish32']
+permissions:
+  contents: write
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Kontroller og oppdater bare de angitte spillfilene
+        run: |
+          python3 - <<'PY'
+          import json, hashlib
+          from pathlib import Path
+          for item in json.loads(Path('fjordsprint/polish-patches.json').read_text()):
+              path = Path(item['path'])
+              assert str(path).startswith('fjordsprint/') and '..' not in path.parts
+              data = path.read_text()
+              assert hashlib.sha256(data.encode()).hexdigest() == item['sha256'], str(path)
+              for old, new in item['changes']:
+                  assert old in data, (str(path), old)
+                  data = data.replace(old, new)
+              assert hashlib.sha256(data.encode()).hexdigest() == item['resultSha256'], str(path)
+              path.write_text(data)
+          PY
+      - name: Enhetstester
+        working-directory: fjordsprint
+        run: npm test
+      - name: Lag Git-objekter uten å endre noen gren
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess, hashlib
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+          base='https://api.github.com/repos/'+os.environ['GITHUB_REPOSITORY']+'/git/'
+          def post(endpoint, data):
+              req=Request(base+endpoint, data=json.dumps(data).encode(), headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Content-Type':'application/json','Accept':'application/vnd.github+json'}, method='POST')
+              with urlopen(req, timeout=30) as response: return json.load(response)
+          entries=[]
+          for item in json.loads(Path('fjordsprint/polish-patches.json').read_text()):
+              content=Path(item['path']).read_text()
+              assert hashlib.sha256(content.encode()).hexdigest()==item['resultSha256']
+              blob=post('blobs',{'content':content,'encoding':'utf-8'})
+              entries.append({'path':item['path'],'mode':'100644','type':'blob','sha':blob['sha']})
+          for path in ['fjordsprint/polish-patches.json','.github/workflows/prepare-polish-32.yml']:
+              entries.append({'path':path,'mode':'100644','type':'blob','sha':None})
+          tree=post('trees',{'base_tree':subprocess.check_output(['git','rev-parse','HEAD^{tree}']).decode().strip(),'tree':entries})
+          report={'tree_sha':tree['sha'],'files':entries,'source_commit':os.environ['GITHUB_SHA']}
+          Path('polish-stage.json').write_text(json.dumps(report,indent=2))
+          print(json.dumps(report,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fjordsprint-polish-stage
+          path: polish-stage.json
+          retention-days: 3

@@ -33,11 +33,13 @@ jobs:
         run: |
           python3 -m pip install playwright==1.57.0
           python3 -m playwright install --with-deps chromium
-      - name: Prøv kjøring og rekordflyt på desktop og mobil
+      - name: Prøv kjøring, toppliste, mobilstyring og grafikk
         working-directory: fjordsprint
         env:
           FJORDSPRINT_VIEWPORT: ${{ matrix.viewport }}
-        run: python3 tests/browser-smoke.py
+        run: |
+          python3 tests/browser-smoke.py
+          python3 tests/mobile-polish.py
       - name: Arkiver kilde og faktiske skjermbilder
         if: always()
         uses: actions/upload-artifact@v4
