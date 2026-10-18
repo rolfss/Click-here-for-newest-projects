@@ -29,9 +29,23 @@ export function mountMobileControls({settings,onSettings,onRecover,openModal}){
  function updateStatus(){const help=!!settings.mobileHelp;document.body.classList.toggle('mobile-help-on',active&&help);status.textContent=autoWater?'Vann auto: på':'Vann auto: av';status.setAttribute('aria-pressed',String(autoWater));document.getElementById('auto-water-label').textContent=help&&autoWater?'AUTOMATISK':'HOLD';document.getElementById('mobile-help-toggle').textContent='Mobilhjelp: '+(help?'på':'av');document.getElementById('mobile-help-toggle').setAttribute('aria-pressed',String(help));document.getElementById('mobile-guide-text').textContent=help?'Du styrer. Bilen gir gass og demper farten før svingene. Vannkanonen hjelper til.':'Manuell kjøring: styr med tommelen og bruk gass, brems og vann. Fire kontroller på høyre side.';lastHelp=help;}
  for(const event of ['blur','pagehide','resize'])addEventListener(event,reset);
  document.addEventListener('visibilitychange',()=>{if(document.hidden)reset();});
- updateStatus();
+ function update(mode,opts=settings){
+  // Modals may open outside the animation loop (keyboard, assistive tech,
+  // page lifecycle). Release held pointers before the next graphics frame.
+  if(!document.getElementById('modal-backdrop').classList.contains('hidden'))mode='paused';
+  else if(!document.getElementById('quiz').classList.contains('hidden'))mode='quiz';
+  if(mode!==currentMode){reset();currentMode=mode;}
+  document.body.dataset.gameMode=mode;
+  if(lastHelp!==!!settings.mobileHelp)updateStatus();
+  root.classList.toggle('hidden',!active||mode!=='race'||!!opts.sightseeing);
+  recover.classList.toggle('hidden',!active||mode!=='race'||!!opts.sightseeing);
+  status.classList.toggle('hidden',!active||mode!=='race'||!opts.mobileHelp||!!opts.sightseeing);
+ }
+ const overlays=new MutationObserver(()=>update(currentMode));
+ for(const id of ['quiz','modal-backdrop'])overlays.observe(document.getElementById(id),{attributes:true,attributeFilter:['class']});
+ updateStatus();update('menu');
  return {active,reset,get autoWater(){return autoWater;},get steering(){return steer;},
-  update(mode,opts=settings){if(mode!==currentMode){reset();currentMode=mode;}document.body.dataset.gameMode=mode;if(lastHelp!==!!settings.mobileHelp)updateStatus();root.classList.toggle('hidden',!active||mode!=='race'||!!opts.sightseeing);recover.classList.toggle('hidden',!active||mode!=='race'||!!opts.sightseeing);status.classList.toggle('hidden',!active||mode!=='race'||!opts.mobileHelp||!!opts.sightseeing);},
+  update,
   sample(input){if(!active||currentMode!=='race')return input;const v={...input};if(pointer!==null)v.steer=steer;for(const {name} of held.values())v[name]=true;return v;},
   help(start){openModal('To tomler. Klar for fjellet.',`<p><strong>Venstre tommel:</strong> dra på rattet for å styre. Små bevegelser gir små svinger.</p><p><strong>Høyre tommel:</strong> brems før skarpe svinger. Hold BOOST på rette partier. VANN lar deg skyte selv.</p><p>Med <strong>mobilhjelp</strong> går gassen av seg selv, farten dempes før svinger, og kanonen skyter når et troll er i siktet. Du må fortsatt styre bilen.</p><p>Les spørsmålene i ditt eget tempo. Trykk <strong>Fortsett</strong> når du er ferdig. Mobilhjelp har en egen poengtavle med 48 timers lagring.</p><button id="mobile-help-start" class="primary">SKRIV NAVN OG KJØR →</button><p class="note">Begge skjermretninger fungerer. Liggende skjerm gir større utsikt. Mobilhjelp kan slås av i startmenyen.</p>`);document.getElementById('mobile-help-start').onclick=start;}
  };

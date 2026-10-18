@@ -50,18 +50,20 @@ try:
    client.send('Input.dispatchTouchEvent',{'type':'touchCancel','touchPoints':[]});page.wait_for_timeout(100)
    assert page.evaluate('__mobileQA.input.steering')==0
    assert not page.evaluate('!!__mobileQA.input.sample({}).brake')
+   # The normal quiz cannot time out in the comfort class, even after 24 seconds.
    page.evaluate('__mobileQA.openQuiz(1)');page.wait_for_selector('#quiz:not(.hidden)')
    page.evaluate('()=>{for(let i=0;i<2881;i++)__mobileQA.step(1/120,{});}');assert not page.evaluate('__mobileQA.quiz.answered');assert page.evaluate('__mobileQA.quiz.left')==20
-   assert not page.locator('#mobile-controls').is_visible()
+   page.wait_for_selector('#mobile-controls',state='hidden');assert not page.locator('#mobile-controls').is_visible()
    page.evaluate('__mobileQA.answerQuiz(__mobileQA.quiz.q.correct)');page.evaluate('()=>{for(let i=0;i<1201;i++)__mobileQA.step(1/120,{});}');assert page.evaluate('__mobileQA.mode')=='quiz'
    screenshot(page,label+'-32-reading');page.click('#skip-quiz');page.wait_for_function("__mobileQA.mode==='race'")
-   fire=center(page,'#mobile-fire');client.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[{**fire,'id':3}]});page.keyboard.press('Escape');page.wait_for_selector('#modal-backdrop:not(.hidden)');page.wait_for_timeout(100)
+   # Pause interrupts held input; resuming requires a new touch.
+   page.wait_for_selector('#mobile-fire');fire=center(page,'#mobile-fire');client.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[{**fire,'id':3}]});page.keyboard.press('Escape');page.wait_for_selector('#modal-backdrop:not(.hidden)');page.wait_for_timeout(100)
    assert not page.evaluate('!!__mobileQA.input.sample({}).fire')
    client.send('Input.dispatchTouchEvent',{'type':'touchCancel','touchPoints':[]});page.click('#resume');page.wait_for_function("__mobileQA.mode==='race'")
    page.evaluate('__mobileQA.resetForTouch()')
    sizes=[(320,568),(390,844),(844,390)] if label=='mobile-portrait' else [(844,390)]
    for w,h in sizes:
-    page.set_viewport_size({'width':w,'height':h});page.wait_for_timeout(220);controls_fit(page);screenshot(page,f'{label}-32-controls-{w}x{h}')
+    page.set_viewport_size({'width':w,'height':h});page.wait_for_timeout(220);page.wait_for_selector('#thumb-steer');controls_fit(page);screenshot(page,f'{label}-32-controls-{w}x{h}')
   else:assert not page.locator('#mobile-controls').is_visible()
   for i in range(3):
    page.evaluate(f'__mobileQA.boostPreview({i})');page.wait_for_timeout(300)
