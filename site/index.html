@@ -1,230 +1,203 @@
 <!doctype html>
-<html lang="nb">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Digitale prosjekter innen dokumentasjonsforvaltning, informasjonsstyring og interaktive systemer, laget av Rolf Selås.">
+  <meta name="description" content="Rolf Selås — application management, information governance, software development and selected digital projects.">
   <meta name="theme-color" content="#0b2531">
   <meta name="color-scheme" content="light">
-  <title>Rolf Selås — digitale prosjekter</title>
+  <title>Rolf Selås | Application Management &amp; Information Governance</title>
   <link rel="stylesheet" href="./styles.css">
-  <link rel="stylesheet" href="./support-hunt-card.css">
-  <link rel="stylesheet" href="./vedtak-card.css">
   <style>
-    .model-note { max-width: 760px; margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 1rem; line-height: 1.6; }
-    .model-note h2 { margin-bottom: .65rem; color: var(--navy); font-size: 1rem; letter-spacing: normal; }
-    .model-note p { margin-bottom: .65rem; }
-    .model-note p:last-child { margin-bottom: 0; }
-    .model-note a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .15em; }
-    .model-note a:hover, .model-note a:focus-visible { color: var(--teal); }
+    .hero { padding: clamp(3.2rem, 7vw, 6rem) 0 2.6rem; }
+    .hero h1 { font-size: clamp(3rem, 7vw, 5.8rem); margin-bottom: .6rem; }
+    .hero-role { max-width: 920px; margin: 0 0 1.2rem; color: var(--navy); font-size: clamp(1.4rem, 3vw, 2.3rem); font-weight: 720; line-height: 1.2; letter-spacing: -.03em; }
+    .hero-copy { max-width: 860px; }
+    .profile-links { display: flex; flex-wrap: wrap; align-items: center; gap: .7rem; margin-top: 1.7rem; }
+    .profile-links .button-secondary { border-color: var(--line); color: var(--navy); }
+    .profile-links .button-secondary:hover, .profile-links .button-secondary:focus-visible { background: var(--surface); }
+    .cv-panel { max-width: var(--max); margin: 0 auto 4rem; padding: clamp(1.35rem, 3.8vw, 3.2rem); border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
+    .cv-panel h2 { margin: 0 0 1rem; color: var(--navy); font-size: clamp(1.7rem, 3vw, 2.5rem); }
+    .cv-intro { max-width: 940px; margin-bottom: 2rem; color: var(--muted); font-size: 1.02rem; }
+    .cv-layout { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(260px, .85fr); gap: clamp(1.7rem, 4vw, 4rem); }
+    .cv-panel h3 { margin: 0 0 .9rem; color: var(--teal-dark); font-size: .82rem; letter-spacing: .09em; text-transform: uppercase; }
+    .cv-entry { padding: .9rem 0; border-top: 1px solid var(--line); }
+    .cv-entry:first-of-type { padding-top: 0; border-top: 0; }
+    .cv-entry h4 { margin: 0 0 .18rem; color: var(--navy); font-size: 1.02rem; }
+    .cv-period { margin-bottom: .35rem; color: var(--muted); font-size: .78rem; }
+    .cv-entry p:last-child { margin: 0; font-size: .88rem; line-height: 1.65; }
+    .cv-side { padding-left: 1.4rem; border-left: 1px solid var(--line); }
+    .cv-side section { margin-bottom: 2rem; }
+    .cv-side ul { margin: 0; padding-left: 1.15rem; }
+    .cv-side li { margin-bottom: .65rem; font-size: .85rem; line-height: 1.55; }
+    .cv-side p { color: var(--muted); font-size: .85rem; line-height: 1.7; }
+    .portfolio-head { max-width: var(--max); margin: 0 auto 1.4rem; }
+    .portfolio-head h2 { margin-bottom: .65rem; color: var(--navy); font-size: clamp(2rem, 4vw, 3.4rem); }
+    .portfolio-head p { max-width: 800px; color: var(--muted); }
+    .project-grid { margin-bottom: 1.5rem; }
+    .project-card { min-height: 270px; }
+    .project-card .card-top { margin-bottom: 1.4rem; }
+    .project-card h2 { font-size: clamp(1.45rem, 2.2vw, 2rem); }
+    .project-card .actions { margin-top: auto; margin-bottom: 0; }
+    .more-projects { max-width: var(--max); margin: 1rem auto 0; color: var(--muted); font-size: .9rem; }
+    .more-projects a { color: var(--teal-dark); font-weight: 750; text-underline-offset: 3px; }
+    .second-rolf-spotlight { margin: 0 auto 1.5rem; }
+    .second-rolf-spotlight h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); }
+    @media (max-width: 850px) {
+      .cv-layout { grid-template-columns: 1fr; }
+      .cv-side { padding: 1.5rem 0 0; border-left: 0; border-top: 1px solid var(--line); }
+      .site-header nav { flex-wrap: wrap; justify-content: flex-end; gap: .7rem; }
+    }
+    @media (max-width: 760px) {
+      .site-header nav a { display: inline !important; }
+      .site-header nav a:nth-child(3) { display: none !important; }
+    }
+    @media (max-width: 420px) {
+      .site-header { align-items: flex-start; }
+      .site-header nav { gap: .6rem; }
+      .site-header nav a { font-size: .73rem; }
+      .site-header nav a:nth-child(2) { display: none !important; }
+    }
   </style>
 </head>
 <body>
-  <a class="skip-link" href="#main">Hopp til innhold</a>
-
+  <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header">
-    <a class="identity" href="./" aria-label="Rolf Selås, startside">
-      <span aria-hidden="true">RS</span>
-      <strong>Rolf Selås</strong>
+    <a class="identity" href="./" aria-label="Rolf Selås, home">
+      <span aria-hidden="true">RS</span><strong>Rolf Selås</strong>
     </a>
-    <nav aria-label="Hovednavigasjon">
-      <a href="#prosjekter">Prosjekter</a>
-      <a href="./fagstrom/">Fagstrøm</a>
-      <a href="./second-rolf/">Second Rolf</a>
-      <a href="./noark-assistent/">Noark-assistent</a>
-      <a href="./archive-assist/">Archive Assist</a>
+    <nav aria-label="Main navigation">
+      <a href="#experience">Experience</a>
+      <a href="#projects">Projects</a>
+      <a href="./fagstrom/">Industry news</a>
       <a href="https://github.com/rolfss" rel="noreferrer">GitHub</a>
     </nav>
   </header>
-
   <main id="main">
+    <section class="hero" aria-labelledby="page-title">
+      <p class="eyebrow">Oslo, Norway · Technology &amp; information governance</p>
+      <h1 id="page-title">Rolf Selås</h1>
+      <p class="hero-role">Application management · Information governance · Software development</p>
+      <p class="hero-copy">I work at the intersection of IT, records management and organizational improvement. My experience spans regional application services, systems integration, automation, user-centered development and cross-organizational leadership.</p>
+      <div class="profile-links">
+        <a class="button button-primary" href="mailto:rolfselaas@gmail.com">Email me</a>
+        <a class="button button-secondary" href="https://github.com/rolfss/Click-here-for-newest-projects/blob/main/CV.md" rel="noreferrer">View English CV →</a>
+        <a class="button button-secondary" href="https://www.linkedin.com/in/rolf-sel%C3%A5s/" rel="noreferrer">LinkedIn ↗</a>
+      </div>
+    </section>
+
+    <section class="cv-panel" id="experience" aria-labelledby="cv-heading">
+      <h2 id="cv-heading">Professional background</h2>
+      <p class="cv-intro">Application manager with a multidisciplinary education in computer science, information governance, UX and the humanities. I combine hands-on technical work with stakeholder coordination, training and service improvement.</p>
+      <div class="cv-layout">
+        <div>
+          <h3>Experience</h3>
+          <article class="cv-entry">
+            <h4>Application Manager · Sykehuspartner HF</h4>
+            <p class="cv-period">August 2024–present</p>
+            <p>Manage Public 360 services for approximately <strong>11,000 users across 11 health trusts</strong>, with regional responsibility for eFormidling. Work on integrations, access control, testing, service quality and a new regional records-management system. Lead a cross-organizational working group of records professionals and deliver specialist training.</p>
+          </article>
+          <article class="cv-entry">
+            <h4>Information &amp; Records Management Adviser · Agder County Municipality</h4>
+            <p class="cv-period">June 2023–August 2024</p>
+            <p>Managed Public 360, delivered user training and developed digital forms in ACOS Interact, including scripting, testing and integration. Supported records governance, automation and process improvement.</p>
+          </article>
+          <article class="cv-entry">
+            <h4>Records Management · Nittedal Municipality &amp; Nedre Romerike Fire and Rescue Service</h4>
+            <p class="cv-period">July 2022–February 2023 · Temporary assignments through Adecco</p>
+            <p>Document control, public enquiries, records systems and internal user support.</p>
+          </article>
+          <article class="cv-entry">
+            <h4>Library Branch Manager · Karmøy Municipality</h4>
+            <p class="cv-period">April 2021–May 2022</p>
+            <p>Managed local library services, public engagement, training and cultural events.</p>
+          </article>
+          <article class="cv-entry">
+            <h4>Systems Developer · Norwegian Mapping Authority (Kartverket)</h4>
+            <p class="cv-period">August–November 2020</p>
+            <p>Developed automated public-sector data exchange using Python, PostgreSQL and system integrations.</p>
+          </article>
+        </div>
+        <aside class="cv-side">
+          <section aria-labelledby="education-heading">
+            <h3 id="education-heading">Education</h3>
+            <ul>
+              <li><strong>Bachelor's in Informatics</strong> — University of Oslo; additional UX/HCI coursework.</li>
+              <li><strong>Master's in European Culture (History of Ideas)</strong> — University of Oslo.</li>
+              <li><strong>Bachelor's in History of Ideas</strong> — University of Oslo.</li>
+              <li><strong>One-year programme in Records Management</strong> — OsloMet.</li>
+              <li>Further studies in sustainable management (ongoing) and Microsoft Learn coursework in Azure, Microsoft 365 and AI.</li>
+            </ul>
+          </section>
+          <section aria-labelledby="skills-heading">
+            <h3 id="skills-heading">Areas of expertise</h3>
+            <p>Application and service management, information governance, integrations, access management, technical troubleshooting, Python, PostgreSQL, APIs, Microsoft 365, AI prototypes, process improvement, UX, testing, training and stakeholder engagement.</p>
+          </section>
+        </aside>
+      </div>
+    </section>
+
+    <section class="portfolio-head" id="projects" aria-labelledby="projects-heading">
+      <p class="eyebrow">Selected work</p>
+      <h2 id="projects-heading">Digital projects</h2>
+      <p>Practical prototypes in records management, information quality and interactive learning. These projects are independent experiments, not products of my employer.</p>
+    </section>
+
     <section class="second-rolf-spotlight" aria-labelledby="second-rolf-title">
-      <div><p class="eyebrow">Møt prosjektet</p><h2 id="second-rolf-title">Second Rolf</h2>
-      <p>En AI-samtalepartner for vanlig chat og spørsmål om prosjektene mine, fag og digitale verktøy. Bonsai 2 27B kjører lokalt på min egen PC.</p></div>
-      <div class="spotlight-action"><a class="button button-primary" href="./second-rolf/">Snakk med Second Rolf →</a>
-      <span id="second-rolf-status" class="model-status" role="status"><i aria-hidden="true"></i><span>Offentlig profilmodus</span></span></div>
-    </section>
-    <section class="hero">
-      <p class="eyebrow">Dokumentasjonsforvaltning · digitale produkter · interaktive systemer</p>
-      <h1>Kompliserte krav bør ende som verktøy folk kan bruke.</h1>
-      <p class="hero-copy">Her ligger testede digitale produkter fra 2026 innen arkivkrav, dokumentanalyse, informasjonskvalitet, AI-beredskap og interaktive systemer. Fellesnevneren er å gjøre faglogikk om til verktøy folk faktisk kan bruke.</p>
-      <aside class="model-note" aria-labelledby="model-note-title">
-        <h2 id="model-note-title">Modellvalg i praksis</h2>
-        <p>Jeg bruker også prosjektene til å prøve ut ulike AI-modeller og se hva oppgaven faktisk trenger.</p>
-        <p>Små, lokale modeller som <a href="https://mistral.ai/news/mistral-3/" rel="noreferrer">Ministral 3</a> gir større kontroll over data og drift, men krever egen maskinvare og oppsett.</p>
-        <p>Rimelige skymodeller som <a href="https://developers.openai.com/api/docs/models/gpt-5.6-luna" rel="noreferrer">GPT-5.6 Luna</a> holder kostnadene nede, men har mindre kapasitet til krevende resonnering enn toppmodellene.</p>
-        <p>Toppmodeller som <a href="https://developers.openai.com/api/docs/models/gpt-6-astra" rel="noreferrer">GPT-6 Astra</a> gir større kapasitet til kompleks problemløsning, men til høyere pris.</p>
-      </aside>
-    </section>
-
-    <section class="project project-featured" id="prosjekter" aria-labelledby="noark-title">
-      <div class="project-copy">
-        <div class="label-row">
-          <span class="label">Nytt prosjekt</span>
-          <span class="label label-outline">Fungerende demo</span>
-        </div>
-        <p class="project-name">Noark 5-arkivassistent</p>
-        <h2 id="noark-title">Finn kravet, se grunnlaget og åpne originalkilden.</h2>
-        <p>En kildebasert søke- og svarassistent for Noark 5 versjon 6.0 og arkivregelverket fra 2026. Den rangerer relevante kildeposter, lager et kort svar og viser kravnummer, seksjon og side.</p>
-        <p>Alt skjer lokalt i nettleseren. Ingen konto, API-nøkkel eller opplastning.</p>
-        <div class="actions">
-          <a class="button button-primary" href="./noark-assistent/">Åpne arkivassistenten</a>
-          <a class="button button-secondary" href="https://github.com/rolfss/Click-here-for-newest-projects/tree/main/noark-assistent" rel="noreferrer">Se kildekoden</a>
-        </div>
-        <ul class="facts" aria-label="Om Noark 5-arkivassistenten">
-          <li><strong>71</strong><span>kontrollerte kildeposter</span></li>
-          <li><strong>10</strong><span>offisielle kilder</span></li>
-          <li><strong>15</strong><span>automatiske tester</span></li>
-          <li><strong>0</strong><span>eksterne avhengigheter</span></li>
-        </ul>
-      </div>
-
-      <a class="noark-preview" href="./noark-assistent/" aria-label="Åpne Noark 5-arkivassistenten">
-        <div class="preview-toolbar">
-          <span><i></i><i></i><i></i></span>
-          <small>noark-assistent / lokalt søk</small>
-        </div>
-        <div class="preview-body">
-          <div class="preview-brand"><b>N5</b><span>Noark 5-arkivassistent<small>Kildebasert fagstøtte</small></span></div>
-          <div class="preview-query">Er Noark fortsatt obligatorisk?</div>
-          <div class="preview-answer">
-            <span class="preview-confidence">Høy kildedekning</span>
-            <p><strong>Nei.</strong> Fra 1. januar 2026 er Noark en frivillig standard, men arkivkravene gjelder fortsatt.</p>
-            <ul><li><i>1</i> Noark – temaside</li><li><i>2</i> Arkivforskrifta §§ 5–7</li></ul>
-          </div>
-          <div class="preview-source"><b>1</b><span>Noark er frivillig fra 2026<small>Nasjonalarkivet · offisiell veiledning</small></span></div>
-        </div>
-        <span class="preview-cta">Prøv den selv →</span>
-      </a>
-    </section>
-
-    <section class="project-grid" aria-label="Flere prosjekter">
-      <article class="project-card game-card" id="fjordsprint">
-        <div class="card-topline"><span class="card-index">09 / SPILL</span><span class="status">SAKSRALLY 2.0</span></div>
-        <h3>Fjordsprint</h3>
-        <p class="card-lead">Forbi køen. Før fristen.</p>
-        <p>Tre norske fjellbaner, kunnskapsboost og flyvende kontrollører. Jakt medaljer, følg en spøkelsesbil og skriv navnet ditt på topplisten.</p>
-        <div class="tags"><span>3D-rally</span><span>Mobil og kontroller</span><span>Toppliste · 72 timer</span></div>
-        <div class="card-actions"><a class="button primary" href="./fjordsprint/">Spill Fjordsprint <span>↗</span></a></div>
-        <p class="small-note">Navnebaserte resultater varer i tre døgn på denne enheten. Felles nettbasert liste er ikke tilkoblet.</p>
-      </article>
-
-      <article class="project-card vedtak-card" id="vedtak">
-        <a class="vedtak-art" href="./vedtak/" aria-label="Spill VEDTAK! — Felles sak"><img src="./vedtak/assets/kari.png" alt="Kari, en gaupe i rød anorakk med et gyllent godkjenningsstempel" loading="lazy"><span>VEDTAK<b>!</b><small>FELLES SAK</small></span></a>
-        <div class="card-top"><span class="card-index">08</span><span class="label">Plattformspill · Norsk hverdagshumor</span></div>
-        <p class="project-name">VEDTAK!</p>
-        <h2>For folket. Med hverandre.</h2>
-        <p>Ta stafetten som Kari gjennom Kommunekaia, Arkivverket og Digitaliseringsfjellet. Finn TILLIT-bokstavene, besøk dugnadsgjengen og møt Konfettikolossen i en finale med dobbelthopp, kaffekraft og skikkelig feiring.</p>
-        <ul class="compact-facts"><li>Tre verdener med hver sin originale musikk</li><li>Lagoppdrag, seks merker, rangstigning og Fellesløft</li><li>Fyrverkeri, konfetti og kaffedash · tastatur og mobil</li></ul>
-        <div class="actions"><a class="button button-dark" href="./vedtak/">Spill VEDTAK! →</a><a class="text-action" href="https://github.com/rolfss/Click-here-for-newest-projects/tree/main/vedtak" rel="noreferrer">Se kildekoden →</a></div>
-      </article>
-      <article class="project-card">
-        <div class="card-top"><span class="card-index">07</span><span class="label">AI · Offentlig beta</span></div>
-        <p class="project-name">Second Rolf</p>
-        <h2>Snakk med en avgrenset digital representasjon av Rolf.</h2>
-        <p>Vanlig chat og kildebaserte svar om Rolfs dokumenterte profesjonelle profil og prosjektene på denne siden. Samtalen holdes midlertidig i nettleseren og går gjennom Cloudflare til den lokale modellen. Private eiernotater er ikke del av offentlig chat.</p>
-        <ul class="compact-facts"><li>Offentlig profilmodus når PC-en er frakoblet</li><li>Bonsai 2 27B (PQ2_0) på lokal GPU</li><li>Ingen handlingsverktøy eller sky-modell som fallback</li></ul>
-        <div class="actions">
-          <a class="button button-dark" href="./second-rolf/">Snakk med Second Rolf</a>
-          <a class="text-action" href="https://github.com/rolfss/Click-here-for-newest-projects/tree/main/second-rolf-api" rel="noreferrer">Arkitektur og kode →</a>
-        </div>
-      </article>
-
-      <article class="project-card" id="arkivmuseet">
-        <div class="card-top"><span class="card-index">06</span><span class="label">For ledere · Interaktiv læring</span></div>
-        <p class="project-name">Arkivmuseet</p>
-        <h2>Forstå arkivets rolle i organisasjonen.</h2>
-        <p>En interaktiv museumsreise for ledere i offentlig sektor. Utforsk virkelige saker, prøv ledervalg og se hvordan arkivering støtter gode beslutninger, rettigheter og tillit – og hva som kan skje når dokumentasjonen mangler.</p>
-        <ul class="compact-facts"><li>Virkelige saker og praktiske ledervalg</li><li>Konkrete tiltak til neste ledermøte</li><li>Utforsk med eller uten 3D</li></ul>
-        <div class="actions">
-          <a class="button button-dark" href="./arkivmuseet/">Start lederreisen</a>
-          <a class="text-action" href="https://github.com/rolfss/Click-here-for-newest-projects/tree/main/arkivmuseet" rel="noreferrer">Kilder og kode →</a>
-        </div>
-      </article>
-      <article class="project-card archive-card">
-        <div class="card-top"><span class="card-index">02</span><span class="label">Dokumentasjonsforvaltning</span></div>
-        <p class="project-name">Archive Assist</p>
-        <h2>Les innholdet og foreslå en sømmelig saksdokumenttittel.</h2>
-        <p>Appen leser dokumentinnhold og tilgjengelige metadata, setter et redigerbart tittelforslag og lar saksbehandler eller arkivar kontrollere resultatet før eksport.</p>
-        <ul class="compact-facts"><li>Kontrollrapport og eksportspor</li><li>Lokal AI der støttet</li><li>30 automatiske tester</li></ul>
-        <div class="actions">
-          <a class="button button-dark" href="./archive-assist/">Prøv Archive Assist</a>
-          <a class="text-action" href="https://github.com/rolfss/Click-here-for-newest-projects/tree/main/archive-assist" rel="noreferrer">Kildekode →</a>
-        </div>
-      </article>
-
-      <article class="project-card">
-        <div class="card-top"><span class="card-index">03</span><span class="label">Informasjonsstyring</span></div>
-        <p class="project-name">MetaReady</p>
-        <h2>Se hva informasjonen faktisk kan brukes til.</h2>
-        <p>Arbeidsflate for metadata, eierskap, proveniens, sensitivitet, livsløp, relasjoner, kvalitet og AI-beredskap. Mangler blir gjort om til konkrete tiltak.</p>
-        <ul class="compact-facts"><li>24 sammenkoblede ressurser</li><li>12 forklarbare regler</li><li>Ledelsesbrief og styringsspor</li></ul>
-        <div class="actions">
-          <a class="button button-dark" href="./metaready/">Åpne MetaReady</a>
-          <a class="text-action" href="https://github.com/rolfss/Click-here-for-newest-projects/tree/main/metaready" rel="noreferrer">Kildekode →</a>
-        </div>
-      </article>
-
-      <article class="project-card game-card">
-        <div class="card-top"><span class="card-index">04</span><span class="label">Nettleserspill</span></div>
-        <p class="project-name">Lumen Relay</p>
-        <h2>Rut signaler før systemet tetner til.</h2>
-        <p>Et 90-sekunders arkadespill laget med Canvas 2D, Web Audio og vanlige JavaScript-moduler. Det kan spilles med tastatur, mus og berøring.</p>
-        <div class="mini-game" aria-hidden="true">
-          <i class="gate gate-one"></i><i class="gate gate-two"></i><i class="gate gate-three"></i>
-          <i class="signal signal-one"></i><i class="signal signal-two"></i><i class="signal signal-three"></i>
-          <i class="player"></i><span class="route"></span>
-        </div>
-        <div class="actions">
-          <a class="button button-dark" href="./lumen-relay/">Spill Lumen Relay</a>
-          <a class="text-action" href="https://github.com/rolfss/Click-here-for-newest-projects/tree/main/lumen-relay" rel="noreferrer">Kildekode →</a>
-        </div>
-      </article>
-
-      <article class="project-card support-hunt-card">
-        <div class="support-hunt-copy">
-          <div class="card-top"><span class="card-index">05</span><span class="label">Interaktivt nettleserspill</span></div>
-          <p class="project-name">Brukerstøttejakten</p>
-          <h2>Ta kontroll over køen. Bli årets ansatt.</h2>
-          <p>Et påkostet Duck Hunt-inspirert kaffepausespill med ti nivåer, 80 saker, dybdemotor, moduloppgraderinger og en intern IT-vri. Lukk «Brukerstøttesaker» med Service Manager Mk V og avslutt med en flerfaset hovedhendelse.</p>
-          <ul class="compact-facts"><li>10 nivåer · 80 saker</li><li>Mus, berøring og tastatur</li><li>22 automatiske tester</li></ul>
-          <div class="actions">
-            <a class="button button-dark" href="./brukerstottejakten/">Spill Brukerstøttejakten</a>
-            <a class="text-action" href="https://github.com/rolfss/Click-here-for-newest-projects/tree/main/brukerstottejakten" rel="noreferrer">Kildekode →</a>
-          </div>
-        </div>
-
-        <a class="support-hunt-preview" href="./brukerstottejakten/" aria-label="Spill Brukerstøttejakten">
-          <span class="hunt-sun" aria-hidden="true"></span>
-          <span class="hunt-cloud" aria-hidden="true"></span>
-          <span class="hunt-horizon" aria-hidden="true"></span>
-          <span class="hunt-ticket" aria-hidden="true"><b>Brukerstøttesak</b></span>
-          <span class="hunt-crosshair" aria-hidden="true"></span>
-          <span class="hunt-weapon" aria-hidden="true">Service Manager</span>
-          <span class="hunt-score" aria-hidden="true"><b>Årets ansatt</b><i><em></em></i><small>42 av 80</small></span>
-          <span class="preview-cta">Spill nå →</span>
-        </a>
-      </article>
-    </section>
-
-    <section class="principles" aria-labelledby="principles-title">
       <div>
-        <p class="eyebrow">Felles for prosjektene</p>
-        <h2 id="principles-title">Faglig logikk først. Grensesnitt etterpå.</h2>
+        <p class="eyebrow">Local AI project</p>
+        <h2 id="second-rolf-title">Second Rolf</h2>
+        <p>A conversational AI prototype running a local language model. Explore my public professional background and projects, or ask general questions.</p>
       </div>
-      <div class="principle-grid">
-        <article><span>01</span><h3>Etterprøvbart</h3><p>Kilder, regler og begrensninger skal kunne forstås av andre enn den som skrev koden.</p></article>
-        <article><span>02</span><h3>Brukbart</h3><p>Et fagverktøy må fungere på vanlig skjerm, uten komplisert oppsett eller skjulte forutsetninger.</p></article>
-        <article><span>03</span><h3>Testet</h3><p>Domenelogikk blir kontrollert med automatiske tester før den publiseres.</p></article>
-        <article><span>04</span><h3>Nøkternt</h3><p>Systemet skal si fra når grunnlaget er svakt, i stedet for å late som det vet.</p></article>
+      <div class="spotlight-action">
+        <a class="button button-primary" href="./second-rolf/">Open Second Rolf →</a>
+        <span id="second-rolf-status" class="model-status" role="status"><i aria-hidden="true"></i><span>Public profile mode</span></span>
       </div>
     </section>
-  </main>
 
+    <section class="project-grid" aria-label="Selected portfolio projects">
+      <article class="project-card">
+        <div class="card-top"><span class="card-index">01</span><span class="label">AI · Search</span></div>
+        <h2>Noark 5 Assistant</h2>
+        <p>Source-based search and guidance for Norwegian records-management requirements, with traceable references.</p>
+        <div class="actions"><a class="button button-dark" href="./noark-assistent/">Open project →</a></div>
+      </article>
+      <article class="project-card">
+        <div class="card-top"><span class="card-index">02</span><span class="label">Information governance</span></div>
+        <h2>MetaReady</h2>
+        <p>Information-quality assessment across metadata, ownership, provenance, sensitivity and AI readiness.</p>
+        <div class="actions"><a class="button button-dark" href="./metaready/">Open project →</a></div>
+      </article>
+      <article class="project-card">
+        <div class="card-top"><span class="card-index">03</span><span class="label">Document workflows</span></div>
+        <h2>Archive Assist</h2>
+        <p>Document analysis and editable title suggestions with metadata exports and a review trail.</p>
+        <div class="actions"><a class="button button-dark" href="./archive-assist/">Open project →</a></div>
+      </article>
+      <article class="project-card">
+        <div class="card-top"><span class="card-index">04</span><span class="label">Interactive learning</span></div>
+        <h2>Arkivmuseet</h2>
+        <p>An interactive 3D museum illustrating the value of trustworthy public-sector records and management decisions.</p>
+        <div class="actions"><a class="button button-dark" href="./arkivmuseet/">Explore museum →</a></div>
+      </article>
+      <article class="project-card">
+        <div class="card-top"><span class="card-index">05</span><span class="label">Interactive game</span></div>
+        <h2>Fjordsprint</h2>
+        <p>A Norwegian mountain rally game combining driving challenges with records-management scenarios.</p>
+        <div class="actions"><a class="button button-dark" href="./fjordsprint/">Play Fjordsprint →</a></div>
+      </article>
+      <article class="project-card">
+        <div class="card-top"><span class="card-index">06</span><span class="label">Interactive game</span></div>
+        <h2>VEDTAK!</h2>
+        <p>An original platform game inspired by public-sector work, cooperation and everyday problem-solving.</p>
+        <div class="actions"><a class="button button-dark" href="./vedtak/">Play VEDTAK! →</a></div>
+      </article>
+    </section>
+    <p class="more-projects">Also explore <a href="./lumen-relay/">Lumen Relay</a>, <a href="./brukerstottejakten/">Brukerstøttejakten</a>, or the <a href="./fagstrom/">industry news feed</a>. All source code is available on <a href="https://github.com/rolfss/Click-here-for-newest-projects" rel="noreferrer">GitHub</a>.</p>
+  </main>
   <footer>
-    <span>Rolf Selås</span>
-    <span>Oslo, Norge</span>
-    <a href="https://github.com/rolfss" rel="noreferrer">GitHub</a>
+    <span>© 2026 Rolf Selås</span><span>Oslo, Norway</span>
+    <a href="mailto:rolfselaas@gmail.com">Contact</a>
   </footer>
   <script type="module" src="./second-rolf/spotlight.js?v=20260926-pages-rename"></script>
 </body>
