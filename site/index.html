@@ -58,6 +58,12 @@
       .site-header nav a { font-size: .73rem; }
       .site-header nav a:nth-child(2) { display: none !important; }
     }
+
+    .earlier-career { margin-top: -2.4rem; }
+    .earlier-positions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.2rem 1.6rem; margin:0; padding:0; list-style:none; }
+    .earlier-positions li { padding:.6rem 0; border-top:1px solid var(--line); color:var(--muted); font-size:.86rem; line-height:1.5; }
+    .earlier-positions strong { color:var(--navy); font-weight:750; }
+    @media(max-width:760px) { .earlier-positions { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
@@ -81,7 +87,7 @@
       <p class="hero-copy">I work at the intersection of IT, records management and organizational improvement. My experience spans regional application services, systems integration, automation, user-centered development and cross-organizational leadership.</p>
       <div class="profile-links">
         <a class="button button-primary" href="mailto:rolfselaas@gmail.com">Email me</a>
-        <a class="button button-secondary" href="https://github.com/rolfss/Click-here-for-newest-projects/blob/main/CV.md" rel="noreferrer">View English CV →</a>
+        <a class="button button-secondary" href="https://github.com/rolfss/RolfssCurriculumVitae/blob/main/Rolf_Selas_CV.pdf" rel="noreferrer">Complete CV (PDF) →</a>
         <a class="button button-secondary" href="https://www.linkedin.com/in/rolf-sel%C3%A5s/" rel="noreferrer">LinkedIn ↗</a>
       </div>
     </section>
@@ -103,9 +109,14 @@
             <p>Managed Public 360, delivered user training and developed digital forms in ACOS Interact, including scripting, testing and integration. Supported records governance, automation and process improvement.</p>
           </article>
           <article class="cv-entry">
-            <h4>Records Management · Nittedal Municipality &amp; Nedre Romerike Fire and Rescue Service</h4>
-            <p class="cv-period">July 2022–February 2023 · Temporary assignments through Adecco</p>
-            <p>Document control, public enquiries, records systems and internal user support.</p>
+            <h4>Consultant · Nedre Romerike Fire and Rescue Service</h4>
+            <p class="cv-period">October 2022–February 2023 · Adecco temporary assignment</p>
+            <p>Records management in Elements and DM Brann, property and fire-safety enquiries, and physical archives.</p>
+          </article>
+          <article class="cv-entry">
+            <h4>Records Officer · Nittedal Municipality</h4>
+            <p class="cv-period">July–October 2022 · Adecco temporary assignment</p>
+            <p>Municipal records centre, Public 360, Altinn, incoming correspondence, public journal quality checks and user guidance.</p>
           </article>
           <article class="cv-entry">
             <h4>Library Branch Manager · Karmøy Municipality</h4>
@@ -135,6 +146,23 @@
           </section>
         </aside>
       </div>
+    </section>
+
+
+    <section class="cv-panel earlier-career" id="earlier-experience" aria-labelledby="earlier-experience-heading">
+      <h2 id="earlier-experience-heading">Earlier positions</h2>
+      <ul class="earlier-positions">
+        <li><strong>Aug 2018–Mar 2019</strong> · Oslo Municipality / Ammerud Farm — Support Worker</li>
+        <li><strong>Jan–Jul 2017</strong> · Verbum Publishing — Researcher / Intern</li>
+        <li><strong>Jun–Jul 2016</strong> · Café Ibsen / Grimstad Municipality — Harbour Attendant and Ticket Officer</li>
+        <li><strong>Jun–Jul 2015</strong> · Scandic Hotel Grimstad — Housekeeping Assistant</li>
+        <li><strong>Jan–Jul 2014</strong> · Brockwood Park School / The Krishnamurti Centre — Guest Services and Operations</li>
+        <li><strong>Jun–Jul 2013</strong> · Sørlandet Hospital, Arendal — Support Worker</li>
+        <li><strong>Jan 2011–Dec 2013</strong> · Grimstad Schools and Kindergarten — On-call Substitute</li>
+        <li><strong>Mar–Jun 2011</strong> · Steiner School, Arendal — Assistant</li>
+        <li><strong>Sep 2010–Jun 2012</strong> · Grimstad Municipality — Homework Tutor and Support Contact</li>
+        <li><strong>Oct 2009–Jun 2011</strong> · Odden Bistro — Restaurant Staff</li>
+      </ul>
     </section>
 
     <section class="portfolio-head" id="projects" aria-labelledby="projects-heading">
