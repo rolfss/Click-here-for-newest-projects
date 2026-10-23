@@ -1,0 +1,17 @@
+{
+  "name": "jev-bridge",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server.mjs",
+    "http": "node http.mjs",
+    "doctor": "node doctor.mjs --live",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check jev-client.mjs && node --check server.mjs && node --check http.mjs && node --check doctor.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.1",
+    "zod": "^4.4.3"
+  }
+}
