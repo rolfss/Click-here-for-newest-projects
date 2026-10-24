@@ -99,8 +99,9 @@
   top: calc(var(--safe-top) + 73px); left: var(--safe-left); width: 163px;
   min-height: 52px; padding: 8px 10px;
 }
-.phone-ui-ready.mobile-ui .rally-readouts { font-size: 11px; gap: 12px; margin-bottom: 6px; }
-.phone-ui-ready.mobile-ui .rally-readouts b { font-size: 19px; }
+.phone-ui-ready.mobile-ui .rally-readouts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); font-size: 10px; gap: 6px; margin-bottom: 6px; }
+.phone-ui-ready.mobile-ui .rally-readouts span { white-space: nowrap; }
+.phone-ui-ready.mobile-ui .rally-readouts b { font-size: 18px; margin-right: 2px; }
 .phone-ui-ready.mobile-ui #pace-note {
   top: calc(var(--safe-top) + 73px)!important; right: var(--safe-right);
   left: auto; width: 112px; height: 52px; padding: 6px 8px;
@@ -204,6 +205,7 @@
 .phone-ui-ready.mobile-ui #results h2 { order: 1; font-size: 27px; margin: 12px 0; }
 .phone-ui-ready.mobile-ui #score-entry { order: 2; margin: 0 0 12px; padding: 14px; width: 100%; }
 .phone-ui-ready.mobile-ui .career-result { display: grid; grid-template-columns: 46px minmax(0,1fr); gap: 8px 12px; margin: 0; }
+.phone-ui-ready.mobile-ui .career-result > .insignia { width: 46px; height: 54px; }
 .phone-ui-ready.mobile-ui .career-result .eyebrow { font-size: 12px; letter-spacing: .02em; overflow-wrap: anywhere; }
 .phone-ui-ready.mobile-ui .career-result h3 { font-size: 21px; line-height: 1.2; overflow-wrap: anywhere; }
 .phone-ui-ready.mobile-ui .career-result p { font-size: 13px; line-height: 1.4; max-width: none; }
