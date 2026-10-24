@@ -60,7 +60,11 @@ def exercise(page,label,touch):
  page.evaluate('__qa.setAge(11.8);__qa.world.cameraInitialized=false');wait(page,"document.querySelectorAll('.career-rung.reached').length===6")
  page.wait_for_timeout(600);shot(page,label+'-rocket-top');page.click('#skip-rocket');page.wait_for_timeout(200)
  assert 'Toppleder' in page.locator('#score-entry').inner_text()
+ if touch:page.click('.phone-board-details > summary')
  assert 'Rolf Test' in page.locator('#result-score-rows').inner_text()
+ if touch:
+  page.click('.phone-board-details > summary')
+  page.locator('#results').evaluate('(e)=>e.scrollTop=0')
  shot(page,label+'-results')
  rows=page.evaluate("JSON.parse(localStorage.getItem('fjordsprint-career-scores-v3'))")
  assert len(rows)==1 and rows[0]['expiresAt']-rows[0]['createdAt']==172800000
