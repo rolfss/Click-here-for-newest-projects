@@ -28,13 +28,28 @@ for (const [q, expected] of fixtures) test(`guidance retrieval: ${q}`, () => {
 });
 
 test('new catalogue has section-level provenance and unique IDs', () => {
-  assert.equal(RECORDS.length, 180); assert.equal(SOURCES.length, 28); assert.equal(FORMAT_ROWS.length, 65);
+  assert.equal(RECORDS.length, 182); assert.equal(SOURCES.length, 29); assert.equal(FORMAT_ROWS.length, 65);
   assert.equal(new Set(RECORDS.map((r) => r.id)).size, RECORDS.length);
   for (const source of GUIDANCE_SOURCES) {
-    assert.equal(new URL(source.url).protocol, 'https:'); assert.equal(source.verifiedAt, '2026-09-07');
+    assert.equal(new URL(source.url).protocol, 'https:');
+    assert.equal(source.verifiedAt, source.id === 'na-internal-control' ? '2026-10-24' : '2026-09-07');
     assert.ok(source.scope); assert.ok(source.status);
   }
   for (const record of GUIDANCE_RECORDS) { assert.ok(record.section); assert.ok(sourceUrl(record).startsWith('https://')); }
+});
+
+test('source metadata corrections preserve the older unchanged records verification date', () => {
+  const internal = SOURCES.find(({ id }) => id === 'na-internal-control');
+  assert.equal(internal.published, '29.08.2025');
+  assert.equal(internal.updated, '14.10.2026');
+  const testing = SOURCES.find(({ id }) => id === 'na-extract-testing');
+  assert.equal(testing.published, '07.10.2026');
+  assert.equal(testing.updated, '14.10.2026');
+  assert.equal(testing.verifiedAt, '2026-10-24');
+  for (const record of GUIDANCE_RECORDS.filter(({ source }) => source === internal.id)) {
+    assert.equal(record.verifiedAt, '2026-09-07');
+  }
+  assert.equal(getRecord('guide-extract-authentic-deviations').verifiedAt, '2026-10-15');
 });
 test('format rows retain specific versions and PUIDs without inventing universal acceptance', () => {
   assert.match(getRecord('format-siard').detail, /2\.2/); assert.match(getRecord('format-siard').detail, /fmt\/1777/);

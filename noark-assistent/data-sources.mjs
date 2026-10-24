@@ -8,6 +8,19 @@ export const BUILD_INFO = Object.freeze({
 
 export const SOURCES = Object.freeze([
   {
+    id: "na-outsourced-statutory",
+    title: "Veileder om dokumentasjon av lovpålagte oppgaver som er løst på vegne av organet (arkivloven § 7)",
+    shortTitle: "Lovpålagte oppgaver satt ut til andre",
+    publisher: "Nasjonalarkivet",
+    published: "Publiseringsdato ikke bekreftet",
+    verifiedAt: "2026-10-24",
+    type: "Offisiell veiledning",
+    status: "current-guidance",
+    url: "https://www.nasjonalarkivet.no/veiledere/veileder-om-dokumentasjon-av-lovpalagte-oppgaver-som-er-lost-pa-vegne-av-organet-arkivloven-%C2%A7-7/",
+    scope: "Organer underlagt arkivlova som avtaler at rettssubjekt utenfor loven løser deres lovpålagte oppgaver",
+    note: "Avgrenset ansvar og mottaksplikt etter § 7; skill lovkrav fra anbefalinger om avtale og oppfølging."
+  },
+  {
     "id": "na-siard-preparation",
     "title": "SIARD-uttrekk for avlevering",
     "shortTitle": "SIARD – forberedelse og kontroll",
@@ -64,12 +77,13 @@ export const SOURCES = Object.freeze([
     "id": "na-extract-testing",
     "title": "Testing av arkivuttrekk",
     "shortTitle": "Testing av arkivuttrekk",
-    "published": "Publiseringsdato ikke bekreftet",
+    "published": "07.10.2026",
+    "updated": "14.10.2026",
     "url": "https://www.nasjonalarkivet.no/veiledere/testing-av-arkivuttrekk/",
     "scope": "Arkivuttrekk som skal overføres til Nasjonalarkivet",
     "note": "Skiller autentiske avvik i Noark-arkivet fra feil som oppstår ved uttrekk.",
     "publisher": "Nasjonalarkivet",
-    "verifiedAt": "2026-10-15",
+    "verifiedAt": "2026-10-24",
     "type": "Offisiell veiledning",
     "status": "current-guidance"
   },

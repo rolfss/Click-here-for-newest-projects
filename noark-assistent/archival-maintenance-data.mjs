@@ -6,6 +6,30 @@ const verifiedAt = '2026-09-22';
 
 export const ARCHIVAL_MAINTENANCE_RECORDS = Object.freeze([
   record({
+    id: 'guide-outsourced-statutory-responsibility',
+    source: 'na-outsourced-statutory',
+    title: 'Arkivansvar når lovpålagte oppgaver settes ut',
+    section: 'Når gjelder § 7?; Hvilke plikter har dere?',
+    topic: 'Regelverk 2026',
+    verifiedAt: '2026-10-24',
+    scope: 'Organer underlagt arkivlova som avtaler at rettssubjekt utenfor loven løser deres lovpålagte oppgaver',
+    tags: ['arkivlova § 7', 'arkivloven § 7', 'lovpålagte oppgaver', 'utsetting', 'oppgaveutsetting', 'private', 'rettssubjekt', 'avtale', 'ansvar', 'mottaksplikt', 'dokumentasjon'],
+    summary: 'Når et organ avtaler at et rettssubjekt utenfor arkivloven utfører organets lovpålagte oppgaver, skal organet sørge for at pliktene etter arkivloven følges opp. Organet må ta imot dokumentasjonen når utføreren ikke lenger trenger eller har rettmessig krav på den.',
+    detail: 'Bestemmelsen gjelder avtalt oppgaveløsning på organets vegne, ikke ethvert privat tjenestetilbud. Den overfører ikke hele den private virksomheten til arkivlovens virkeområde.'
+  }),
+  record({
+    id: 'guide-outsourced-statutory-followup',
+    source: 'na-outsourced-statutory',
+    title: 'Avtal og følg opp dokumentasjonen ved oppgaveutsetting',
+    section: 'Hva bør dere gjøre i praksis?; Huskeliste',
+    topic: 'Dokumentasjonsplan',
+    verifiedAt: '2026-10-24',
+    scope: 'Organer underlagt arkivlova som avtaler at rettssubjekt utenfor loven løser deres lovpålagte oppgaver',
+    tags: ['arkivlova § 7', 'arkivloven § 7', 'lovpålagte oppgaver', 'utsetting', 'oppgaveutsetting', 'private', 'avtale', 'oppfølging', 'dokumentasjonsplan', 'innkjøp', 'metadata', 'mottak', 'overføring'],
+    summary: 'Veilederen anbefaler tidlig samarbeid mellom arkiv, innkjøp og fagansvarlige og avklaringer om dokumentasjon, metadata, mottakstidspunkt, overføring og oppfølging. Opplysninger om avtalene skal inngå i dokumentasjonsplanen.',
+    detail: 'Anbefalte avtalepunkter er praktiske råd, ikke en lovbestemt standardavtale. Følg opp dokumentasjonen underveis og kontroller kompletthet og informasjonstap ved mottak.'
+  }),
+  record({
     "id": "guide-siard-preparation",
     "source": "na-siard-preparation",
     "title": "Avklar og kontroller SIARD-uttrekket før avlevering",
