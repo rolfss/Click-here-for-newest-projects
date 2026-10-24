@@ -1,0 +1,303 @@
+/* Phone-first presentation. Existing desktop styling and game rules are unchanged. */
+.phone-ui-ready.mobile-ui {
+  --safe-top: max(10px, env(safe-area-inset-top));
+  --safe-left: max(12px, env(safe-area-inset-left));
+  --safe-right: max(12px, env(safe-area-inset-right));
+  --safe-bottom: max(12px, env(safe-area-inset-bottom));
+  --controls-height: 120px;
+  -webkit-text-size-adjust: 100%;
+}
+#phone-menu-toggle { display: none; }
+.phone-ui-ready.mobile-ui button, .phone-ui-ready.mobile-ui summary { min-height: 48px; }
+.phone-ui-ready.mobile-ui button:focus-visible, .phone-ui-ready.mobile-ui summary:focus-visible {
+  outline: 3px solid #ffdf9c; outline-offset: 3px;
+}
+.phone-ui-ready.mobile-ui #menu {
+  height: 100vh; height: 100dvh; overflow-y: auto; overflow-x: hidden;
+  padding: 0 0 var(--safe-bottom); background: linear-gradient(100deg,#102a3ee8,#102a3e9c);
+  scroll-padding-block: 12px; -webkit-overflow-scrolling: touch;
+}
+.phone-ui-ready.mobile-ui .topbar {
+  position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: var(--safe-top) var(--safe-right) 8px var(--safe-left);
+}
+.phone-ui-ready.mobile-ui .brand { font-size: 14px; letter-spacing: 1px; gap: 9px; }
+.phone-ui-ready.mobile-ui .brand small, .phone-ui-ready.mobile-ui .preview-tag { display: none; }
+.phone-ui-ready.mobile-ui #phone-menu-toggle {
+  display: block; margin-left: auto; padding: 10px 16px; font-size: 14px;
+  background: #173e50; border: 1px solid #b8d8db66;
+}
+.phone-ui-ready.mobile-ui .top-actions { display: none; width: 100%; }
+.phone-ui-ready.mobile-ui .phone-menu-open .top-actions {
+  display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px;
+  padding: 8px; background: #102c3e; border: 1px solid #b6d7d345; border-radius: 14px;
+}
+.phone-ui-ready.mobile-ui .top-actions .text-btn {
+  font-size: 14px; line-height: 1.3; padding: 10px; min-width: 0;
+  border: 1px solid #b6d7d345; border-radius: 9px; background: #1c4152; color: #effaf7;
+}
+.phone-ui-ready.mobile-ui .top-actions .icon-btn { width: 100%; height: 48px; border-radius: 9px; }
+.phone-ui-ready.mobile-ui .menu-title {
+  position: relative; inset: auto; width: auto; max-width: none; margin: 10px 20px 20px;
+}
+.phone-ui-ready.mobile-ui .menu-title > .eyebrow { display: none; }
+.phone-ui-ready.mobile-ui .menu-title h1 {
+  font-size: clamp(32px,10vw,46px); line-height: 1; letter-spacing: -1.7px;
+  margin: 12px 0 14px; overflow-wrap: normal;
+}
+.phone-ui-ready.mobile-ui .menu-title h1 span { display: inline; }
+.phone-ui-ready.mobile-ui .menu-title h1 em {
+  font-size: 12px; letter-spacing: 4px; line-height: 1.3; margin: 9px 0 0 2px;
+}
+.phone-ui-ready.mobile-ui .menu-title > p {
+  display: block; font-size: 15px; line-height: 1.45; margin: 0 0 16px; color: #e2efe9;
+}
+.phone-ui-ready.mobile-ui .menu-title .small-hint { display: none; }
+.phone-ui-ready.mobile-ui .menu-primary { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 0; }
+.phone-ui-ready.mobile-ui .menu-primary .primary {
+  width: 100%; min-height: 56px; padding: 15px 16px; font-size: 15px; letter-spacing: .03em;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.phone-ui-ready.mobile-ui .menu-primary .primary span { margin-left: 8px; }
+.phone-ui-ready.mobile-ui .menu-primary .secondary { min-height: 48px; padding: 12px; font-size: 14px; }
+.phone-ui-ready.mobile-ui #mobile-guide { margin-top: 12px; }
+.phone-ui-ready.mobile-ui #mobile-guide p { font-size: 14px; line-height: 1.45; margin: 8px 0; }
+.phone-ui-ready.mobile-ui #mobile-help-toggle { min-height: 48px; padding: 10px 14px; font-size: 14px; }
+.phone-ui-ready.mobile-ui .course-callout { display: none; }
+.phone-ui-ready.mobile-ui .course-picker { position: relative; inset: auto; width: auto; margin: 18px 20px; }
+.phone-ui-ready.mobile-ui .career { display: flex; flex-wrap: wrap; padding: 12px; gap: 10px; }
+.phone-ui-ready.mobile-ui .career .eyebrow { font-size: 12px; letter-spacing: .06em; }
+.phone-ui-ready.mobile-ui .career p { display: block; font-size: 14px; line-height: 1.4; }
+.phone-ui-ready.mobile-ui .career small { display: block; font-size: 11px; line-height: 1.4; letter-spacing: 0; }
+.phone-ui-ready.mobile-ui .cup-tabs { width: 100%; flex-direction: row; }
+.phone-ui-ready.mobile-ui .cup-tabs button { min-height: 48px; padding: 10px; font-size: 14px; }
+.phone-ui-ready.mobile-ui .picker-label { display: flex; font-size: 11px; letter-spacing: .04em; gap: 8px; }
+.phone-ui-ready.mobile-ui #course-cards { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.phone-ui-ready.mobile-ui .course-card { display: flex; min-height: 68px; padding: 12px; gap: 10px; }
+.phone-ui-ready.mobile-ui .course-number { display: block; font-size: 23px; }
+.phone-ui-ready.mobile-ui .course-name { font-size: 16px; line-height: 1.2; }
+.phone-ui-ready.mobile-ui .course-meta { font-size: 11px; letter-spacing: .02em; line-height: 1.4; }
+.phone-ui-ready.mobile-ui .menu-footer {
+  position: relative; inset: auto; display: flex; flex-direction: column; align-items: flex-start;
+  margin: 20px; padding: 0; gap: 6px; font-size: 12px; line-height: 1.5;
+}
+.phone-ui-ready.mobile-ui .menu-footer span:nth-child(2) { display: block; font-size: 12px; }
+/* Keep the center of the road clear; secondary data lives in the pause/results UI. */
+.phone-ui-ready.mobile-ui .race-top {
+  display: grid; grid-template-columns: minmax(0,1fr) auto 48px; align-items: start; gap: 10px;
+  padding: var(--safe-top) var(--safe-right) 0 var(--safe-left);
+}
+.phone-ui-ready.mobile-ui .race-brand { max-width: none; min-width: 0; }
+.phone-ui-ready.mobile-ui .race-brand strong { font-size: 14px; margin-top: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.phone-ui-ready.mobile-ui .race-brand span { font-size: 10px; max-width: none; line-height: 1.3; }
+.phone-ui-ready.mobile-ui .timer { position: static; transform: none; min-width: 0; align-items: flex-end; }
+.phone-ui-ready.mobile-ui .timer > span { font-size: 10px; letter-spacing: .05em; }
+.phone-ui-ready.mobile-ui .timer strong { font-size: 25px; letter-spacing: 0; }
+.phone-ui-ready.mobile-ui #pause-btn { width: 48px; height: 48px; }
+.phone-ui-ready.mobile-ui .progress-track { top: calc(var(--safe-top) + 61px); }
+.phone-ui-ready.mobile-ui #competence-hud {
+  top: calc(var(--safe-top) + 73px); left: var(--safe-left); width: 163px;
+  min-height: 52px; padding: 8px 10px;
+}
+.phone-ui-ready.mobile-ui .rally-readouts { font-size: 11px; gap: 12px; margin-bottom: 6px; }
+.phone-ui-ready.mobile-ui .rally-readouts b { font-size: 19px; }
+.phone-ui-ready.mobile-ui #pace-note {
+  top: calc(var(--safe-top) + 73px)!important; right: var(--safe-right);
+  left: auto; width: 112px; height: 52px; padding: 6px 8px;
+}
+.phone-ui-ready.mobile-ui #pace-note span, .phone-ui-ready.mobile-ui #pace-note small { font-size: 10px; }
+.phone-ui-ready.mobile-ui #troll-target {
+  top: calc(var(--safe-top) + 135px); left: var(--safe-left); right: var(--safe-right);
+  width: auto; padding: 9px 12px;
+}
+.phone-ui-ready.mobile-ui #troll-target strong { font-size: 15px; line-height: 1.3; margin: 3px 0; }
+.phone-ui-ready.mobile-ui #troll-target span { font-size: 10px; letter-spacing: .03em; }
+.phone-ui-ready.mobile-ui #troll-target small { font-size: 11px; }
+.phone-ui-ready.mobile-ui #mascot-alert {
+  top: calc(var(--safe-top) + 221px)!important; font-size: 12px!important;
+  max-width: calc(100% - var(--safe-left) - var(--safe-right))!important;
+}
+.phone-ui-ready.mobile-ui #toast {
+  top: auto; bottom: calc(var(--safe-bottom) + var(--controls-height) + 74px);
+  width: calc(100% - 32px); max-width: none; font-size: 13px; line-height: 1.35;
+  padding: 7px 10px; border-radius: 9px; background: #102d3de8; white-space: normal;
+}
+.phone-ui-ready.mobile-ui #countdown { top: 38%; }
+.phone-ui-ready.mobile-ui #mobile-controls { height: var(--controls-height); gap: 12px; }
+.phone-ui-ready.mobile-ui #thumb-steer { width: clamp(132px,40vw,176px); height: 120px; }
+.phone-ui-ready.mobile-ui .steer-track { top: 53px; }
+.phone-ui-ready.mobile-ui .steer-arrow { top: 32px; }
+.phone-ui-ready.mobile-ui #steer-knob { top: 29px; }
+.phone-ui-ready.mobile-ui #thumb-steer small { font-size: 11px; bottom: 12px; letter-spacing: .02em; }
+.phone-ui-ready.mobile-ui .mobile-pedals { width: clamp(140px,44vw,184px); gap: 8px; }
+.phone-ui-ready.mobile-ui .mobile-pedals button { min-height: 56px; font-size: 14px; padding: 8px 4px; }
+.phone-ui-ready.mobile-ui .mobile-pedals button small { font-size: 10px; letter-spacing: 0; }
+.phone-ui-ready.mobile-ui .mobile-pedals #mobile-brake { min-height: 56px; }
+.phone-ui-ready.mobile-ui .mobile-pedals #mobile-brake small { white-space: normal; font-size: 9px; }
+.phone-ui-ready.mobile-ui #mobile-recover, .phone-ui-ready.mobile-ui #mobile-water-toggle {
+  bottom: calc(var(--safe-bottom) + var(--controls-height) + 10px); min-height: 48px; font-size: 12px;
+}
+.phone-ui-ready.mobile-ui .race-bottom {
+  left: auto; right: var(--safe-right); bottom: calc(var(--safe-bottom) + var(--controls-height) + 70px);
+}
+.phone-ui-ready.mobile-ui .speed-panel { width: 84px; }
+.phone-ui-ready.mobile-ui .speed strong { font-size: 30px; }
+.phone-ui-ready.mobile-ui .speed span { font-size: 10px; }
+.phone-ui-ready.mobile-ui #toast.show ~ .race-bottom { visibility: hidden; }
+/* Reading sheets: generous type, stacked answers, no text under the keyboard. */
+.phone-ui-ready.mobile-ui #modal-backdrop {
+  top: var(--phone-visible-top,0px); bottom: auto; height: var(--phone-visible-height,100dvh);
+  padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  backdrop-filter: none; background: #071b2de8; align-items: center;
+}
+.phone-ui-ready.mobile-ui #modal {
+  width: 100%; max-height: 100%; padding: 24px 18px; overflow-y: auto; overflow-x: hidden;
+  scroll-padding-block: 12px; -webkit-overflow-scrolling: touch;
+}
+.phone-ui-ready.mobile-ui #modal h2 { font-size: 25px; line-height: 1.2; margin: 0 40px 16px 0; }
+.phone-ui-ready.mobile-ui #modal h3 { font-size: 18px; }
+.phone-ui-ready.mobile-ui #modal p, .phone-ui-ready.mobile-ui #modal li { font-size: 15px; line-height: 1.5; }
+.phone-ui-ready.mobile-ui #modal .note, .phone-ui-ready.mobile-ui #modal .board-note { font-size: 13px!important; line-height: 1.5!important; }
+.phone-ui-ready.mobile-ui #modal .close-btn { width: 48px; height: 48px; top: 4px; right: 4px; }
+.phone-ui-ready.mobile-ui #modal input, .phone-ui-ready.mobile-ui #modal select { font-size: 16px; }
+.phone-ui-ready.mobile-ui .score-input-row { flex-direction: column; align-items: stretch; }
+.phone-ui-ready.mobile-ui #driver-form label { font-size: 15px; margin-top: 16px; }
+.phone-ui-ready.mobile-ui #driver-name { min-height: 54px; }
+.phone-ui-ready.mobile-ui #driver-form button { min-height: 54px; font-size: 15px; }
+.phone-ui-ready.mobile-ui .setting-row { flex-wrap: wrap; gap: 10px; }
+.phone-ui-ready.mobile-ui .setting-row label { font-size: 16px; flex: 1 1 150px; }
+.phone-ui-ready.mobile-ui .setting-row small { font-size: 13px; line-height: 1.4; }
+.phone-ui-ready.mobile-ui .setting-row select { max-width: 100%; }
+.phone-ui-ready.mobile-ui #quiz {
+  top: calc(var(--phone-visible-top,0px) + var(--safe-top)); bottom: auto;
+  left: var(--safe-left)!important; transform: none; width: calc(100% - var(--safe-left) - var(--safe-right));
+  max-height: calc(var(--phone-visible-height,100dvh) - var(--safe-top) - var(--safe-bottom));
+  padding: 18px; overflow-y: auto; overflow-x: hidden; z-index: 12;
+  scroll-padding-block: 12px; -webkit-overflow-scrolling: touch; box-shadow: 0 0 0 100vmax #071b2dcf;
+}
+.phone-ui-ready.mobile-ui[data-game-mode=quiz] #hud { visibility: hidden; }
+.phone-ui-ready.mobile-ui #quiz h2, .phone-ui-ready.mobile-ui #quiz.expert h2 {
+  font-size: 20px!important; line-height: 1.35!important; margin: 14px 0 16px;
+}
+.phone-ui-ready.mobile-ui .quiz-meta { font-size: 12px; letter-spacing: .02em; gap: 8px; }
+.phone-ui-ready.mobile-ui #quiz-context { display: block; width: 100%; order: 3; font-size: 12px; line-height: 1.4; }
+.phone-ui-ready.mobile-ui #quiz-answers { grid-template-columns: 1fr; gap: 10px; }
+.phone-ui-ready.mobile-ui #quiz-answers button { min-height: 58px; padding: 14px; font-size: 16px; line-height: 1.4; }
+.phone-ui-ready.mobile-ui #quiz-answers button:disabled { opacity: 1; }
+.phone-ui-ready.mobile-ui #quiz-explanation { font-size: 16px; line-height: 1.5; margin: 10px 0; }
+.phone-ui-ready.mobile-ui #phone-answer-feedback { color: #b7f1d9; font-size: 15px; font-weight: 650; line-height: 1.4; margin: 14px 0 0; }
+.phone-ui-ready.mobile-ui #phone-answer-feedback:empty { display: none; }
+.phone-ui-ready.mobile-ui #skip-quiz {
+  position: static; display: block; width: 100%; min-height: 52px; margin: 16px 0 0;
+  padding: 13px; background: #234957; border: 1px solid #9acbbc; border-radius: 12px;
+  color: #effbf5; font-size: 16px; font-weight: 650; box-shadow: 0 -7px 12px #173542;
+}
+.phone-ui-ready.mobile-ui .phone-answered #skip-quiz { background: #a3dac9; color: #102e35; }
+/* Rewards first, spreadsheets second. All detailed information remains available. */
+.phone-ui-ready.mobile-ui #results {
+  padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  background: #102b3ff5; backdrop-filter: none;
+}
+.phone-ui-ready.mobile-ui #results .results-inner { display: flex; flex-direction: column; padding: 12px 0 24px; width: 100%; }
+.phone-ui-ready.mobile-ui #result-eyebrow { order: 0; font-size: 11px; letter-spacing: .03em; line-height: 1.4; }
+.phone-ui-ready.mobile-ui #medal-symbol { display: none; }
+.phone-ui-ready.mobile-ui #results h2 { order: 1; font-size: 27px; margin: 12px 0; }
+.phone-ui-ready.mobile-ui #score-entry { order: 2; margin: 0 0 12px; padding: 14px; width: 100%; }
+.phone-ui-ready.mobile-ui .career-result { display: grid; grid-template-columns: 46px minmax(0,1fr); gap: 8px 12px; margin: 0; }
+.phone-ui-ready.mobile-ui .career-result .eyebrow { font-size: 12px; letter-spacing: .02em; overflow-wrap: anywhere; }
+.phone-ui-ready.mobile-ui .career-result h3 { font-size: 21px; line-height: 1.2; overflow-wrap: anywhere; }
+.phone-ui-ready.mobile-ui .career-result p { font-size: 13px; line-height: 1.4; max-width: none; }
+.phone-ui-ready.mobile-ui .score-total { grid-column: 1/-1; width: 100%; margin: 4px 0 0; text-align: center; }
+.phone-ui-ready.mobile-ui .score-total strong { font-size: 38px; }
+.phone-ui-ready.mobile-ui .score-total span { font-size: 12px; letter-spacing: .08em; }
+.phone-ui-ready.mobile-ui #score-entry > .board-note { font-size: 12px!important; line-height: 1.5!important; }
+.phone-ui-ready.mobile-ui #score-entry > .board-note:last-child { display: none; }
+.phone-ui-ready.mobile-ui #result-time { order: 3; font-size: 32px!important; letter-spacing: 0; }
+.phone-ui-ready.mobile-ui #result-comparison { order: 4; font-size: 14px; line-height: 1.4; margin: 8px 0 12px; }
+.phone-ui-ready.mobile-ui .result-actions { order: 5; display: grid; grid-template-columns: 1fr; gap: 8px; margin: 0 0 16px; }
+.phone-ui-ready.mobile-ui .result-actions button { min-height: 52px; width: 100%; font-size: 15px; }
+.phone-ui-ready.mobile-ui #menu-btn { grid-column: auto; }
+.phone-ui-ready.mobile-ui #phone-run-details { order: 6; }
+.phone-ui-ready.mobile-ui #review-btn { order: 7; font-size: 15px; margin-top: 12px; }
+.phone-ui-ready.mobile-ui .result-footer { order: 8; display: block; font-size: 12px; line-height: 1.5; }
+.phone-ui-ready.mobile-ui #phone-run-details, .phone-ui-ready.mobile-ui .phone-board-details {
+  text-align: left; border: 1px solid #a0c9c84d; border-radius: 12px; background: #15394a; margin-top: 10px;
+}
+.phone-ui-ready.mobile-ui details > summary { padding: 14px 12px; font-size: 14px; line-height: 1.4; cursor: pointer; }
+.phone-ui-ready.mobile-ui #phone-run-details > :not(summary) { margin-left: 10px; margin-right: 10px; }
+.phone-ui-ready.mobile-ui .result-stats { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px 10px; }
+.phone-ui-ready.mobile-ui .result-stats span { font-size: 11px; letter-spacing: 0; }
+.phone-ui-ready.mobile-ui .medal-targets { flex-wrap: wrap; font-size: 13px; gap: 12px; }
+.phone-ui-ready.mobile-ui #sector-results { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.phone-ui-ready.mobile-ui .sector-result > span, .phone-ui-ready.mobile-ui .sector-result small { font-size: 12px; letter-spacing: 0; }
+.phone-ui-ready.mobile-ui .career-table th, .phone-ui-ready.mobile-ui .career-table td { font-size: 13px; padding: 10px; }
+.phone-ui-ready.mobile-ui .career-table caption { font-size: 13px; padding: 0 10px; }
+.phone-ui-ready.mobile-ui .table-scroll { max-width: 100%; }
+.phone-ui-ready.mobile-ui .score-breakdown { padding: 12px; font-size: 13px; gap: 12px; }
+.phone-ui-ready.mobile-ui #career-ladder { top: 155px; left: 12px; gap: 3px; }
+.phone-ui-ready.mobile-ui .career-rung { min-width: 174px; gap: 7px; padding: 2px 6px; }
+.phone-ui-ready.mobile-ui .career-rung strong { font-size: 12px; }
+.phone-ui-ready.mobile-ui .career-rung small { font-size: 10px; }
+.phone-ui-ready.mobile-ui .career-rung .insignia { width: 28px; height: 33px; }
+.phone-ui-ready.mobile-ui .rocket-title { top: var(--safe-top); left: 16px; width: calc(100% - 32px); }
+.phone-ui-ready.mobile-ui .rocket-title h2 { font-size: 33px; }
+.phone-ui-ready.mobile-ui .rocket-title p { font-size: 14px; max-width: 290px; }
+.phone-ui-ready.mobile-ui .rocket-title .eyebrow { font-size: 10px; line-height: 1.4; }
+.phone-ui-ready.mobile-ui .rocket-altimeter { right: 16px; bottom: var(--safe-bottom); }
+.phone-ui-ready.mobile-ui .rocket-altimeter > strong { font-size: 46px; }
+.phone-ui-ready.mobile-ui .rocket-altimeter p { font-size: 11px; max-width: 240px; }
+.phone-ui-ready.mobile-ui .rocket-altimeter button { font-size: 13px; min-height: 48px; }
+@media (orientation: landscape) and (max-height: 600px) {
+  .phone-ui-ready.mobile-ui { --controls-height: 96px; }
+  .phone-ui-ready.mobile-ui .menu-title { width: min(440px,calc(100% - 40px)); margin: 12px auto 20px; }
+  .phone-ui-ready.mobile-ui .menu-title h1 { font-size: 38px; }
+  .phone-ui-ready.mobile-ui .course-picker { width: min(580px,calc(100% - 40px)); margin: 20px auto; }
+  .phone-ui-ready.mobile-ui .menu-footer { width: min(580px,calc(100% - 40px)); margin: 20px auto; }
+  .phone-ui-ready.mobile-ui .race-brand span { display: none; }
+  .phone-ui-ready.mobile-ui .timer > span { display: none; }
+  .phone-ui-ready.mobile-ui .timer strong { font-size: 24px; margin-top: 4px; }
+  .phone-ui-ready.mobile-ui .progress-track { top: calc(var(--safe-top) + 51px); }
+  .phone-ui-ready.mobile-ui #competence-hud { top: calc(var(--safe-top) + 61px); width: 150px; min-height: 45px; padding: 5px 8px; }
+  .phone-ui-ready.mobile-ui #pace-note { top: calc(var(--safe-top) + 61px)!important; width: 105px; height: 48px; }
+  .phone-ui-ready.mobile-ui #troll-target { top: calc(var(--safe-top) + 61px); left: 178px; right: 134px; padding: 6px 10px; }
+  .phone-ui-ready.mobile-ui #troll-target span { display: none; }
+  .phone-ui-ready.mobile-ui #troll-target strong { font-size: 14px; }
+  .phone-ui-ready.mobile-ui #troll-target small { font-size: 11px; }
+  .phone-ui-ready.mobile-ui #thumb-steer { width: 132px; height: 96px; }
+  .phone-ui-ready.mobile-ui #steer-knob { top: 14px; }
+  .phone-ui-ready.mobile-ui .steer-track { top: 39px; }
+  .phone-ui-ready.mobile-ui .steer-arrow { top: 19px; }
+  .phone-ui-ready.mobile-ui #thumb-steer small { bottom: 8px; font-size: 10px; }
+  .phone-ui-ready.mobile-ui .mobile-pedals { width: 216px; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; }
+  .phone-ui-ready.mobile-ui .mobile-pedals button, .phone-ui-ready.mobile-ui .mobile-pedals #mobile-brake { min-height: 64px; font-size: 13px; }
+  .phone-ui-ready.mobile-ui .mobile-pedals #mobile-brake { grid-column: auto; }
+  .phone-ui-ready.mobile-ui:not(.mobile-help-on) .mobile-pedals { width: 270px; grid-template-columns: repeat(4,minmax(0,1fr)); }
+  .phone-ui-ready.mobile-ui #mobile-recover { left: calc(var(--safe-left) + 142px); bottom: var(--safe-bottom); max-width: 70px; padding: 6px; }
+  .phone-ui-ready.mobile-ui #mobile-water-toggle { bottom: calc(var(--safe-bottom) + 74px); font-size: 11px; }
+  .phone-ui-ready.mobile-ui .race-bottom { left: auto; right: 242px; bottom: calc(var(--safe-bottom) + 54px); }
+  .phone-ui-ready.mobile-ui:not(.mobile-help-on) .race-bottom { display: none; }
+  .phone-ui-ready.mobile-ui #toast { bottom: calc(var(--safe-bottom) + 104px); left: 50%; width: 52%; font-size: 12px; }
+  .phone-ui-ready.mobile-ui #mascot-alert { top: calc(var(--safe-top) + 116px)!important; max-width: 240px!important; font-size: 11px!important; }
+  .phone-ui-ready.mobile-ui #quiz { padding: 14px 18px; }
+  .phone-ui-ready.mobile-ui #quiz h2, .phone-ui-ready.mobile-ui #quiz.expert h2 { font-size: 19px!important; }
+  .phone-ui-ready.mobile-ui #quiz-context { font-size: 12px; }
+  .phone-ui-ready.mobile-ui #quiz-answers button { min-height: 54px; font-size: 16px; }
+  .phone-ui-ready.mobile-ui #results .results-inner { max-width: 580px; }
+  .phone-ui-ready.mobile-ui .result-actions { grid-template-columns: 1fr 1fr; }
+  .phone-ui-ready.mobile-ui #menu-btn { grid-column: 1/-1; }
+  .phone-ui-ready.mobile-ui .rocket-title { width: 46%; }
+  .phone-ui-ready.mobile-ui .rocket-title h2 { font-size: 29px; }
+  .phone-ui-ready.mobile-ui .rocket-title p { font-size: 13px; }
+  .phone-ui-ready.mobile-ui #career-ladder { top: var(--safe-top); left: auto; right: var(--safe-right); }
+  .phone-ui-ready.mobile-ui .career-rung { min-width: 180px; }
+  .phone-ui-ready.mobile-ui .rocket-altimeter { left: 16px; right: auto; text-align: left; }
+  .phone-ui-ready.mobile-ui .rocket-altimeter > strong { font-size: 32px; }
+  .phone-ui-ready.mobile-ui .rocket-altimeter p { margin: 5px 0; }
+}
+@media (max-width: 359px) {
+  .phone-ui-ready.mobile-ui .menu-title, .phone-ui-ready.mobile-ui .course-picker { margin-left: 14px; margin-right: 14px; }
+  .phone-ui-ready.mobile-ui #competence-hud { width: 155px; }
+  .phone-ui-ready.mobile-ui #pace-note { width: 104px; }
+  .phone-ui-ready.mobile-ui #thumb-steer { width: 132px; }
+  .phone-ui-ready.mobile-ui .mobile-pedals { width: 140px; }
+}
