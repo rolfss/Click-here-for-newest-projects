@@ -25,12 +25,17 @@ url=f'http://127.0.0.1:{server.server_port}/'
 reports=[]
 def shot(page,name):page.screenshot(path=str(OUT/f'{name}.png'))
 def wait(page,condition):page.wait_for_function(condition,timeout=45000)
+def click_menu(page,selector):
+ if page.evaluate("document.body.classList.contains('mobile-ui')"):
+  page.wait_for_selector('body.phone-ui-ready',timeout=10000)
+ if not page.locator(selector).is_visible():page.click('#phone-menu-toggle')
+ page.click(selector)
 def exercise(page,label,touch):
  page.goto(url,wait_until='networkidle');page.wait_for_selector('#menu:not(.hidden)',timeout=60000)
  assert page.evaluate('__qa.world.renderer.info.render.calls')>0
  assert page.evaluate('__qa.world.car.userData.brandDecals')==4
  assert page.locator('#partner-badge img').evaluate('(img)=>img.complete&&img.naturalWidth===1246')
- page.click('#hospitals-btn');assert page.locator('.hospital-directory li').count()==44
+ click_menu(page,'#hospitals-btn');assert page.locator('.hospital-directory li').count()==44
  assert page.locator('[data-tour]').count()==3
  shot(page,label+'-directory');page.click('#close-modal');shot(page,label+'-menu')
  page.evaluate("__qa.world.setQuality('low')")
@@ -55,7 +60,11 @@ def exercise(page,label,touch):
  page.evaluate('__qa.setAge(11.8);__qa.world.cameraInitialized=false');wait(page,"document.querySelectorAll('.career-rung.reached').length===6")
  page.wait_for_timeout(600);shot(page,label+'-rocket-top');page.click('#skip-rocket');page.wait_for_timeout(200)
  assert 'Toppleder' in page.locator('#score-entry').inner_text()
+ if touch:page.click('.phone-board-details > summary')
  assert 'Rolf Test' in page.locator('#result-score-rows').inner_text()
+ if touch:
+  page.click('.phone-board-details > summary')
+  page.locator('#results').evaluate('(e)=>e.scrollTop=0')
  shot(page,label+'-results')
  rows=page.evaluate("JSON.parse(localStorage.getItem('fjordsprint-career-scores-v3'))")
  assert len(rows)==1 and rows[0]['expiresAt']-rows[0]['createdAt']==172800000
@@ -68,16 +77,16 @@ def exercise(page,label,touch):
   page.evaluate('__qa.previewCampus(3)');page.wait_for_timeout(250);shot(page,f'{label}-hospitals-{i+1}')
  assert len(campuses)==44
  assert all(h['visible'] for h in campuses),[h for h in campuses if not h['visible']]
- page.evaluate('__qa.toMenu()');page.click('#hospitals-btn');page.click('[data-tour="0"]');wait(page,"__qa.mode==='race'")
+ page.evaluate('__qa.toMenu()');click_menu(page,'#hospitals-btn');page.click('[data-tour="0"]');wait(page,"__qa.mode==='race'")
  assert page.evaluate('__qa.raceSettings.sightseeing')
  assert page.evaluate('__qa.car.sightseeing')
  assert not page.evaluate('__qa.raceSettings.quiz')
  wait(page,'__qa.car.speed>5');assert page.evaluate('__qa.game.fired')==0
  assert len(page.evaluate("JSON.parse(localStorage.getItem('fjordsprint-career-scores-v3'))"))==1
  page.evaluate('__qa.toMenu()');page.reload(wait_until='networkidle');page.wait_for_selector('#menu:not(.hidden)')
- page.click('#leaderboard-btn');assert 'Rolf Test' in page.locator('#leaderboard-rows').inner_text()
+ click_menu(page,'#leaderboard-btn');assert 'Rolf Test' in page.locator('#leaderboard-rows').inner_text()
  page.context.add_init_script('const originalNow=Date.now;Date.now=()=>originalNow()+172800001;')
- page.reload(wait_until='networkidle');page.wait_for_selector('#menu:not(.hidden)');page.click('#leaderboard-btn')
+ page.reload(wait_until='networkidle');page.wait_for_selector('#menu:not(.hidden)');click_menu(page,'#leaderboard-btn')
  assert 'Ingen aktive resultater' in page.locator('#leaderboard-rows').inner_text()
  assert page.evaluate("localStorage.getItem('fjordsprint-career-scores-v3')")=='[]'
  return campuses
@@ -104,3 +113,8 @@ try:
 finally:
  server.shutdown();(OUT/'report.json').write_text(json.dumps(reports,ensure_ascii=False,indent=2))
 print(json.dumps(reports,ensure_ascii=False,indent=2))
+
+# Run the expanded phone UI matrix once, rather than in all three CI jobs.
+if os.environ.get('FJORDSPRINT_VIEWPORT','mobile-portrait') == 'mobile-portrait':
+ import subprocess,sys
+ subprocess.run([sys.executable,str(ROOT/'tests/phone-ui.py')],check=True)
