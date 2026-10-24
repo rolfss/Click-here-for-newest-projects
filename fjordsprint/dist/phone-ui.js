@@ -52,7 +52,7 @@ function mountPhoneUI() {
   feedback.id = 'phone-answer-feedback'; feedback.setAttribute('role', 'status');
   feedback.setAttribute('aria-live', 'polite'); feedback.setAttribute('aria-atomic', 'true');
   explanation.before(feedback);
-  let quizOpen = false, answered = false, questionText = '', quizFrame = 0;
+  let quizOpen = false, answered = false, questionText = '';
   function syncQuiz() {
     const open = !quiz.classList.contains('hidden');
     const changed = heading.textContent !== questionText;
@@ -61,7 +61,7 @@ function mountPhoneUI() {
       questionText = heading.textContent; answered = false; feedback.textContent = '';
       quiz.scrollTop = 0; heading.focus({ preventScroll: true });
     }
-    quiz.classList.toggle('phone-answered', !!correct);
+    if (quiz.classList.contains('phone-answered') !== !!correct) quiz.classList.toggle('phone-answered', !!correct);
     if (open && correct && !answered) {
       const answerText = correct.textContent.replace(/^\s*[123]\s*/, '').trim();
       feedback.textContent = `Riktig svar: ${answerText}`;
@@ -70,11 +70,11 @@ function mountPhoneUI() {
       feedback.scrollIntoView({ block: 'nearest', behavior: 'auto' });
       answered = true;
     }
+    if (!open && quizOpen && quiz.contains(document.activeElement)) document.activeElement.blur();
     quizOpen = open;
   }
-  const quizObserver = new MutationObserver(() => {
-    cancelAnimationFrame(quizFrame); quizFrame = requestAnimationFrame(syncQuiz);
-  });
+  // DOM feedback must not wait for an expensive WebGL graphics frame.
+  const quizObserver = new MutationObserver(syncQuiz);
   quizObserver.observe(quiz, { attributes: true, attributeFilter: ['class'], childList: true, subtree: true });
   quiz.addEventListener('keydown', event => {
     if (event.key !== 'Tab') return;
