@@ -9,9 +9,9 @@ const env = { JEV_ENABLED: 'true', TYPESAFE_API_KEY: 'synthetic-private-key-neve
 const prepare = (text = question, consent = RAG_CONSENT, settings = env) => prepareRetrieval(text, [], settings, consent);
 const noFetch = () => { throw new Error('Unexpected network call'); };
 const ids = (items) => items.map(({ record }) => record.id);
-function response(plan, overrides = {}) {
+function response(plan, overrides = {}, promotedId) {
   return { answers: Object.fromEntries(plan.payload.state.records.map((record, i) => [`r${i}`, {
-    type: 'noul', noul: record.id === 'req-6-13-14' ? 0.99 : 0.1,
+    type: 'noul', noul: record.id === promotedId ? 0.99 : 0.1,
   }])), usage: { input_tokens: 700, output_tokens: 160 }, ...overrides };
 }
 
@@ -64,9 +64,17 @@ test('preparation preserves lexical fallback, scope, and relevant user context w
 test('successful JEV ranking promotes candidates outside the old 12 while retaining corpus identities', async () => {
   const plan = prepare();
   assert.equal(plan.status, 'ready');
-  assert.ok(!ids(plan.candidates).includes('req-6-13-14'));
+  assert.equal(plan.candidates.length, 12);
+  assert.equal(plan.payload.state.records.length, 24);
   const pool = retrieveConversation(question, [], JEV_LIMITS.candidatePool);
-  const original = pool.find((candidate) => candidate.record.id === 'req-6-13-14');
+  // This checks transport/reranking, not a particular record's lexical rank.
+  // Semantic recall of person-access evidence is checked in jev-fixtures.test.mjs.
+  const baselineIds = new Set(ids(plan.candidates));
+  const original = pool.find((candidate) => !baselineIds.has(candidate.record.id)
+    && candidate.record.source !== 'na-formats');
+  assert.ok(original, 'the real 24-record pool must contain a candidate outside the selected 12');
+  const promotedId = original.record.id;
+  assert.ok(plan.payload.state.records.some((record) => record.id === promotedId));
   let calls = 0;
   const fetchImpl = async (url, options) => {
     calls++;
@@ -74,12 +82,14 @@ test('successful JEV ranking promotes candidates outside the old 12 while retain
     assert.equal(options.redirect, 'manual');
     assert.equal(options.headers.Authorization, `Bearer ${env.TYPESAFE_API_KEY}`);
     assert.deepEqual(JSON.parse(options.body), plan.payload);
-    return Response.json(response(plan));
+    return Response.json(response(plan, {}, promotedId));
   };
   const [result, duplicate] = await Promise.all([runRetrieval(plan, env, { fetchImpl }), runRetrieval(plan, env, { fetchImpl })]);
   assert.equal(calls, 1);
   assert.equal(duplicate, result);
   assert.equal(result.candidates.length, 12);
+  assert.equal(new Set(ids(result.candidates)).size, 12);
+  assert.ok(result.candidates.every((candidate) => pool.some((entry) => entry.record === candidate.record)));
   assert.deepEqual(result.retrieval, { method: 'jev', status: 'completed' });
   assert.equal(result.charged, 860);
   assert.equal(result.candidates[0].record, original.record);

@@ -68,13 +68,21 @@ function installFetch(t, setup, { bot, jev, luna } = {}) {
       return bot ? bot(payload) : Response.json({ success: true, action: 'noark-chat', hostname: 'rolfss.github.io' });
     }
     if (url === 'https://api.typesafe.ai/v1/systemone') {
-      setup.events.push({ provider: 'jev', payload });
+      const event = { provider: 'jev', payload };
+      setup.events.push(event);
       const ledger = await setup.storage.get('ledger');
       assert.ok(Object.values(ledger.requests).some((request) => request.pending && request.amount > 0), 'JEV dispatched before reservation');
       assert.equal(options.redirect, 'manual');
       if (jev) return jev(payload);
+      // A synthetic score tests whether selection crosses the lexical cutoff.
+      // Actual semantic recall remains covered by the unchanged evaluation fixtures.
+      const baselineIds = new Set(retrieveConversation(payload.state.retrievalQuery).map(({ record }) => record.id));
+      const promoted = payload.state.records.find((record) => !baselineIds.has(record.id)
+        && record.source.id !== 'na-formats');
+      assert.ok(promoted, 'the real JEV pool must include a candidate outside the lexical selection');
+      event.promotedId = promoted.id;
       return Response.json({ answers: Object.fromEntries(payload.state.records.map((record, i) => [`r${i}`, {
-        type: 'noul', noul: record.id === 'req-6-13-14' ? 0.99 : 0.1,
+        type: 'noul', noul: record.id === promoted.id ? 0.99 : 0.1,
       }])), usage: jevUsage });
     }
     if (url === 'https://api.openai.com/v1/responses') {
@@ -116,10 +124,18 @@ test('public chat authenticates, reserves, reranks 24 candidates, then sends onl
   assert.deepEqual(answer.retrieval, { method: 'jev', status: 'completed' });
   const jev = setup.events[1].payload, luna = setup.events[2].payload;
   assert.equal(jev.state.records.length, 24);
-  assert.ok(!retrieveConversation(question).some((entry) => entry.record.id === 'req-6-13-14'));
+  const promotedId = setup.events[1].promotedId;
+  assert.ok(promotedId);
+  assert.ok(!retrieveConversation(question).some((entry) => entry.record.id === promotedId));
+  const promoted = jev.state.records.find((record) => record.id === promotedId);
+  assert.ok(promoted);
   const selected = JSON.parse(luna.input[0].content).source_records;
   assert.equal(selected.length, 12);
-  assert.equal(selected[0].id, 'req-6-13-14');
+  assert.equal(new Set(selected.map((record) => record.id)).size, 12);
+  assert.ok(selected.every((record) => jev.state.records.some((candidate) => candidate.id === record.id)));
+  assert.equal(selected[0].id, promotedId);
+  assert.equal(selected[0].summary, promoted.summary);
+  assert.equal(selected[0].publisher, promoted.source.publisher);
   assert.deepEqual(luna.text.format.schema.properties.relevance.items.properties.recordId.enum, selected.map((record) => record.id));
   assert.ok(answer.results.every((entry) => /^https:\/\//.test(entry.url)));
   const ledger = await setup.storage.get('ledger');
@@ -190,7 +206,10 @@ test('only capacity failures trigger one consented Bonsai request and no Luna re
     assert.deepEqual(providers(setup), ['turnstile', 'jev', 'luna', 'bonsai']);
     const bonsai = setup.events[3].input;
     assert.equal(bonsai.recordIds.length, 12);
-    assert.equal(bonsai.recordIds[0], 'req-6-13-14');
+    assert.equal(new Set(bonsai.recordIds).size, 12);
+    assert.ok(setup.events[1].promotedId);
+    assert.equal(bonsai.recordIds[0], setup.events[1].promotedId);
+    assert.ok(bonsai.recordIds.every((id) => setup.events[1].payload.state.records.some((record) => record.id === id)));
     assert.equal(bonsai.protocolRevision, BONSAI_PROTOCOL_REVISION);
     assert.equal(bonsai.corpusVersion, BUILD_INFO.corpusVersion);
     assert.equal((await setup.storage.get('ledger')).trial, jevCharge + (status === 429 ? 0 : generationReserve));

@@ -28,11 +28,12 @@ for (const [q, expected] of fixtures) test(`guidance retrieval: ${q}`, () => {
 });
 
 test('new catalogue has section-level provenance and unique IDs', () => {
-  assert.equal(RECORDS.length, 182); assert.equal(SOURCES.length, 29); assert.equal(FORMAT_ROWS.length, 65);
+  assert.equal(RECORDS.length, 184); assert.equal(SOURCES.length, 29); assert.equal(FORMAT_ROWS.length, 65);
   assert.equal(new Set(RECORDS.map((r) => r.id)).size, RECORDS.length);
   for (const source of GUIDANCE_SOURCES) {
     assert.equal(new URL(source.url).protocol, 'https:');
-    assert.equal(source.verifiedAt, source.id === 'na-internal-control' ? '2026-10-24' : '2026-09-07');
+    const verifiedDates = { 'na-internal-control': '2026-10-24', 'na-appraisal': '2026-10-31', 'na-single-disposal': '2026-10-31' };
+    assert.equal(source.verifiedAt, verifiedDates[source.id] ?? '2026-09-07');
     assert.ok(source.scope); assert.ok(source.status);
   }
   for (const record of GUIDANCE_RECORDS) { assert.ok(record.section); assert.ok(sourceUrl(record).startsWith('https://')); }

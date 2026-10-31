@@ -192,7 +192,7 @@ export const RECORDS_2 = Object.freeze([
     requirement: "6.13–6.14",
     requirementType: "B",
     topic: "Søk og innsyn",
-    tags: ["partsinnsyn", "personopplysninger", "forvaltningsloven", "innsyn", "utskrift", "skjerming"],
+    tags: ["partsinnsyn", "personopplysninger", "forvaltningsloven", "innsyn", "utskrift", "skjerming", "personinnsyn", "opplysningene", "omtaler andre", "person ber om"],
     summary: "Løsninger med parts- eller personopplysninger skal kunne hente ut relevant dokumentasjon for lovbestemt innsyn.",
     detail: "Ved personinnsyn må opplysninger om andre parter skjermes når det er nødvendig.",
   }),
