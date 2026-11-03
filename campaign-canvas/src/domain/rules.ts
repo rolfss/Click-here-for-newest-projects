@@ -28,6 +28,7 @@ const commonDefaults = (): CommonNodeData => ({
 function defaultData(type: 'pc'): PlayerCharacterData;
 function defaultData(type: 'npc'): NPCData;
 function defaultData(type: 'faction'): FactionData;
+function defaultData(type: NodeType): PlayerCharacterData | NPCData | FactionData;
 function defaultData(type: NodeType): CommonNodeData {
   const common = commonDefaults();
   switch (type) {
@@ -75,7 +76,7 @@ export function changeNodeType(node: CampaignNode, next: NodeType): CampaignNode
     description: node.data.description, goals: node.data.goals,
     secrets: node.data.secrets, notes: node.data.notes, tags: [...node.data.tags],
   };
-  const data = defaultData(next) as Record<string, unknown>;
+  const data = defaultData(next) as unknown as Record<string, unknown>;
   for (const field of NODE_REGISTRY[next].fields) {
     if (field.key in carry) continue;
     if (Object.prototype.hasOwnProperty.call(previous, field.key)) {

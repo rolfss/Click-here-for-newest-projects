@@ -5,7 +5,7 @@ import {
 } from '@xyflow/react';
 import type { Connection, NodeChange, NodeTypes, EdgeTypes } from '@xyflow/react';
 import { Hand, MousePointer2 } from 'lucide-react';
-import { NODE_REGISTRY, relationColor } from '../domain/registry';
+import { relationColor } from '../domain/registry';
 import { useCanvasStore } from '../store/canvasStore';
 import { CampaignNodeView } from '../nodes/CampaignNodeView';
 import type { CampaignFlowNode } from '../nodes/CampaignNodeView';
