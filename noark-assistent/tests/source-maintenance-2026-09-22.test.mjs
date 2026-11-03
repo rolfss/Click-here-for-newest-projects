@@ -121,7 +121,8 @@ test('older paper material is not covered by an absolute digital-delivery statem
   assert.match(text, /1950 eller tidligere.{0,35}unntatt/);
   const evidence = modelEvidence(question, 'rules-digital-delivery');
   assert.match(evidence, /1950 eller tidligere/);
-  assert.match(evidence, /kan gjore unntak fra paragraf 19/);
+  assert.match(evidence, /kan gjore unntak fra aldersregelen i paragraf 19 forste ledd/);
+  assert.match(evidence, /unntaksadgangen omfatter ikke vernet i andre ledd/);
 });
 
 test('the section 28 extraction answer keeps its exception even without opening source details', () => {

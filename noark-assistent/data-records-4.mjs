@@ -31,10 +31,10 @@ export const RECORDS_4 = Object.freeze([
     section: "§§ 19–21: analoge originaler, digital avlevering og avtale",
     topic: "Regelverk 2026",
     tags: ["statlig", "avlevering", "digital", "papir", "papiravlevering", "unntak", "1950", "skanning", "arkivdepot"],
-    verifiedAt: "2026-09-22",
+    verifiedAt: "2026-11-03",
     scope: "Statlige virksomheters avlevering til Nasjonalarkivet",
     summary: "Statlige arkiver avleveres som hovedregel digitalt. Analoge originaler vernet av § 19, blant annet fra 1950 eller tidligere, er unntatt. Andre unntak kan gis etter søknad.",
-    detail: "Avleveringen avtales med Nasjonalarkivet. § 19 verner også originaler med særskilt historisk verdi som gjenstand og originalformat som annet regelverk krever bevart. Nasjonalarkivet kan gjøre unntak fra § 19; søknadsbaserte unntak fra digital avlevering etter § 20 krever særlige tilfeller.",
+    detail: "Avleveringen avtales med Nasjonalarkivet. § 19 verner også originaler med særskilt historisk verdi som gjenstand og originalformat som annet regelverk krever bevart. Nasjonalarkivet kan gjøre unntak fra aldersregelen i § 19 første ledd (1950 eller tidligere). Denne unntaksadgangen omfatter ikke vernet i andre ledd; søknadsbaserte unntak fra digital avlevering etter § 20 krever særlige tilfeller.",
   }),
   record({
     id: "noark-voluntary",
