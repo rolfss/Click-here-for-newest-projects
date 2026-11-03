@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import type { FieldDefinition } from '../domain/registry';
 
 interface FormFieldProps {
@@ -14,6 +14,11 @@ export function TagField({
 }): JSX.Element {
   const id = useId();
   const [draft, setDraft] = useState(value.join(', '));
+  const incoming = value.join(', ');
+  useEffect(() => {
+    const normalizedDraft = draft.split(',').map((tag) => tag.trim()).filter(Boolean).join(', ');
+    if (normalizedDraft !== incoming) setDraft(incoming);
+  }, [draft, incoming]);
   return (
     <label className="form-group" htmlFor={id}>
       <span className="form-label">{label}</span>

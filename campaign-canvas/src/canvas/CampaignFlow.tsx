@@ -18,6 +18,12 @@ const edgeTypes: EdgeTypes = { relationship: RelationshipEdge };
 
 function CampaignFlowInner(): JSX.Element {
   const container = useRef<HTMLDivElement>(null);
+  const nodePan = useRef<{
+    id: number;
+    startX: number;
+    startY: number;
+    viewport: { x: number; y: number; zoom: number };
+  } | null>(null);
   const canvas = useCanvasStore((s) => s.canvas);
   const selection = useCanvasStore((s) => s.selection);
   const mode = useCanvasStore((s) => s.mode);
@@ -94,6 +100,50 @@ function CampaignFlowInner(): JSX.Element {
     addNode(position);
   }, [hand, rf, addNode]);
 
+  const beginNodePan = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (!hand || event.button !== 0 || !(event.target instanceof Element) ||
+        !event.target.closest('.react-flow__node, .react-flow__edge, .react-flow__edgelabel-renderer')) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    nodePan.current = {
+      id: event.pointerId, startX: event.clientX, startY: event.clientY,
+      viewport: rf.getViewport(),
+    };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  }, [hand, rf]);
+
+  const moveNodePan = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    const drag = nodePan.current;
+    if (!drag || drag.id !== event.pointerId) return;
+    event.preventDefault();
+    event.stopPropagation();
+    void rf.setViewport({
+      x: drag.viewport.x + event.clientX - drag.startX,
+      y: drag.viewport.y + event.clientY - drag.startY,
+      zoom: drag.viewport.zoom,
+    }, { duration: 0 });
+  }, [rf]);
+
+  const endNodePan = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    const drag = nodePan.current;
+    if (!drag || drag.id !== event.pointerId) return;
+    event.preventDefault();
+    event.stopPropagation();
+    nodePan.current = null;
+    const viewport = {
+      x: drag.viewport.x + event.clientX - drag.startX,
+      y: drag.viewport.y + event.clientY - drag.startY,
+      zoom: drag.viewport.zoom,
+    };
+    void rf.setViewport(viewport, { duration: 0 });
+    setViewport(viewport);
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }, [rf, setViewport]);
+
   useEffect(() => {
     const element = container.current;
     if (!element) return;
@@ -117,7 +167,12 @@ function CampaignFlowInner(): JSX.Element {
 
   return (
     <div ref={container} className={'flow-stage ' + (hand ? 'is-hand-mode' : 'is-select-mode')}
-      onDoubleClick={onPaneDoubleClick} aria-label="Campaign relationship canvas">
+      onDoubleClick={onPaneDoubleClick}
+      onPointerDownCapture={beginNodePan}
+      onPointerMove={moveNodePan}
+      onPointerUp={endNodePan}
+      onPointerCancel={endNodePan}
+      aria-label="Campaign relationship canvas">
       <ReactFlow<CampaignFlowNode, CampaignFlowEdge>
         nodes={nodes}
         edges={edges}

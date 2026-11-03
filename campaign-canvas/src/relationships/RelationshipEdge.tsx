@@ -41,7 +41,11 @@ function RelationshipEdgeInner({
             transform: 'translate(-50%, -50%) translate(' + labelX + 'px,' + labelY + 'px)',
             pointerEvents: 'all',
           }}
-          onClick={() => useCanvasStore.getState().setSelection({ kind: 'relationship', id })}
+          onClick={() => {
+            const state = useCanvasStore.getState();
+            if (state.mode === 'hand' || state.spaceHeld) return;
+            state.setSelection({ kind: 'relationship', id });
+          }}
           aria-label={'Select ' + label + ' relationship'}
           title={label}
         >{label}</button>

@@ -92,7 +92,7 @@ export function changeNodeType(node: CampaignNode, next: NodeType): CampaignNode
 }
 export function updateNodeField(node: CampaignNode, key: string, value: string | number | string[]): CampaignNode {
   if (!NODE_REGISTRY[node.type].fields.some((field) => field.key === key)) return node;
-  const normalized = key === 'level' ? Math.min(20, Math.max(1, Number(value) || 1)) : value;
+  const normalized = key === 'level' ? Math.min(20, Math.max(1, Math.round(Number(value) || 1))) : value;
   return { ...node, data: { ...node.data, [key]: normalized } } as CampaignNode;
 }
 export function deleteNodeCascade(canvas: CampaignCanvas, nodeId: string): CampaignCanvas {

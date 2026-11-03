@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   addHistoryEntry, changeNodeType, clampStrength, createEmptyCanvas, createNode,
   createRelationship, deleteHistoryEntry, deleteNodeCascade, editHistoryEntry,
-  fieldsLostOnTypeChange, findRelationshipDuplicate, manuallySetStrength,
+  fieldsLostOnTypeChange, findRelationshipDuplicate, manuallySetStrength, updateNodeField,
 } from './rules';
 import type { CampaignCanvas, Relationship } from './types';
 import { calculateEdgeOffsets } from '../relationships/geometry';
@@ -34,6 +34,12 @@ describe('campaign nodes', () => {
     expect(pc.data).toHaveProperty('level', 1);
     expect(faction.data).toHaveProperty('headquarters', '');
     expect(faction.data.status).toBe('Unknown');
+  });
+  it('rounds and bounds character levels so saved data remains valid', () => {
+    const pc = createNode({ x: 0, y: 0 }, 'pc');
+    const updated = updateNodeField(pc, 'level', 19.7);
+    expect(updated.data).toHaveProperty('level', 20);
+    expect(updateNodeField(pc, 'level', -15).data).toHaveProperty('level', 1);
   });
   it('keeps shared values and discards incompatible ones on type changes', () => {
     const node = createNode({ x: 1, y: 2 }, 'npc', 'a');
