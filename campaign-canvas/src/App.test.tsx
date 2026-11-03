@@ -12,7 +12,6 @@ type StubFlowProps = {
   nodes: StubNode[];
   edges: StubEdge[];
   panOnDrag: boolean;
-  onPaneDoubleClick?: (e: ReactMouseEvent<Element, MouseEvent>) => void;
   onPaneClick?: () => void;
   onNodeClick?: (e: ReactMouseEvent<Element, MouseEvent>, node: StubNode) => void;
   onEdgeClick?: (e: ReactMouseEvent<Element, MouseEvent>, edge: StubEdge) => void;
@@ -23,8 +22,8 @@ type StubFlowProps = {
 vi.mock('@xyflow/react', () => ({
   ReactFlowProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
   ReactFlow: (props: StubFlowProps) => (
-    <section data-testid="flow" data-pan={String(props.panOnDrag)}
-      onDoubleClick={props.onPaneDoubleClick} aria-label="Mock relationship map">
+    <section className="react-flow__pane" data-testid="flow" data-pan={String(props.panOnDrag)}
+      aria-label="Mock relationship map">
       <button onClick={props.onPaneClick}>Empty canvas</button>
       {props.nodes.map((node) => (
         <button type="button" key={node.id}

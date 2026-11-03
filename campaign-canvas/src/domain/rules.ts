@@ -29,7 +29,7 @@ function defaultData(type: 'pc'): PlayerCharacterData;
 function defaultData(type: 'npc'): NPCData;
 function defaultData(type: 'faction'): FactionData;
 function defaultData(type: NodeType): PlayerCharacterData | NPCData | FactionData;
-function defaultData(type: NodeType): CommonNodeData {
+function defaultData(type: NodeType): PlayerCharacterData | NPCData | FactionData {
   const common = commonDefaults();
   switch (type) {
     case 'pc': return { ...common, playerName: '', className: '', level: 1, species: '', alignment: 'Unaligned' };

@@ -87,8 +87,9 @@ function CampaignFlowInner(): JSX.Element {
     connect(connection.source, connection.target);
   }, [hand, connect]);
 
-  const onPaneDoubleClick = useCallback((event: React.MouseEvent<Element, MouseEvent>) => {
-    if (hand) return;
+  const onPaneDoubleClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    if (hand || !(event.target instanceof Element) ||
+      !event.target.classList.contains('react-flow__pane')) return;
     const position = rf.screenToFlowPosition({ x: event.clientX, y: event.clientY });
     addNode(position);
   }, [hand, rf, addNode]);
@@ -116,7 +117,7 @@ function CampaignFlowInner(): JSX.Element {
 
   return (
     <div ref={container} className={'flow-stage ' + (hand ? 'is-hand-mode' : 'is-select-mode')}
-      aria-label="Campaign relationship canvas">
+      onDoubleClick={onPaneDoubleClick} aria-label="Campaign relationship canvas">
       <ReactFlow<CampaignFlowNode, CampaignFlowEdge>
         nodes={nodes}
         edges={edges}
@@ -128,7 +129,6 @@ function CampaignFlowInner(): JSX.Element {
         onNodeClick={(_, node) => { if (!hand) setSelection({ kind: 'node', id: node.id }); }}
         onEdgeClick={(_, edge) => { if (!hand) setSelection({ kind: 'relationship', id: edge.id }); }}
         onPaneClick={() => setSelection(null)}
-        onPaneDoubleClick={onPaneDoubleClick}
         onMoveEnd={(_, viewport) => setViewport(viewport)}
         defaultViewport={canvas.viewport}
         nodesDraggable={!hand}
