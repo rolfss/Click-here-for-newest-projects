@@ -18,6 +18,7 @@ on:
       - "fjordsprint/**"
       - "noark-assistent/**"
       - "arkivmuseet/**"
+      - "campaign-canvas/**"
       - ".github/workflows/deploy-pages.yml"
   schedule:
     - cron: '23 */6 * * *'
@@ -91,6 +92,14 @@ jobs:
           pnpm test
           pnpm build
 
+      - name: Valider og bygg Campaign Canvas
+        working-directory: ./campaign-canvas
+        run: |
+          npm install --no-audit --no-fund
+          npm run typecheck
+          npm test
+          npm run build
+
       - name: Test Fagstrøm
         run: python3 scripts/test-news.py
 
@@ -110,6 +119,7 @@ jobs:
           cp -R noark-assistent _site/noark-assistent
           cp -R arkivmuseet/dist _site/arkivmuseet
           cp -R fjordsprint/dist _site/fjordsprint
+          cp -R campaign-canvas/dist _site/campaign-canvas
           rm -rf _site/archive-assist/tests _site/archive-assist/package.json _site/archive-assist/README.md _site/archive-assist/ARKITEKTUR.md _site/archive-assist/PROSJEKTGRUNNLAG.md _site/archive-assist/SECURITY.md _site/archive-assist/LICENSE
           rm -rf _site/metaready/tests _site/metaready/package.json _site/metaready/README.md
           rm -rf _site/lumen-relay/tests _site/lumen-relay/package.json _site/lumen-relay/README.md _site/lumen-relay/DESIGN.md _site/lumen-relay/LICENSE
@@ -117,6 +127,11 @@ jobs:
           rm -rf _site/vedtak/tests _site/vedtak/package.json _site/vedtak/README.md _site/vedtak/assets/ART-PROMPTS.txt
           rm -rf _site/noark-assistent/tests _site/noark-assistent/package.json _site/noark-assistent/README.md
           touch _site/.nojekyll
+
+      - name: Kontroller at Campaign Canvas er publiserbar
+        run: |
+          test -s _site/campaign-canvas/index.html
+          grep -q './campaign-canvas/' _site/index.html
 
       - name: Kontroller at Fjordsprint er publiserbart
         run: |
