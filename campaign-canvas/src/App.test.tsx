@@ -1,6 +1,6 @@
 import type { MouseEvent as ReactMouseEvent, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { App } from './App';
 import { createEmptyCanvas } from './domain/rules';
 import { repository } from './storage/repository';
@@ -72,6 +72,8 @@ beforeEach(() => {
     selection: null, mode: 'select', spaceHeld: false, focusNameId: null, notice: null,
   });
   vi.mocked(repository.load).mockResolvedValue({ canvas: createEmptyCanvas(), warning: null });
+  vi.mocked(repository.save).mockResolvedValue(undefined);
+  vi.mocked(repository.reset).mockResolvedValue(undefined);
 });
 afterEach(() => cleanup());
 
@@ -107,7 +109,7 @@ describe('campaign canvas interactions', () => {
   });
   it('selecting a node opens the left editor', async () => {
     await openApp();
-    useCanvasStore.getState().addNode({ x: 20, y: 30 });
+    act(() => useCanvasStore.getState().addNode({ x: 20, y: 30 }));
     fireEvent.click(screen.getByRole('button', { name: 'Unnamed' }));
     expect(screen.getByLabelText('Node editor')).toBeInTheDocument();
     expect(screen.getByLabelText('Relationship editor closed')).toBeInTheDocument();
@@ -115,8 +117,10 @@ describe('campaign canvas interactions', () => {
   it('connecting and selecting an edge opens the right editor', async () => {
     await openApp();
     const store = useCanvasStore.getState();
-    store.addNode({ x: 0, y: 0 });
-    store.addNode({ x: 200, y: 200 });
+    act(() => {
+      store.addNode({ x: 0, y: 0 });
+      store.addNode({ x: 200, y: 200 });
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Connect nodes' }));
     expect(screen.getByLabelText('Relationship editor')).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Relationship type' })).toHaveValue('Neutral');
@@ -126,7 +130,7 @@ describe('campaign canvas interactions', () => {
   });
   it('Escape clears selection; shortcuts do not run while typing', async () => {
     await openApp();
-    useCanvasStore.getState().addNode({ x: 0, y: 0 });
+    act(() => useCanvasStore.getState().addNode({ x: 0, y: 0 }));
     const name = screen.getByRole('textbox', { name: 'Name' });
     name.focus();
     fireEvent.keyDown(name, { key: 'h' });
@@ -140,12 +144,15 @@ describe('campaign canvas interactions', () => {
   it('warns before deleting nodes with relationships', async () => {
     await openApp();
     const store = useCanvasStore.getState();
-    store.addNode({ x: 0, y: 0 });
-    const a = useCanvasStore.getState().canvas.nodes[0]!.id;
-    store.addNode({ x: 200, y: 0 });
-    const b = useCanvasStore.getState().canvas.nodes[1]!.id;
-    store.connect(a, b);
-    useCanvasStore.getState().setSelection({ kind: 'node', id: a });
+    act(() => {
+      store.addNode({ x: 0, y: 0 });
+      store.addNode({ x: 200, y: 0 });
+    });
+    const [a, b] = useCanvasStore.getState().canvas.nodes.map((node) => node.id);
+    act(() => {
+      store.connect(a!, b!);
+      store.setSelection({ kind: 'node', id: a! });
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Delete node' }));
     expect(screen.getByRole('dialog')).toHaveTextContent('1 connected relationship');
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
