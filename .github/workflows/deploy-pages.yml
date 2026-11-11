@@ -128,6 +128,24 @@ jobs:
           rm -rf _site/noark-assistent/tests _site/noark-assistent/package.json _site/noark-assistent/README.md
           touch _site/.nojekyll
 
+      - name: Koble Fjordsprint til konferansens poengtjeneste
+        env:
+          CONFERENCE_API_URL: ${{ vars.FJORDSPRINT_CONFERENCE_API_URL }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { writeFileSync } from 'node:fs';
+
+          const configuredUrl = (process.env.CONFERENCE_API_URL || '').trim();
+          if (configuredUrl) {
+            const apiUrl = URL.parse(configuredUrl);
+            if (!apiUrl || apiUrl.protocol !== 'https:' || apiUrl.username || apiUrl.password || apiUrl.search || apiUrl.hash) {
+              throw new Error('FJORDSPRINT_CONFERENCE_API_URL må være en HTTPS-adresse uten innlogging, parametere eller anker.');
+            }
+            const source = `export const CONFERENCE_API_URL = ${JSON.stringify(apiUrl.href)};\n`;
+            writeFileSync('_site/fjordsprint/conference-config.js', source);
+          }
+          NODE
+
       - name: Kontroller at Campaign Canvas er publiserbar
         run: |
           test -s _site/campaign-canvas/index.html
@@ -138,6 +156,15 @@ jobs:
           test -s _site/fjordsprint/index.html
           test -s _site/fjordsprint/leaderboard.js
           test -s _site/fjordsprint/vendor/three.module.js
+          test -s _site/fjordsprint/conference-config.js
+          test -s _site/fjordsprint/conference-race.js
+          test -s _site/fjordsprint/conference-race.css
+          test -s _site/fjordsprint/conference-leaderboard.html
+          test -s _site/fjordsprint/conference-manager.html
+          test -s _site/fjordsprint/conference-display.js
+          test -s _site/fjordsprint/conference-manager.js
+          test -s _site/fjordsprint/conference-standings.js
+          test -s _site/fjordsprint/conference.css
           grep -q './fjordsprint/' _site/index.html
 
       - name: Kontroller sidelenker og ressursstier etter bygging

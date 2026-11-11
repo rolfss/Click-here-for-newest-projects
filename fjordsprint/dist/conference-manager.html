@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102a36">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src https: http://localhost:* http://127.0.0.1:*; base-uri 'none'; form-action 'none'">
+  <title>FJORDSPRINT · Arrangør</title>
+  <link rel="stylesheet" href="conference.css">
+</head>
+<body class="conference-manager">
+  <main class="conference-panel">
+    <header class="conference-header">
+      <h1>FJORD<span>SPRINT</span></h1>
+      <p>Arrangør · Finn vinneren</p>
+    </header>
+    <form id="manager-unlock" class="manager-card" autocomplete="off">
+      <label for="manager-token">Arrangørnøkkel</label>
+      <div class="manager-actions">
+        <input type="password" id="manager-token" autocomplete="off" required disabled>
+        <button type="submit" id="manager-open" disabled>Åpne arrangørvisningen</button>
+      </div>
+    </form>
+    <section id="manager-board" hidden aria-label="Vinneroppslag">
+      <form id="manager-search" class="manager-card">
+        <label for="manager-day">Konkurransedag</label>
+        <div class="manager-actions">
+          <input type="date" id="manager-day" required aria-describedby="manager-day-note">
+          <button type="submit" id="manager-find">Vis resultat</button>
+          <button type="button" id="manager-today" class="manager-secondary">Vis i dag</button>
+          <button type="button" id="manager-lock" class="manager-secondary">Lås visningen</button>
+        </div>
+        <p id="manager-day-note" class="conference-note">Konkurransedagen starter kl. 08.00 (Oslo-tid).</p>
+      </form>
+      <section id="manager-result" class="manager-card" aria-labelledby="manager-result-title" hidden>
+        <h2 id="manager-result-title"></h2>
+        <p id="manager-empty" hidden>Ingen fullførte løp denne dagen.</p>
+        <dl id="manager-winner" class="manager-result" hidden>
+          <div><dt>Kallenavn</dt><dd id="winner-nickname"></dd></div>
+          <div><dt>Poeng</dt><dd id="winner-score"></dd></div>
+          <div><dt>Tid</dt><dd id="winner-time"></dd></div>
+          <div>
+            <dt>M365-brukernavn</dt>
+            <dd><code id="winner-username"></code></dd>
+          </div>
+        </dl>
+        <div id="manager-lookup" hidden>
+          <p class="conference-note">Søk etter brukernavnet nøyaktig slik det er oppgitt. Premiekontakt krever et eksakt treff i jobbkatalogen.</p>
+          <button type="button" id="manager-copy" class="manager-secondary">Kopier brukernavn</button>
+        </div>
+      </section>
+    </section>
+    <p class="conference-status" id="manager-status" role="status"></p>
+  </main>
+  <script type="module" src="conference-manager.js"></script>
+</body>
+</html>
