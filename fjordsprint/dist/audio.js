@@ -25,6 +25,7 @@ export class RaceAudio {
     this._active = false;
     this._lastCue = new Map();
     this._beat = 60 / 98;
+    this._cueTranspose = 0;
   }
 
   async start() {
@@ -51,7 +52,7 @@ export class RaceAudio {
       this._suspended = false;
       this._nextNote = this.ctx.currentTime + 0.055;
       this._target(this.master.gain, this.volume, 0.06);
-      this._target(this.musicBus.gain, this.musicEnabled ? 0.8 : 0, 0.15);
+      this._target(this.musicBus.gain, this._musicLevel(), 0.15);
       if (!this._timer) this._timer = setInterval(() => this._schedule(), 40);
       this._schedule();
       return true;
@@ -74,7 +75,7 @@ export class RaceAudio {
     this.master.connect(limiter).connect(c.destination);
 
     this.musicBus = c.createGain();
-    this.musicBus.gain.value = this.musicEnabled ? 0.8 : 0;
+    this.musicBus.gain.value = this._musicLevel();
     this.musicFilter = c.createBiquadFilter();
     this.musicFilter.type = 'lowpass';
     this.musicFilter.frequency.value = 2400;
@@ -89,6 +90,7 @@ export class RaceAudio {
     this.echoIn.gain.value = 0.24;
     const delayL = c.createDelay(1);
     const delayR = c.createDelay(1);
+    this._echoDelays = [delayL, delayR];
     delayL.delayTime.value = this._beat * 0.75;
     delayR.delayTime.value = this._beat * 1.25;
     const returnL = c.createGain();
@@ -174,10 +176,20 @@ export class RaceAudio {
   }
 
   setMusic(enabled) {
+    const wasEnabled = this.musicEnabled;
     this.musicEnabled = !!enabled;
     if (!this.ctx) return;
-    this._target(this.musicBus.gain, this.musicEnabled ? 0.8 : 0, 0.15);
-    if (this.musicEnabled) this._nextNote = this.ctx.currentTime + 0.055;
+    this._target(this.musicBus.gain, this._musicLevel(), 0.06);
+    if (this.musicEnabled && !wasEnabled) this._nextNote = this.ctx.currentTime + 0.055;
+    if (!this.musicEnabled && wasEnabled) this._fadeMusicVoices();
+  }
+
+  _musicLevel() {
+    return this.musicEnabled ? 0.8 : 0;
+  }
+
+  _musicCutoff(speed, active) {
+    return 2100 + (active ? Math.min(speed / 300, 1) * 1300 : 0);
   }
 
   update({ speed = 0, throttle = 0, boost = 0, drift = 0, active = false } = {}, dt = 1 / 60) {
@@ -206,7 +218,7 @@ export class RaceAudio {
     this._target(this.boost.filter.frequency, 1400 + v * 2.1, 0.18);
     this._target(this.skid.gain.gain, on * this._drift * Math.min(v / 90, 1) * 0.037, 0.055);
     this._target(this.skid.filter.frequency, 800 + v * 2, 0.12);
-    this._target(this.musicFilter.frequency, 2100 + (active ? Math.min(v / 300, 1) * 1300 : 0), 0.7);
+    this._target(this.musicFilter.frequency, this._musicCutoff(v, active), 0.38);
   }
 
   _schedule() {
@@ -273,17 +285,31 @@ export class RaceAudio {
     const attack = options.attack ?? 0.007;
     const release = options.release ?? 0.1;
     const length = Math.max(sustain, attack + 0.01);
+    const decay = Math.min(options.decay ?? 0, length - attack);
+    const heldLevel = decay > 0 ? Math.max(0.0001, level * (options.sustainLevel ?? 1)) : level;
     const oscillator = c.createOscillator();
     oscillator.type = type;
     oscillator.frequency.setValueAtTime(440 * Math.pow(2, (midi - 69) / 12), at);
     oscillator.detune.value = options.detune || 0;
     const envelope = c.createGain();
+    envelope.gain.value = 0;
     envelope.gain.setValueAtTime(0, at);
     envelope.gain.linearRampToValueAtTime(level, at + attack);
-    envelope.gain.setValueAtTime(level, at + length);
+    if (decay > 0) envelope.gain.exponentialRampToValueAtTime(heldLevel, at + attack + decay);
+    envelope.gain.setValueAtTime(heldLevel, at + length);
     envelope.gain.exponentialRampToValueAtTime(0.0001, at + length + release);
     const nodes = [oscillator, envelope];
-    oscillator.connect(envelope);
+    if (options.filter) {
+      const { frequency, endFrequency, Q = 0.65 } = typeof options.filter === 'number'
+        ? { frequency: options.filter } : options.filter;
+      const filter = c.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.Q.value = Q;
+      filter.frequency.setValueAtTime(frequency, at);
+      if (endFrequency) filter.frequency.exponentialRampToValueAtTime(endFrequency, at + length);
+      oscillator.connect(filter).connect(envelope);
+      nodes.push(filter);
+    } else oscillator.connect(envelope);
     if (options.pan && c.createStereoPanner) {
       const panner = c.createStereoPanner();
       panner.pan.value = options.pan;
@@ -291,7 +317,7 @@ export class RaceAudio {
       nodes.push(panner);
     } else envelope.connect(destination);
     if (options.echo) envelope.connect(this.echoIn);
-    this._trackVoice(oscillator, nodes);
+    this._trackVoice(oscillator, nodes, destination === this.musicBus ? envelope.gain : null);
     oscillator.start(at);
     oscillator.stop(at + length + release + 0.025);
     return oscillator;
@@ -305,31 +331,45 @@ export class RaceAudio {
     const filter = c.createBiquadFilter();
     filter.type = filterType; filter.frequency.value = frequency; filter.Q.value = 0.65;
     const gain = c.createGain();
+    gain.gain.value = 0;
     gain.gain.setValueAtTime(0, at);
     gain.gain.linearRampToValueAtTime(level, at + 0.003);
     gain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
     source.connect(filter).connect(gain).connect(destination);
-    this._trackVoice(source, [source, filter, gain]);
+    this._trackVoice(source, [source, filter, gain], destination === this.musicBus ? gain.gain : null);
     source.start(at, Math.random() * 1.5);
     source.stop(at + duration + 0.02);
   }
 
-  _kick(time) {
+  _kick(time, level = 0.16, endFrequency = 44) {
     time = Math.max(this.ctx.currentTime, time);
-    const oscillator = this._tone(45, time, 0.04, 0.16, 'sine', this.musicBus, { attack: 0.002, release: 0.19 });
+    const oscillator = this._tone(45, time, 0.04, level, 'sine', this.musicBus, { attack: 0.002, release: 0.19 });
     if (oscillator) {
       oscillator.frequency.setValueAtTime(125, time);
-      oscillator.frequency.exponentialRampToValueAtTime(44, time + 0.13);
+      oscillator.frequency.exponentialRampToValueAtTime(endFrequency, time + 0.13);
     }
   }
 
-  _trackVoice(source, nodes) {
-    const voice = { source, nodes };
+  _trackVoice(source, nodes, musicGain) {
+    const voice = { source, nodes, musicGain, fading: false };
     this._voices.add(voice);
     source.onended = () => {
       nodes.forEach(node => { try { node.disconnect(); } catch (_) {} });
       this._voices.delete(voice);
     };
+  }
+
+  _fadeMusicVoices() {
+    const time = this.ctx.currentTime;
+    for (const voice of this._voices) {
+      if (!voice.musicGain || voice.fading) continue;
+      voice.fading = true;
+      const gain = voice.musicGain;
+      if (gain.cancelAndHoldAtTime) gain.cancelAndHoldAtTime(time);
+      else gain.cancelScheduledValues(time);
+      gain.setTargetAtTime(0, time, 0.009);
+      try { voice.source.stop(time + 0.05); } catch (_) {}
+    }
   }
 
   cue(name) {
@@ -340,7 +380,7 @@ export class RaceAudio {
     if (at - (this._lastCue.get(name) ?? -100) < cooldown) return;
     this._lastCue.set(name, at);
     const note = (midi, offset = 0, duration = 0.09, gain = 0.11, type = 'sine') =>
-      this._tone(midi, at + offset, duration, gain, type, this.fxBus, { release: 0.14 });
+      this._tone(midi + this._cueTranspose, at + offset, duration, gain, type, this.fxBus, { release: 0.14 });
     switch (name) {
       case 'countdown': note(74, 0, 0.065, 0.10); break;
       case 'go': [74, 81, 86].forEach((n, i) => note(n, i * 0.045, 0.19, 0.095)); break;
