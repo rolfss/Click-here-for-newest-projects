@@ -23,12 +23,12 @@ export const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 export function careerIndex(juice){let i=0;for(let n=1;n<CAREERS.length;n++)if(juice>=CAREERS[n].juice)i=n;return i;}
 export function rocketHeight(juice){const i=careerIndex(juice),a=CAREERS[i],b=CAREERS[i+1];return b?a.height+(b.height-a.height)*clamp((juice-a.juice)/(b.juice-a.juice),0,1):a.height+Math.min(juice-120,40)*6;}
 export function createChallenge(track,index=0){
-  // Keep trolls clear of quiz gates and ramp landings. Exactly twelve per stage.
-  const available=[];
-  for(let q=.055;q<.965;q+=.026){if(track.config.quiz.every(p=>Math.abs(p-q)>.042)&&track.config.jumps.every(p=>q<p-.026||q>p+.07))available.push(q);}
-  const spots=Array.from({length:12},(_,i)=>available[Math.round(i*(available.length-1)/11)]);
+  // Alternate shoulders while leaving room to steer around each troll.
+  const lanes=[-5,5,-7,6,-3,7,4,-6,3,-7,6,-4];
+  const spots=track.config.trolls??[];
   return {time:0,pressure:100,cooldown:0,shots:[],effects:[],nextShot:0,juice:0,correct:0,attempted:0,cleared:0,hits:0,fired:0,bumps:0,combo:0,bestCombo:0,
-    trolls:spots.map((q,i)=>({id:i,s:q*track.length,targetX:[0,-5,5,1.5,-3.5,4][(i+index)%6],x:(i%2?1:-1)*(track.config.width/2+5),side:i%2?1:-1,age:0,hp:2,phase:'sleep',flash:0,excuse:EXCUSES[(i+index*5)%EXCUSES.length]}))};
+    trolls:spots.map((q,i)=>{const targetX=lanes[(i+index*3)%lanes.length],side=Math.sign(targetX);
+      return {id:i,s:q*track.length,targetX,x:side*(track.config.width/2+5),side,age:0,hp:2,phase:'sleep',flash:0,excuse:EXCUSES[(i+index*5)%EXCUSES.length]};})};
 }
 export function awardAnswer(game,correct){game.attempted++;if(correct){game.correct++;game.juice+=18;}}
 export function aimTarget(game,car){return game.trolls.filter(t=>['entering','active'].includes(t.phase)&&t.s>car.s+3&&t.s-car.s<150).sort((a,b)=>a.s-b.s).find(t=>Math.abs(Math.atan2(t.x-car.x,t.s-car.s)-car.heading)<.16)||null;}

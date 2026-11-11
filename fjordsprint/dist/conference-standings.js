@@ -44,8 +44,10 @@ export function isConferenceScore(row) {
     Number.isSafeInteger(row.timeMs) && row.timeMs > 0;
 }
 
-export async function fetchConferenceStandings(apiUrl, {signal} = {}) {
-  const response = await fetch(conferenceApiEndpoint(apiUrl, 'conference/scores'), {
+export async function fetchConferenceStandings(apiUrl, {signal, board} = {}) {
+  const endpoint = conferenceApiEndpoint(apiUrl, 'conference/scores');
+  if (board) endpoint.searchParams.set('board', board);
+  const response = await fetch(endpoint, {
     signal,
     cache: 'no-store',
     credentials: 'omit',

@@ -1,12 +1,15 @@
 import {CONFERENCE_API_URL} from './conference-config.js';
+import {RUN_BOARD} from './run-scoring.js';
 import {
   fetchConferenceStandings,
   formatConferenceDay,
   renderConferenceStandings
-} from './conference-standings.js';
+} from './conference-standings.js?v=3.3.0';
 
 const rows = document.querySelector('#standings');
 const status = document.querySelector('#board-status');
+const legacy = new URLSearchParams(location.search).get('board') === 'legacy';
+if (legacy) document.querySelector('#conference-board-route').textContent = 'Fjordlinjen · tidligere énetappes løp';
 let currentBoard;
 let requestInProgress = false;
 let resetTimer;
@@ -39,7 +42,8 @@ async function refreshStandings() {
   const timeout = setTimeout(() => controller.abort(), 8000);
   try {
     const standings = await fetchConferenceStandings(CONFERENCE_API_URL, {
-      signal: controller.signal
+      signal: controller.signal,
+      board: legacy ? undefined : RUN_BOARD
     });
     if (standings.resetsAt <= Date.now()) throw new Error('Dagen er avsluttet.');
     if (standings.day !== currentBoard?.day ||

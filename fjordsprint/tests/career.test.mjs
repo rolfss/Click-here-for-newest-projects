@@ -4,6 +4,7 @@ import {Track,courses} from '../dist/tracks.js';
 import {initialState,stepCar,steeringLock,createDemoDriver,recoverCar} from '../dist/rally-physics.js';
 import {SCORE_TTL,SCORE_KEY,ScoreStore,cleanName,validateScore,rankScores,CAREERS,EXCUSES,careerIndex,rocketHeight,rocketPose,createChallenge,stepChallenge,awardAnswer,scoreRun} from '../dist/rally-rules.js';
 import {QUESTIONS,SOURCES,THEMES,createQuestionDeck,nextQuestion} from '../dist/rally-questions.js';
+import {createEncounters} from '../dist/encounters.js';
 const board='fjord-archive3-assist';
 const row=(id='run-00001',name='Åse',score=8000,timeMs=90000)=>({id,name,board,score,timeMs,juice:72,rank:3,correct:3,cleared:3,accuracy:75});
 function fixture(){let now=1_000_000;const data=new Map(),storage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v)};return{data,storage,store:new ScoreStore(storage,()=>now),clock:()=>now,advance:n=>now+=n};}
@@ -16,7 +17,17 @@ test('Malformed records, impossible ranks, future timestamps and extended expiry
 test('Storage denial and quota failure preserve an honest in-memory session',()=>{for(const storage of [null,{getItem:()=>null,setItem:()=>{throw Error('quota');}}]){const s=new ScoreStore(storage,()=>1000);s.add(row());assert.equal(s.all().length,1);assert.equal(s.persistent,false);}});
 test('Six exact career steps with monotonically increasing flight height',()=>{assert.deepEqual(CAREERS.map(c=>c.name),['Rådgiver','Seniorrådgiver','TU/TA','Produkteier','Produktområdeleder','Toppleder']);for(let i=0;i<6;i++){assert.equal(careerIndex(CAREERS[i].juice),i);assert.equal(rocketHeight(CAREERS[i].juice),CAREERS[i].height);}for(let j=1;j<220;j++)assert.ok(rocketHeight(j)>=rocketHeight(j-1));});
 test('Rocket pose is read-only, launches upward and stops at earned height',()=>{const car={...initialState(),finished:true,time:87,s:flat.length,speed:60},snapshot=JSON.stringify(car);let height=0;for(let t=0;t<14;t+=.05){const pose=rocketPose(car,t,flat,120);assert.ok(pose.air>=height);assert.equal(pose.time,87);assert.ok(pose.flightPitch>=0);height=pose.air;}assert.equal(height,1400);assert.equal(JSON.stringify(car),snapshot);assert.equal(rocketPose(car,13,flat,0).air,80);});
-test('Every stage has twelve unique labeled trolls outside question and landing zones',()=>{assert.equal(courses.length,3);for(let i=0;i<3;i++){const t=new Track(courses[i]),g=createChallenge(t,i);assert.equal(g.trolls.length,12);assert.equal(new Set(g.trolls.map(x=>x.s)).size,12);for(const troll of g.trolls){assert.ok(EXCUSES.includes(troll.excuse));assert.ok(courses[i].quiz.every(q=>Math.abs(troll.s/t.length-q)>.04));}}});
+test('All three stages leave road between trolls, quiz gates, bird rings, boost fields and ramps',()=>{
+  assert.equal(courses.length,3);
+  for(const [index,course] of courses.entries()){
+    const track=new Track(course),game=createChallenge(track,index),encounters=createEncounters(track);
+    assert.equal(game.trolls.length,12);
+    assert.ok(game.trolls.every(troll=>EXCUSES.includes(troll.excuse)));
+    const features=[...track.checkpoints,...track.pads,...track.jumps,...encounters.map(bird=>bird.s),...game.trolls.map(troll=>troll.s)].sort((a,b)=>a-b);
+    for(let i=1;i<features.length;i++)assert.ok(features[i]-features[i-1]>=100,`${course.name}: features at ${features[i-1].toFixed(0)} and ${features[i].toFixed(0)} m`);
+    assert.ok(encounters.every(bird=>Math.abs(track.curvature(bird.s))<.003),`${course.name}: place bird rings on a readable stretch`);
+  }
+});
 test('Water consumes pressure, refills and two hits clear a troll only once',()=>{const g=createChallenge(flat,0),car={...initialState(),s:100,speed:0,roadWidth:23};g.trolls=[{id:0,s:135,x:0,targetX:0,hp:2,phase:'active',age:2,flash:0}];for(let i=0;i<150;i++)stepChallenge(g,car,car,{fire:i<60},1/120,{assist:true});assert.equal(g.cleared,1);assert.equal(g.hits,2);const juice=g.juice;for(let i=0;i<500;i++)stepChallenge(g,car,car,{},1/120,{});assert.equal(g.juice,juice);assert.equal(g.pressure,100);});
 test('A troll collision slows the car once; driving past earns no juice',()=>{const g=createChallenge(flat,0),car={...initialState(),s:130,speed:35,roadWidth:23};g.trolls=[{id:0,s:130,x:0,targetX:0,hp:2,phase:'active',age:2,flash:0}];stepChallenge(g,car,{s:128}, {},1/120,{});assert.ok(car.speed<35);assert.equal(g.bumps,1);stepChallenge(g,car,{s:128},{},1/120,{});assert.equal(g.bumps,1);assert.equal(g.juice,0);});
 test('Correct answers and cleared trolls, not speed, fuel the rocket',()=>{const g=createChallenge(flat,0);awardAnswer(g,false);assert.equal(g.juice,0);awardAnswer(g,true);assert.equal(g.juice,18);const a=scoreRun(g,{time:60,crashes:0}),b=scoreRun(g,{time:150,crashes:0});assert.equal(a.juice,b.juice);assert.ok(a.score>b.score);assert.equal(a.breakdown.knowledge,1200);});

@@ -5,6 +5,10 @@ export function carveRoadClearance(geometry,track){
  const nx=geometry.parameters.widthSegments,nz=geometry.parameters.heightSegments;
  const minX=a.getX(0),minZ=a.getZ(0),dx=geometry.parameters.width/nx,dz=geometry.parameters.height/nz;
  const half=track.config.width/2+1.3,clearance=.8;
+ // A terrain triangle can peak between the centre line and the road edge.
+ const roadOffsets=Array.from({length:13},(_,index)=>(index-6)*half/6);
+ const plazaHalf=track.config.width/2+26;
+ const plazaOffsets=[-plazaHalf,...roadOffsets,plazaHalf];
  let adjustments=0;
  const triangle=(x,z)=>{
   const fx=(x-minX)/dx,fz=(z-minZ)/dz,ix=Math.floor(fx),iz=Math.floor(fz);
@@ -15,10 +19,10 @@ export function carveRoadClearance(geometry,track){
   const u=((B.z-C.z)*(x-C.x)+(C.x-B.x)*(z-C.z))/den,v=((C.z-A.z)*(x-C.x)+(A.x-C.x)*(z-C.z))/den;
   return {ids,height:u*A.y+v*B.y+(1-u-v)*C.y};
  };
- const length=track.roadLength||track.length,steps=Math.ceil(length/3);
+ const length=track.roadLength||track.length,steps=Math.ceil(length/2);
  for(let pass=0;pass<2;pass++)for(let i=0;i<=steps;i++){
-  const s=i*length/steps,f=track.at(s),plaza=s>=track.length-45&&s<=track.length+195,w=track.config.width/2+26;
-  for(const offset of plaza?[-w,-half,0,half,w]:[-half,0,half]){
+  const s=i*length/steps,f=track.at(s),plaza=s>=track.length-45&&s<=track.length+195;
+  for(const offset of plaza?plazaOffsets:roadOffsets){
    const hit=triangle(f.p.x+f.r.x*offset,f.p.z+f.r.z*offset);if(!hit)continue;
    const excess=hit.height-(f.p.y-clearance);
    if(excess>.001){for(const id of hit.ids)a.setY(id,a.getY(id)-excess-.002);adjustments++;}

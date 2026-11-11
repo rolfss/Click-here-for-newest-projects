@@ -1,6 +1,7 @@
 export const mascotNames={riks:'Riksrevisjonen',arkiv:'Arkivverket'};
-const schedules=[[.32,.87],[.27,.55,.88],[.12,.29,.57,.90]];
-export function createEncounters(track,index){return schedules[index].map((fraction,i)=>({id:i,kind:i%2?'arkiv':'riks',s:fraction*track.length,x:0,phase:'waiting',age:0}));}
+export function createEncounters(track){
+ return (track.config.birds??[]).map((fraction,i)=>({id:i,kind:i%2?'arkiv':'riks',s:fraction*track.length,x:0,phase:'waiting',age:0}));
+}
 export function stepEncounters(encounters,car,previous,dt,track){
  const events=[];
  for(const e of encounters){

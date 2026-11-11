@@ -113,7 +113,10 @@ function mountPhoneUI() {
   new MutationObserver(() => {
     if (!$('#results').classList.contains('hidden')) {
       $('#results').scrollTop = 0; details.open = false;
-      $('#retry-btn').focus({ preventScroll: true });
+      const stageDetails = $('#stage-details-heading');
+      summary.textContent = stageDetails.hidden ? 'Løpsdetaljer og medaljer' : stageDetails.textContent;
+      const next = $('#next-btn');
+      (next.classList.contains('primary') && !next.classList.contains('hidden') ? next : $('#retry-btn')).focus({ preventScroll: true });
     }
   }).observe($('#results'), { attributes: true, attributeFilter: ['class'] });
   new MutationObserver(() => { if (menu.classList.contains('hidden')) closeMenu(); })

@@ -1,4 +1,5 @@
 import {CONFERENCE_API_URL} from './conference-config.js';
+import {RUN_BOARD} from './run-scoring.js';
 import {
   conferenceApiEndpoint,
   formatConferenceDay,
@@ -23,6 +24,10 @@ const score = element('winner-score');
 const time = element('winner-time');
 const username = element('winner-username');
 const status = element('manager-status');
+const legacy = new URLSearchParams(location.search).get('board') === 'legacy';
+const historyLink = element('manager-history-link');
+historyLink.href = legacy ? './conference-manager.html' : './conference-manager.html?board=legacy';
+historyLink.textContent = legacy ? 'Til treetappersløpet' : 'Vis tidligere énetappes løp';
 let token = '';
 let activeRequest;
 
@@ -86,6 +91,7 @@ async function findWinner(requestToken, day = '') {
   const timeout = setTimeout(() => controller.abort(), 8000);
   try {
     const endpoint = conferenceApiEndpoint(CONFERENCE_API_URL, 'conference/admin');
+    if (!legacy) endpoint.searchParams.set('board', RUN_BOARD);
     if (day) endpoint.searchParams.set('day', day);
     const response = await fetch(endpoint, {
       headers: {Authorization: `Bearer ${requestToken}`},

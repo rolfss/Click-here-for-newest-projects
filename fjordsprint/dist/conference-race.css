@@ -1,7 +1,6 @@
 body.conference-mode .course-picker,
 body.conference-mode #mobile-help-toggle,
 body.conference-mode #mobile-water-toggle,
-body.conference-mode #next-btn,
 body.conference-mode .setting-row:has(:is(#opt-assist, #opt-quiz, #opt-autogas)) {
   display: none !important;
 }
@@ -56,8 +55,7 @@ body.conference-mode #menu .menu-title > p {
   color: #f7ce95;
 }
 
-.conference-form-message:empty,
-.conference-submit-retry[hidden] {
+.conference-form-message:empty {
   display: none;
 }
 
@@ -71,17 +69,4 @@ body.conference-mode #menu .menu-title > p {
   border: 1px solid #355664;
   border-radius: .6rem;
   background: #102533;
-}
-
-.conference-result {
-  padding: .75rem 1rem;
-  border: 1px solid #355664;
-  border-radius: .65rem;
-  background: #102533;
-}
-
-.conference-result > strong {
-  display: block;
-  color: #7eebd5;
-  font-size: 1.4rem;
 }

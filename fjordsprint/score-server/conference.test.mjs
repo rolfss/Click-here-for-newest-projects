@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { test } from 'node:test';
+import { RUN_BOARD, scoreStages } from '../dist/run-scoring.js';
 import { CONFERENCE_BOARD, conferenceWindow } from './conference.mjs';
 import worker, { Leaderboard } from './worker.mjs';
 
@@ -11,8 +12,7 @@ const scores = '/conference/scores';
 const admin = '/conference/admin';
 const date = value => Date.parse(value);
 
-function fixture(start = '2026-11-12T08:00:00Z', managerToken = token) {
-  let now = date(start);
+function namespace(env, clock) {
   let alarm = null;
   const db = new DatabaseSync(':memory:');
   const storage = {
@@ -31,9 +31,18 @@ function fixture(start = '2026-11-12T08:00:00Z', managerToken = token) {
     async setAlarm(value) { alarm = value; },
     async deleteAlarm() { alarm = null; }
   };
+  return { db, app: new Leaderboard({ storage }, env, clock), alarm: () => alarm };
+}
+
+function fixture(start = '2026-11-12T08:00:00Z', managerToken = token) {
+  let now = date(start);
   const env = { ALLOWED_ORIGINS: pages, CONFERENCE_MANAGER_TOKEN: managerToken };
-  const app = new Leaderboard({ storage }, env, () => now);
-  env.LEADERBOARD = { idFromName: name => name, get: () => app };
+  const legacy = namespace(env, () => now);
+  const fullRun = namespace(env, () => now);
+  env.LEADERBOARD = {
+    idFromName: name => name,
+    get(name) { return (name === RUN_BOARD ? fullRun : legacy).app; }
+  };
   const call = (path, { method = 'GET', body, origin = pages, authorization } = {}) => {
     const headers = new Headers({ 'CF-Connecting-IP': '192.0.2.1' });
     if (origin) headers.set('Origin', origin);
@@ -45,10 +54,9 @@ function fixture(start = '2026-11-12T08:00:00Z', managerToken = token) {
   };
   const post = (path, body) => call(path, { method: 'POST', body });
   return {
-    db, call, post, app,
+    ...legacy, fullRun, call, post,
     now: () => now,
     advance: ms => { now += ms; },
-    alarm: () => alarm,
     start: (nickname, username, board = CONFERENCE_BOARD) => post(sessions, { board, nickname, username }),
     finish: (ticket, score, timeMs) => post(scores, { ticket, score, timeMs }),
     viewWinner: (day = '') => call(admin + (day && '?day=' + day), { authorization: 'Bearer ' + token })
@@ -177,4 +185,80 @@ test('manager lookup requires the secret, rejects invalid dates and returns narr
   assert.equal(privateResult.headers.get('Cache-Control'), 'no-store');
   assert.equal((await privateResult.json()).winner.username, 'Kari.N');
   assert.equal((await fixture(undefined, '').viewWinner()).status, 503);
+});
+
+const fullRunPath = path => path + '?board=' + RUN_BOARD;
+const stageTelemetry = [
+  { stage: 'fjord', timeMs: 65000, crashes: 0, bumps: 0, correct: 2, cleared: 5, lineQuality: 942, boostDistanceM: 420 },
+  { stage: 'pass', timeMs: 79000, crashes: 2, bumps: 1, correct: 4, cleared: 7, lineQuality: 876, boostDistanceM: 350 },
+  { stage: 'aurora', timeMs: 89000, crashes: 1, bumps: 2, correct: 5, cleared: 8, lineQuality: 898, boostDistanceM: 440 }
+];
+
+async function fullRunTicket(f, nickname = 'Fjellreven') {
+  const response = await f.post(fullRunPath(sessions), { board: RUN_BOARD, nickname, username: 'Kari.N' });
+  assert.equal(response.status, 200);
+  return (await response.json()).ticket;
+}
+
+test('three-stage receipt preserves the exact earned score for each run and ranks the best run', async () => {
+  const f = fixture('2026-11-12T06:00:00Z');
+  await result(f, 'Fjellreven', 'Kari.N', 6000, 53000);
+  const first = await fullRunTicket(f, 'Fjordracer');
+  f.advance(300000);
+  const expected = { nickname: 'Fjordracer', ...scoreStages(stageTelemetry) };
+  const firstResult = await f.post(fullRunPath(scores), {
+    ticket: first, stages: stageTelemetry, score: 999999, timeMs: 0
+  });
+  assert.equal(firstResult.status, 200);
+  assert.deepEqual(await firstResult.json(), { day: '2026-11-11', score: expected });
+
+  const second = await fullRunTicket(f, 'Fjellracer');
+  f.advance(300000);
+  const cleaner = stageTelemetry.map(stage => ({ ...stage, crashes: 0, bumps: 0 }));
+  const best = { nickname: 'Fjellracer', ...scoreStages(cleaner) };
+  const secondResult = await f.post(fullRunPath(scores), { ticket: second, stages: cleaner });
+  assert.equal(secondResult.status, 200);
+  assert.deepEqual((await secondResult.json()).score, best);
+  assert.equal(f.fullRun.db.prepare('SELECT COUNT(*) AS n FROM conference_run_receipts').get().n, 2);
+  const board = await f.call(fullRunPath(scores), { origin: null });
+  assert.deepEqual((await board.json()).scores, [
+    { rank: 1, nickname: best.nickname, score: best.score, timeMs: best.timeMs }
+  ]);
+  assert.deepEqual((await (await f.call(scores)).json()).scores, [
+    { rank: 1, nickname: 'Fjellreven', score: 6000, timeMs: 53000 }
+  ]);
+
+  f.advance(30 * 60000);
+  const duplicate = await f.post(fullRunPath(scores), { ticket: first, stages: stageTelemetry });
+  assert.equal(duplicate.status, 200);
+  assert.deepEqual(await duplicate.json(), { day: '2026-11-11', score: expected, duplicate: true });
+  const changed = await f.post(fullRunPath(scores), { ticket: first, stages: cleaner });
+  assert.equal(changed.status, 409);
+
+  f.advance(25 * 60000);
+  await f.fullRun.app.alarm();
+  assert.deepEqual((await (await f.call(fullRunPath(scores))).json()).scores, []);
+  assert.equal(f.fullRun.db.prepare('SELECT COUNT(*) AS n FROM conference_run_receipts').get().n, 0);
+  const winner = await f.call(fullRunPath(admin) + '&day=2026-11-11', { authorization: 'Bearer ' + token });
+  assert.deepEqual((await winner.json()).winner,
+    { rank: 1, nickname: best.nickname, username: 'Kari.N', score: best.score, timeMs: best.timeMs });
+});
+
+test('full-run tickets require three plausible ordered stages and enough elapsed time', async () => {
+  const f = fixture();
+  const id = await fullRunTicket(f);
+  const finish = stages => f.post(fullRunPath(scores), { ticket: id, stages });
+  assert.equal((await finish(stageTelemetry)).status, 400);
+  f.advance(100000);
+  assert.equal((await finish(stageTelemetry)).status, 400);
+  f.advance(200000);
+  for (const stages of [
+    stageTelemetry.slice(0, 2),
+    [stageTelemetry[1], stageTelemetry[0], stageTelemetry[2]],
+    [{ ...stageTelemetry[0], correct: 6 }, ...stageTelemetry.slice(1)],
+    [{ ...stageTelemetry[0], boostDistanceM: 5000 }, ...stageTelemetry.slice(1)],
+    [{ ...stageTelemetry[0], lineQuality: 1001 }, ...stageTelemetry.slice(1)]
+  ]) assert.equal((await finish(stages)).status, 400);
+  assert.equal((await f.post(scores, { ticket: id, score: 5000, timeMs: 65000 })).status, 400);
+  assert.equal((await finish(stageTelemetry)).status, 200);
 });
