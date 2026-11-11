@@ -1,4 +1,15 @@
-# Felles toppliste — valgfri Cloudflare Worker
+# FJORDSPRINTs poengtjeneste
+
+Konferanseløpet bruker rutene under `/conference/`. Se [oppsett og kontroll av konferanseløpet](../CONFERENCE.md) for utrulling, arrangørnøkkel og kobling til GitHub Pages.
+
+- `POST /conference/sessions` binder løpsklassen, kallenavnet og det korte M365-brukernavnet til en løpsbillett som varer i 30 minutter.
+- `POST /conference/scores` registrerer poeng og løpstid én gang per billett. Identiteten er allerede bundet til billetten.
+- `GET /conference/scores` viser dagens 50 beste kallenavn med rang, poeng og løpstid. Beste løp per brukernavn teller. Døgnet skifter klokken 08.00 i `Europe/Oslo`.
+- `GET /conference/admin?day=YYYY-MM-DD` krever arrangørnøkkel i `Authorization: Bearer …` og viser dagens eller en tidligere dags vinner med brukernavn.
+
+Ved døgnskiftet beholdes vinneren til arrangørens premieoppslag. Resten av forrige dags resultater fjernes fra den aktive databasen. Løpsbillettene utløper automatisk. Poeng beregnes i spillet og kontrolleres mot mulige poengsummer og løpstider på serveren.
+
+## Eldre felles toppliste
 
 **Status: implementert og testet med SQLite lokalt; ikke koblet til den publiserte klienten.** GitHub Pages publiserer statiske filer og kjører ikke denne serveren. Ingen hemmelig nøkkel skal inn i HTML eller JavaScript.
 

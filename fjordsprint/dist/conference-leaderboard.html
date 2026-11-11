@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102a36">
+  <meta name="referrer" content="no-referrer">
+  <title>FJORDSPRINT · Poengtavle</title>
+  <link rel="stylesheet" href="conference.css">
+</head>
+<body class="conference-display">
+  <main class="conference-panel">
+    <header class="conference-header">
+      <h1>FJORD<span>SPRINT</span></h1>
+      <p>Fjordlinjen · Arkivrally · Assistert · Mobilhjelp</p>
+    </header>
+    <div class="conference-table-wrap">
+      <table class="conference-table" aria-label="Poengtavle for dagens konkurranse">
+        <thead>
+          <tr>
+            <th scope="col" aria-label="Plass">#</th>
+            <th scope="col">Kallenavn</th>
+            <th scope="col">Poeng</th>
+            <th scope="col">Tid</th>
+          </tr>
+        </thead>
+        <tbody id="standings">
+          <tr><td colspan="4">Henter poengtavlen …</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="conference-status" id="board-status" role="status"></p>
+    <p class="conference-note">Ny poengtavle kl. 08.00 (Oslo-tid)</p>
+  </main>
+  <script type="module" src="conference-display.js"></script>
+</body>
+</html>

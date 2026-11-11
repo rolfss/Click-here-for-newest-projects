@@ -2,7 +2,7 @@ import {steeringCurve} from './mobile-drive.js';
 export function touchDevice(){return typeof matchMedia==='function'&&(matchMedia('(pointer: coarse)').matches||(navigator.maxTouchPoints>0&&matchMedia('(max-width: 1100px)').matches));}
 /** Independent pointer IDs allow the two thumbs to steer, brake and shoot.
  * Pointer capture is released on interruption; a hidden button never keeps firing. */
-export function mountMobileControls({settings,onSettings,onRecover,openModal}){
+export function mountMobileControls({settings,onSettings,onRecover,openModal,conferenceMode=false}){
  const active=touchDevice(),held=new Map();let pointer=null,steer=0,currentMode='menu',autoWater=true,lastHelp;
  document.body.classList.toggle('mobile-ui',active);
  if(active){
@@ -56,6 +56,6 @@ export function mountMobileControls({settings,onSettings,onRecover,openModal}){
  return {active,reset,get autoWater(){return autoWater;},get steering(){return steer;},
   update,
   sample(input){if(!active||currentMode!=='race')return input;const v={...input};if(pointer!==null)v.steer=steer;for(const {name} of held.values())v[name]=true;return v;},
-  help(start){openModal('To tomler. Klar for fjellet.',`<p><strong>Venstre tommel:</strong> dra på rattet for å styre. Små bevegelser gir små svinger.</p><p><strong>Høyre tommel:</strong> brems før skarpe svinger. Hold BOOST på rette partier. VANN lar deg skyte selv.</p><p>Med <strong>mobilhjelp</strong> går gassen av seg selv, farten dempes før svinger, og kanonen skyter når et troll er i siktet. Du må fortsatt styre bilen.</p><p>Les spørsmålene i ditt eget tempo. Trykk <strong>Fortsett</strong> når du er ferdig. Mobilhjelp har en egen poengtavle med 48 timers lagring.</p><button id="mobile-help-start" class="primary">SKRIV NAVN OG KJØR →</button><p class="note">Begge skjermretninger fungerer. Liggende skjerm gir større utsikt. Mobilhjelp kan slås av i startmenyen.</p>`);document.getElementById('mobile-help-start').onclick=start;}
+  help(start){openModal('To tomler. Klar for fjellet.',`<p><strong>Venstre tommel:</strong> dra på rattet for å styre. Små bevegelser gir små svinger.</p><p><strong>Høyre tommel:</strong> brems før skarpe svinger. Hold BOOST på rette partier. VANN lar deg skyte selv.</p><p>Med <strong>mobilhjelp</strong> går gassen av seg selv, farten dempes før svinger, og kanonen skyter når et troll er i siktet. Du må fortsatt styre bilen.</p><p>Les spørsmålene i ditt eget tempo. Trykk <strong>Fortsett</strong> når du er ferdig. ${conferenceMode?'Konferanseløpet har en felles poengtavle som starter på nytt kl. 08.00.':'Mobilhjelp har en egen poengtavle med 48 timers lagring.'}</p><button id="mobile-help-start" class="primary">SKRIV NAVN OG KJØR →</button><p class="note">Begge skjermretninger fungerer. Liggende skjerm gir større utsikt. ${conferenceMode?'Alle kjører Fjordlinjen med samme mobilhjelp.':'Mobilhjelp kan slås av i startmenyen.'}</p>`);document.getElementById('mobile-help-start').onclick=start;}
  };
 }

@@ -1,15 +1,12 @@
 import { cleanName, validBoard, rankScores, SCORE_TTL } from '../dist/leaderboard.js';
+import { ConferenceScores } from './conference.mjs';
+import { InputError, json, smallJSON } from './http.mjs';
 const HOUR = 3600000, SESSION_TTL = 30 * 60000;
-const json = (data, status = 200) => Response.json(data, { status, headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });
-class InputError extends Error { constructor(message, status = 400) { super(message); this.status = status; } }
-async function smallJSON(request) {
-  if (!request.headers.get('Content-Type')?.startsWith('application/json')) throw new InputError('JSON kreves.', 415);
-  if (!request.body) throw new InputError('Mangler data.');
-  const reader = request.body.getReader(), chunks = []; let total = 0;
-  while (true) { const { value, done } = await reader.read(); if (done) break; total += value.length; if (total > 4096) { await reader.cancel(); throw new InputError('For stor forespørsel.', 413); } chunks.push(value); }
-  const bytes = new Uint8Array(total); let offset = 0; for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
-  try { const body = JSON.parse(new TextDecoder().decode(bytes)); if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error(); return body; }
-  catch { throw new InputError('Ugyldig JSON.'); }
+
+async function rateKey(request, now) {
+  const address = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${Math.floor(now / HOUR)}:${address}`));
+  return Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, '0')).join('');
 }
 export function checkRun(data, session, now, minimumTimes = { fjord: 26000, pass: 33000, aurora: 34000 }) {
   if (!session || session.expiresAt <= now) throw new InputError('Løpsbilletten har utløpt. Start et nytt løp.');
@@ -34,24 +31,38 @@ export class Leaderboard {
       'CREATE TABLE IF NOT EXISTS limits (id TEXT PRIMARY KEY, hits INTEGER NOT NULL, expiresAt INTEGER NOT NULL)',
       'CREATE INDEX IF NOT EXISTS limit_expiry ON limits(expiresAt)'
     ]) this.sql.exec(statement);
+    this.conference = new ConferenceScores(ctx.storage, env.CONFERENCE_MANAGER_TOKEN, clock,
+      async (request, now) => this.rate(`conference:${await rateKey(request, now)}`, now, 600));
   }
   cleanup(now) { for (const table of ['scores', 'sessions', 'limits']) this.sql.exec(`DELETE FROM ${table} WHERE expiresAt <= ?`, now); }
   async schedule() {
     const row = [...this.sql.exec('SELECT MIN(expiresAt) AS next FROM (SELECT expiresAt FROM scores UNION ALL SELECT expiresAt FROM sessions UNION ALL SELECT expiresAt FROM limits)')][0];
-    if (row?.next) await this.ctx.storage.setAlarm(Math.max(this.clock() + 1000, row.next));
+    const now = this.clock();
+    const next = Math.min(row?.next ?? Infinity, this.conference.nextCleanup(now) ?? Infinity);
+    if (Number.isFinite(next)) await this.ctx.storage.setAlarm(Math.max(now + 1000, next));
     else await this.ctx.storage.deleteAlarm();
   }
-  async alarm() { this.cleanup(this.clock()); await this.schedule(); }
-  rate(key, now) {
+  async alarm() {
+    const now = this.clock();
+    this.cleanup(now);
+    this.conference.cleanup(now);
+    await this.schedule();
+  }
+  rate(key, now, limit = 60) {
     const expires = (Math.floor(now / HOUR) + 1) * HOUR;
     this.sql.exec('INSERT INTO limits(id,hits,expiresAt) VALUES(?,1,?) ON CONFLICT(id) DO UPDATE SET hits=hits+1', key, expires);
     const value = [...this.sql.exec('SELECT hits FROM limits WHERE id=?', key)][0];
-    if (value.hits > 60) throw new InputError('For mange forsøk. Prøv igjen senere.', 429);
+    if (value.hits > limit) throw new InputError('For mange forsøk. Prøv igjen senere.', 429);
   }
   async fetch(request) {
     const now = this.clock(), url = new URL(request.url);
     this.cleanup(now);
     try {
+      if (url.pathname.startsWith('/conference/')) {
+        const response = await this.conference.fetch(request);
+        if (request.method === 'POST') await this.schedule();
+        return response;
+      }
       if (request.method === 'GET' && url.pathname === '/scores') {
         const board = url.searchParams.get('board'); if (!validBoard(board)) throw new InputError('Ugyldig løpsklasse.');
         const rows = [...this.sql.exec('SELECT * FROM scores WHERE board=? AND expiresAt>? ORDER BY timeMs,createdAt LIMIT 20000', board, now)];
@@ -59,10 +70,7 @@ export class Leaderboard {
       }
       if (request.method !== 'POST' || !['/sessions', '/scores'].includes(url.pathname)) return json({ error: 'Ikke funnet.' }, 404);
       const data = await smallJSON(request);
-      const address = request.headers.get('CF-Connecting-IP') || 'unknown';
-      const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${Math.floor(now / HOUR)}:${address}`));
-      const rateKey = Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, '0')).join('');
-      this.rate(rateKey, now);
+      this.rate(await rateKey(request, now), now);
       let result;
       this.ctx.storage.transactionSync(() => {
         if (url.pathname === '/sessions') {
@@ -96,14 +104,22 @@ export default {
   async fetch(request, env) {
     const origin = request.headers.get('Origin');
     const allowed = (env.ALLOWED_ORIGINS || 'https://rolfss.github.io').split(',').map(s => s.trim());
-    if (request.method === 'GET' && new URL(request.url).pathname === '/health') return json({ ready: true, ttlHours: 72 });
-    if (!origin || !allowed.includes(origin)) return json({ error: 'Denne opprinnelsen er ikke tillatt.' }, 403);
-    const cors = { 'Access-Control-Allow-Origin': origin, 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Max-Age': '600', 'Vary': 'Origin' };
+    const { pathname } = new URL(request.url);
+    if (request.method === 'GET' && pathname === '/health') return json({ ready: true, ttlHours: 72 });
+    const conferenceRead = request.method === 'GET' && ['/conference/scores', '/conference/admin'].includes(pathname);
+    if (origin ? !allowed.includes(origin) : !conferenceRead) return json({ error: 'Denne opprinnelsen er ikke tillatt.' }, 403);
+    const cors = { 'Access-Control-Allow-Origin': origin, 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': pathname === '/conference/admin' ? 'Authorization' : 'Content-Type', 'Access-Control-Max-Age': '600', 'Vary': 'Origin' };
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     try {
       const id = env.LEADERBOARD.idFromName('fjordsprint-v2');
       const response = await env.LEADERBOARD.get(id).fetch(request);
-      const out = new Response(response.body, response); for (const [key, value] of Object.entries(cors)) out.headers.set(key, value); return out;
-    } catch { return json({ error: 'Rekordserveren er utilgjengelig.' }, 503); }
+      const out = new Response(response.body, response);
+      if (origin) for (const [key, value] of Object.entries(cors)) out.headers.set(key, value);
+      return out;
+    } catch {
+      const response = json({ error: 'Rekordserveren er utilgjengelig.' }, 503);
+      if (origin) for (const [key, value] of Object.entries(cors)) response.headers.set(key, value);
+      return response;
+    }
   }
 };

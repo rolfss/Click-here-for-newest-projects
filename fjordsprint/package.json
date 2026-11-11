@@ -5,6 +5,6 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "test": "node tests/verify.mjs && node tests/upgrade.mjs && node --test tests/revival.test.mjs tests/server.test.mjs tests/career.test.mjs tests/handling.test.mjs tests/polish.test.mjs"
+    "test": "node tests/verify.mjs && node tests/upgrade.mjs && node --test tests/revival.test.mjs tests/server.test.mjs tests/career.test.mjs tests/handling.test.mjs tests/polish.test.mjs score-server/conference.test.mjs"
   }
 }
