@@ -5,6 +5,7 @@ import {mascotNames} from './encounters.js';
 import {buildFinishVenue} from './finish.js';
 import {buildRoadsideDetails} from './roadside-details.js';
 import {addRoadsideCabins} from './roadside-architecture.js';
+import {RaceEffects} from './race-effects.js';
 const clamp=T.MathUtils.clamp,up=new T.Vector3(0,1,0);
 function rand(seed){return()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};}
 const material=(c,options={})=>new T.MeshStandardMaterial({color:c,roughness:.86,...options});
@@ -12,19 +13,19 @@ function box(group,w,h,d,mat,x=0,y=0,z=0){let m=new T.Mesh(new T.BoxGeometry(w,h
 function textTexture(text,bg='#10202e',fg='#e9fff9',w=1024,h=128){let c=document.createElement('canvas');c.width=w;c.height=h;let ctx=c.getContext('2d');ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);ctx.fillStyle=fg;ctx.font=`800 ${h*.58}px Bahnschrift,Arial,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,w/2,h*.55);let tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;return tex;}
 export class World{
  constructor(canvas,track,quality='high'){
-  this.renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});this.renderer.setPixelRatio(Math.min(devicePixelRatio,quality==='low'?1:1.6));this.renderer.setSize(innerWidth,innerHeight);this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=T.PCFSoftShadowMap;this.renderer.outputColorSpace=T.SRGBColorSpace;this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.12;this.camera=new T.PerspectiveCamera(62,innerWidth/innerHeight,.3,9000);this.track=null;this.camTarget=new T.Vector3();this.particles=[];this.totalTime=0;this.build(track);this.setQuality(quality);window.addEventListener('resize',()=>this.resize());
+  this.renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});this.renderer.setPixelRatio(Math.min(devicePixelRatio,quality==='low'?1:1.6));this.renderer.setSize(innerWidth,innerHeight);this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=T.PCFSoftShadowMap;this.renderer.outputColorSpace=T.SRGBColorSpace;this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.12;this.camera=new T.PerspectiveCamera(62,innerWidth/innerHeight,.3,9000);this.track=null;this.camTarget=new T.Vector3();this.totalTime=0;this.build(track);this.setQuality(quality);window.addEventListener('resize',()=>this.resize());
  }
  resize(){this.camera.aspect=innerWidth/innerHeight;this.camera.updateProjectionMatrix();this.renderer.setSize(innerWidth,innerHeight);}
  setQuality(q){this.renderer.setPixelRatio(Math.min(devicePixelRatio,q==='low'?1:1.6));this.renderer.shadowMap.enabled=q!=='low';}
  disposeScene(){if(!this.scene)return;const geometries=new Set(),materials=new Set(),textures=new Set();this.scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);for(const m of (Array.isArray(o.material)?o.material:[o.material]))if(m){materials.add(m);if(m.map)textures.add(m.map);}});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());}
  build(track){
-  this.sun?.shadow?.map?.dispose();this.disposeScene();this.track=track;this.scene=new T.Scene();this.scene.background=new T.Color(track.config.sky);this.scene.fog=new T.FogExp2(track.config.fog,.00038);this.random=rand(138+track.config.id.length*17);this.particles=[];this.markers=[];
+  this.sun?.shadow?.map?.dispose();this.disposeScene();this.track=track;this.scene=new T.Scene();this.scene.background=new T.Color(track.config.sky);this.scene.fog=new T.FogExp2(track.config.fog,.00038);this.random=rand(138+track.config.id.length*17);this.markers=[];
   const hemi=new T.HemisphereLight(0xc9e5ff,0x465144,2.4);this.scene.add(hemi);this.sun=new T.DirectionalLight(track.config.sun,3.5);this.sun.position.set(-300,700,-600);this.sun.castShadow=true;this.sun.shadow.mapSize.set(1024,1024);Object.assign(this.sun.shadow.camera,{left:-90,right:90,top:90,bottom:-90,near:1,far:1300});this.sun.shadow.bias=-.0015;this.scene.add(this.sun,this.sun.target);
   this.addSky();this.addTerrain();this.addRoad();this.finishVenue=buildFinishVenue({scene:this.scene,track});this.addScenery();this.living=buildLivingWorld({scene:this.scene,track,terrainGeometry:this.terrainGeometry,seed:830});this.details=buildRoadsideDetails({scene:this.scene,track,terrainGeometry:this.terrainGeometry,seed:1221});this.addMascots();this.car=this.makeCar(false);this.scene.add(this.car);this.ghost=this.makeCar(true);this.ghost.visible=false;this.scene.add(this.ghost);
   const shadowMat=new T.MeshBasicMaterial({color:0x091b22,transparent:true,opacity:.24,depthWrite:false});this.carShadow=new T.Mesh(new T.CircleGeometry(2.4,20),shadowMat);this.carShadow.rotation.x=-Math.PI/2;this.scene.add(this.carShadow);
-  this.exhaust=new T.Group();const em=material(0x78ffe7,{emissive:0x4affcd,emissiveIntensity:3,transparent:true,opacity:.9});for(let x of [-.63,.63]){let e=new T.Mesh(new T.ConeGeometry(.24,2.2,7),em);e.rotation.x=Math.PI/2;e.position.set(x,.58,3.15);this.exhaust.add(e);}this.car.add(this.exhaust);this.exhaust.visible=false;
-  this.effects=new T.InstancedMesh(new T.IcosahedronGeometry(.24,0),new T.MeshBasicMaterial({color:0xbed4ce,transparent:true,opacity:.37,depthWrite:false}),64);this.effects.instanceMatrix.setUsage(T.DynamicDrawUsage);this.effects.frustumCulled=false;this.scene.add(this.effects);this.effectDummy=new T.Object3D();this.effectCursor=0;this.effectTick=0;for(let i=0;i<64;i++){this.particles.push({life:0,p:new T.Vector3(),v:new T.Vector3()});this.effectDummy.scale.setScalar(0);this.effectDummy.updateMatrix();this.effects.setMatrixAt(i,this.effectDummy.matrix);}
-  this.skids=new T.InstancedMesh(new T.PlaneGeometry(.29,1.6),new T.MeshBasicMaterial({color:0x101c23,transparent:true,opacity:.5,depthWrite:false,side:T.DoubleSide}),180);this.skids.frustumCulled=false;this.scene.add(this.skids);this.skidCursor=0;for(let i=0;i<180;i++)this.skids.setMatrixAt(i,this.effectDummy.matrix);
+  this.raceEffects=new RaceEffects(this.scene,this.car,this.renderer.domElement);
+  this.skidTransform=new T.Object3D();this.skidTransform.scale.setScalar(0);this.skidTransform.updateMatrix();
+  this.skids=new T.InstancedMesh(new T.PlaneGeometry(.29,1.6),new T.MeshBasicMaterial({color:0x101c23,transparent:true,opacity:.5,depthWrite:false,side:T.DoubleSide}),180);this.skids.frustumCulled=false;this.scene.add(this.skids);this.skidCursor=0;this.skidDistance=null;for(let i=0;i<180;i++)this.skids.setMatrixAt(i,this.skidTransform.matrix);
   this.lightOffset=new T.Vector3(-220,500,-180);const lightZ=this.lightOffset.clone().normalize();this.lightRight=new T.Vector3().crossVectors(up,lightZ).normalize();this.lightUp=new T.Vector3().crossVectors(lightZ,this.lightRight);this.lightAnchor=new T.Vector3();
   this.cameraInitialized=false;
  }
@@ -106,14 +107,30 @@ export class World{
   const light=material(0xfaffde,{emissive:0xf1ffd9,emissiveIntensity:1.5,transparent:ghost,opacity:ghost?.2:1});for(let x of [-.95,.95]){box(g,.65,.17,.08,light,x,.9,-2.39);box(g,.55,.12,.08,red,x,.93,2.38);}let badge=new T.Mesh(new T.PlaneGeometry(.78,.62),new T.MeshBasicMaterial({map:textTexture('07','#153441','#ddfff1',128,128),transparent:ghost,opacity:ghost?.25:1}));badge.rotation.x=-Math.PI/2;badge.position.set(0,1.18,-1.6);g.add(badge);if(ghost)g.traverse(o=>{if(o.isMesh){o.castShadow=false;o.material.depthWrite=false;}});return g;
  }
  placeCar(obj,state){const f=this.track.at(state.s);obj.position.copy(f.p).addScaledVector(f.r,state.x);obj.position.y+=.13+(state.rideHeight??(state.air+this.track.rampHeight(state.s)));obj.rotation.set((Math.asin(f.t.y)+(state.rampPitch??(this.track.rampHeight(state.s)>0?.114:0)))*Math.cos(state.heading),-f.yaw-state.heading,-state.steer*.05+(state.stagger>0?Math.sin(state.time*25)*.09*Math.min(1,state.stagger):0));for(let w of obj.userData.wheels||[]){w.rotation.x=-state.s*.8;if(w.position.z<0)w.rotation.y=-state.steer*.25;}if(obj.userData.rearLight)obj.userData.rearLight.emissiveIntensity=state.braking?2.2:.6;return f;}
- updateEffects(state,dt){
-  this.effectTick+=dt;
-  if(state.drift>.35&&state.air<.1&&state.speed>16&&this.effectTick>.035){this.effectTick=0;const f=this.track.at(state.s-2);for(let side of [-1,1]){let particle=this.particles[this.effectCursor++%64];particle.life=.6;particle.p.copy(f.p).addScaledVector(f.r,state.x+side*1.3);particle.p.y+=.3;particle.v.copy(f.r).multiplyScalar(side*1.5);particle.v.y=1.8;const d=this.effectDummy;d.position.copy(particle.p);d.position.y=f.p.y+.06;d.rotation.set(-Math.PI/2,0,-f.yaw-state.heading);d.scale.set(1,1,1);d.updateMatrix();this.skids.setMatrixAt(this.skidCursor++%180,d.matrix);}this.skids.instanceMatrix.needsUpdate=true;}
-  for(let i=0;i<64;i++){let p=this.particles[i],d=this.effectDummy;p.life=Math.max(0,p.life-dt);d.rotation.set(0,0,0);if(p.life>0){p.p.addScaledVector(p.v,dt);d.position.copy(p.p);d.scale.setScalar((.6-p.life)*3+.1);}else d.scale.setScalar(0);d.updateMatrix();this.effects.setMatrixAt(i,d.matrix);}this.effects.instanceMatrix.needsUpdate=true;
+ updateSkids(state,mode){
+  if(mode!=='race'||state.drift<.35||state.air>.1||state.speed<16){this.skidDistance=null;return;}
+  const start=this.skidDistance??state.s;
+  const distance=state.s-start;
+  if(distance<0||distance>12){this.skidDistance=state.s;return;}
+  if(this.skidDistance===null)this.skidDistance=state.s;
+  if(distance<1.35)return;
+  const d=this.skidTransform;
+  d.scale.setScalar(1);
+  for(let at=start+1.35;at<=state.s;at+=1.35){
+   const f=this.track.at(at-1.5);
+   for(const side of [-1,1]){
+    d.position.copy(f.p).addScaledVector(f.r,state.x+side*1.42);
+    d.position.y+=.045;
+    d.rotation.set(-Math.PI/2,0,-f.yaw-(state.travelHeading??state.heading));
+    d.updateMatrix();this.skids.setMatrixAt(this.skidCursor++%180,d.matrix);
+   }
+   this.skidDistance=at;
+  }
+  this.skids.instanceMatrix.needsUpdate=true;
  }
  render(state,dt,mode,options={}){
-  this.totalTime+=dt;this.living.update(this.totalTime,state.s);this.details.update(this.totalTime,state.s);this.updateMascots(state,mode,options.encounters||[]);this.updateEffects(state,dt);const menu=mode==='menu',f=this.placeCar(this.car,options.motion===false?{...state,stagger:0}:state),speed=state.speed||0;this.carShadow.position.copy(this.car.position);this.carShadow.position.y=f.p.y+.05;this.carShadow.material.opacity=.24/(1+state.air*.3);
-  this.exhaust.visible=state.boosting;this.exhaust.scale.set(1,1,options.motion===false?1:1+Math.sin(this.totalTime*6)*.06);
+  this.totalTime+=dt;this.living.update(this.totalTime,state.s);this.details.update(this.totalTime,state.s);this.updateMascots(state,mode,options.encounters||[]);const menu=mode==='menu',f=this.placeCar(this.car,options.motion===false?{...state,stagger:0}:state),speed=state.speed||0;this.carShadow.position.copy(this.car.position);this.carShadow.position.y=f.p.y+.05;this.carShadow.material.opacity=.24/(1+state.air*.3);
+  this.raceEffects.update(state,dt,mode,options.motion!==false,f);this.updateSkids(state,mode);
   let desired,target;
   if(menu){const angle=.30+Math.sin(this.totalTime*.13)*.10;desired=f.p.clone().addScaledVector(f.t,-19).addScaledVector(f.r,10+(options.motion===false?0:Math.sin(this.totalTime*.12)*3));desired.y+=9;target=f.p.clone().addScaledVector(f.t,23);target.y+=2;}
   else if(options.camera==='hood'){desired=this.car.position.clone().addScaledVector(f.t,1.3);desired.y+=1.35;target=this.track.position(Math.min(state.s+60,this.track.roadLength),state.x*.5,2);}

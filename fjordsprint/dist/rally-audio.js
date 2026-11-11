@@ -1,4 +1,4 @@
-import { RaceAudio as BaseAudio } from './audio.js?v=3.3.1';
+import { RaceAudio as BaseAudio } from './audio.js?v=3.3.2';
 import { playRaceStep, raceTempo } from './race-music.js';
 
 const musicLevels = { menu: 0.72, countdown: 0.48, race: 0.79, quiz: 0.24, finish: 0.34, results: 0.36 };
@@ -31,7 +31,7 @@ export class RaceAudio extends BaseAudio {
       this._scene = state.mode;
       if (this.ctx) this._target(this.musicBus.gain, this._musicLevel(), 0.11);
     }
-    super.update(state, dt);
+    super.update(state.mode === 'quiz' ? { ...state, active: false } : state, dt);
   }
 
   _musicLevel() {

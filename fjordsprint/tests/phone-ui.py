@@ -55,7 +55,7 @@ try:
    page.wait_for_function("__phoneQA.mode==='race'",timeout=30000);page.evaluate('__phoneQA.stop()')
    for w,h in [(320,568),(390,844),(430,932),(568,320),(844,390)]:
     page.set_viewport_size({'width':w,'height':h});page.wait_for_timeout(200)
-    for selector in ['#thumb-steer','#mobile-fire','#mobile-brake','#mobile-boost','#mobile-recover','#pause-btn']:fits(page,selector)
+    for selector in ['#thumb-steer','#mobile-fire','#mobile-brake','#mobile-drift','#mobile-boost','#mobile-recover','#pause-btn']:fits(page,selector)
     shot(page,f'race-{w}x{h}')
    page.set_viewport_size({'width':390,'height':844});page.wait_for_timeout(160)
    pad=page.locator('#thumb-steer').bounding_box();brake=page.locator('#mobile-brake').bounding_box();client=context.new_cdp_session(page)
@@ -64,6 +64,12 @@ try:
    page.wait_for_function('__phoneQA.mobile.steering>.1 && __phoneQA.mobile.sample({}).brake')
    client.send('Input.dispatchTouchEvent',{'type':'touchCancel','touchPoints':[]})
    page.wait_for_function('__phoneQA.mobile.steering===0 && !__phoneQA.mobile.sample({}).brake')
+   drift=page.locator('#mobile-drift').bounding_box()
+   points[1].update(x=drift['x']+drift['width']/2,y=drift['y']+drift['height']/2)
+   client.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':points})
+   page.wait_for_function('__phoneQA.mobile.steering>.1 && __phoneQA.mobile.sample({}).drift')
+   client.send('Input.dispatchTouchEvent',{'type':'touchCancel','touchPoints':[]})
+   page.wait_for_function('__phoneQA.mobile.steering===0 && !__phoneQA.mobile.sample({}).drift')
    for w,h in [(320,568),(390,844),(568,320),(844,390)]:
     page.set_viewport_size({'width':w,'height':h});page.evaluate('__phoneQA.openReading()');page.wait_for_timeout(160)
     no_overflow(page,'#quiz');assert not page.locator('#mobile-controls').is_visible()

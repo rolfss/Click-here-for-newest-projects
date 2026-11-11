@@ -3,7 +3,7 @@
  * changes the archive rules or the score's 48-hour expiry. */
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const cruiseSpeed = 50;
-const boostSpeed = 73;
+const boostSpeed = 77;
 export function steeringCurve(distance,radius=58){
  const v=clamp(Number(distance)/(Number(radius)||58),-1,1),a=Math.abs(v);
  return a<.04?0:Math.sign(v)*Math.pow((a-.04)/.96,1.35);

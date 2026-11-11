@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-import {World as RallyWorld} from './rally-world.js?v=3.3.0';
+import {World as RallyWorld} from './rally-world.js?v=3.3.2';
 export const PALETTE=Object.freeze({asphalt:0x354951,edge:0xe8ebe1,steel:0x667f86,mint:0x79cdbb,cream:0xf1e7c9,grass:0x7a987f,rock:0x819496,snow:0xe3ece8});
 const terrainPalette={
  fjord:{low:0x748e74,high:0x91a388,rock:0x778987,snow:0xe4ebe5},

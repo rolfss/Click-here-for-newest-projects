@@ -143,9 +143,11 @@ export class RaceAudio {
     this.engineA.start();
     this.engineB.start();
 
-    this.wind = this._continuousNoise('highpass', 550, 0.15);
-    this.boost = this._continuousNoise('bandpass', 1600, 0.6);
-    this.skid = this._continuousNoise('bandpass', 1000, 1.8);
+    this.wind = this._continuousNoise('highpass', 550, 0.35);
+    this.boost = this._continuousNoise('bandpass', 1400, 0.65);
+    this.exhaust = this._continuousNoise('bandpass', 360, 0.72);
+    this.skid = this._continuousNoise('bandpass', 1650, 4.5);
+    this.tireScrub = this._continuousNoise('bandpass', 710, 0.9);
   }
 
   _continuousNoise(type, frequency, q) {
@@ -196,28 +198,38 @@ export class RaceAudio {
     const unit = value => Math.max(0, Math.min(1, Number(value) || 0));
     const delta = Math.max(0, Math.min(0.1, Number(dt) || 1 / 60));
     const blend = 1 - Math.exp(-delta * 8);
+    const boostInput = unit(boost);
     this._speed += (Math.max(0, Math.min(500, Number(speed) || 0)) - this._speed) * blend;
     this._throttle += (unit(throttle) - this._throttle) * blend;
-    this._boost += (unit(boost) - this._boost) * blend;
+    this._boost += (boostInput - this._boost) * blend;
     this._drift += (unit(drift) - this._drift) * blend;
     this._active = !!active;
     if (!this.ctx || this._suspended || this.ctx.state !== 'running') return;
     const v = this._speed;
     const throttleAmount = this._throttle;
     const on = active ? 1 : 0;
+    const speedRatio = Math.min(v / 330, 1);
+    const thrust = this._boost;
+    // The gap between boost engagement and sustained thrust gives the first instant a sharper bark.
+    const boostAttack = Math.max(0, boostInput - thrust);
+    const tireSlip = this._drift * Math.min(v / 155, 1);
     // A soft gear-like saw contour gives acceleration an audible progression.
     const gear = Math.min(5, Math.floor(v / 57));
-    const rev = 42 + v * 0.4 + (v - gear * 57) * 1.1 + throttleAmount * 24;
-    this._target(this.engineA.frequency, rev, 0.12);
-    this._target(this.engineB.frequency, rev * 2.003, 0.12);
-    this._target(this.engineFilter.frequency, 260 + v * 2.6 + throttleAmount * 400 + this._boost * 400, 0.16);
-    this._target(this.engineGain.gain, on * (0.025 + throttleAmount * 0.034 + Math.min(v / 300, 1) * 0.018), 0.10);
-    this._target(this.wind.gain.gain, on * Math.pow(Math.min(v / 330, 1), 1.7) * 0.075, 0.2);
-    this._target(this.wind.filter.frequency, 450 + v * 1.6, 0.2);
-    this._target(this.boost.gain.gain, on * this._boost * 0.065, 0.1);
-    this._target(this.boost.filter.frequency, 1400 + v * 2.1, 0.18);
-    this._target(this.skid.gain.gain, on * this._drift * Math.min(v / 90, 1) * 0.037, 0.055);
-    this._target(this.skid.filter.frequency, 800 + v * 2, 0.12);
+    const rev = 42 + v * 0.4 + (v - gear * 57) * 1.1 + throttleAmount * 24 + thrust * 46;
+    this._target(this.engineA.frequency, rev, 0.085);
+    this._target(this.engineB.frequency, rev * 2.003, 0.085);
+    this._target(this.engineFilter.frequency, 260 + v * 2.6 + throttleAmount * 400 + thrust * 1050, 0.08);
+    this._target(this.engineGain.gain, on * (0.025 + throttleAmount * 0.034 + speedRatio * 0.025 + thrust * 0.075), 0.06);
+    this._target(this.wind.gain.gain, on * Math.pow(speedRatio, 1.8) * 0.19, 0.15);
+    this._target(this.wind.filter.frequency, 420 + v * 2.1, 0.17);
+    this._target(this.exhaust.gain.gain, on * (thrust * 0.38 + boostAttack * 0.54), 0.025);
+    this._target(this.exhaust.filter.frequency, 270 + v * 0.95 + thrust * 205, 0.05);
+    this._target(this.boost.gain.gain, on * (thrust * 0.25 + boostAttack * 0.14), 0.045);
+    this._target(this.boost.filter.frequency, 1080 + v * 3 + thrust * 900, 0.055);
+    this._target(this.tireScrub.gain.gain, on * tireSlip * 0.24, 0.05);
+    this._target(this.tireScrub.filter.frequency, 570 + v * 1.65, 0.09);
+    this._target(this.skid.gain.gain, on * Math.pow(tireSlip, 1.35) * 0.27, 0.05);
+    this._target(this.skid.filter.frequency, 1250 + v * 2.2 + tireSlip * 430, 0.09);
     this._target(this.musicFilter.frequency, this._musicCutoff(v, active), 0.38);
   }
 
@@ -416,7 +428,7 @@ export class RaceAudio {
       voice.nodes.forEach(node => { try { node.disconnect(); } catch (_) {} });
     }
     this._voices.clear();
-    for (const gain of [this.engineGain, this.wind.gain, this.boost.gain, this.skid.gain]) {
+    for (const gain of [this.engineGain, this.wind.gain, this.boost.gain, this.exhaust.gain, this.skid.gain, this.tireScrub.gain]) {
       gain.gain.cancelScheduledValues(this.ctx.currentTime);
       gain.gain.setValueAtTime(0, this.ctx.currentTime);
     }

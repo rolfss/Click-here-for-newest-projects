@@ -26,3 +26,11 @@ body.mobile-ui .race-bottom{left:var(--safe-left);right:var(--safe-right);bottom
 .mobile-ui .cup-tabs [aria-pressed=true]{background:#a3dac9;color:#17313e}
 .mobile-ui .mobile-pedals .down{opacity:1}
 @media(max-height:550px) and (orientation:landscape){.mobile-ui #quiz.expert h2{font-size:17px!important}}
+
+.racing.boosting .speed strong,.racing.turbo .speed strong{
+ color:#fff1d4;
+ text-shadow:0 0 18px #ff975474,0 3px 12px #081a24;
+}
+.racing.boosting .boost-bar i,.racing.turbo .boost-bar i{
+ background:linear-gradient(90deg,#e4783d,#ffc071,#fff0ba);
+}
