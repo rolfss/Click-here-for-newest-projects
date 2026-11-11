@@ -1,2 +1,2 @@
-// Set the public HTTPS base URL of the conference score service when deploying.
-export const CONFERENCE_API_URL = '';
+// Public URL. The organizer key is stored in the Worker as a secret.
+export const CONFERENCE_API_URL = 'https://fjordsprint-scores.rolfsselas.workers.dev';

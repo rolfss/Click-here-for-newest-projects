@@ -15,7 +15,7 @@ Konferanseløpet bruker Fjordlinjen, Arkivrally, Assistert og Mobilhjelp for all
    Bruk en tilfeldig nøkkel på 32–128 tegn fra en passordbehandler, med bokstaver, tall, bindestrek eller understrek. Lim den inn når Wrangler ber om verdien, og behold den i passordbehandleren. Worker-tjenesten lagrer resultatene i et SQLite-basert Durable Object.
 
 2. Kopier den offentlige HTTPS-adressen som `deploy` skrev ut. Åpne `/conference/scores` på den adressen og sjekk at svaret inneholder `day`, `resetsAt` og `scores`. `scores` er tom før første fullførte løp.
-3. I GitHub-repositoriet går du til **Settings → Secrets and variables → Actions → Variables** og oppretter repositorievariabelen `FJORDSPRINT_CONFERENCE_API_URL`. Bruk Worker-adressen fra punkt 2, uten `/conference/scores`. Denne adressen brukes av nettleseren. Arrangørens tilgangsnøkkel ligger som en hemmelighet i Worker-tjenesten.
+3. Den publiserte Worker-adressen ligger i `dist/conference-config.js`. Hvis poengtjenesten flyttes, kan du overstyre adressen i **Settings → Secrets and variables → Actions → Variables** med repositorievariabelen `FJORDSPRINT_CONFERENCE_API_URL`. Bruk Worker-adressen uten `/conference/scores`. Arrangørens tilgangsnøkkel ligger som en hemmelighet i Worker-tjenesten.
 4. Når endringen er på `main`, åpner du **Actions → Publiser prosjektsiden → Run workflow** på `main`. Kontroller at publiseringen og den påfølgende kjøringen **Kontroller publisert Fjordsprint** lykkes før du deler QR-koden.
 
 ## Lenker på arrangementsdagen
