@@ -38,8 +38,16 @@ def verify_cup_flow(page):
   wait(page,"__qa.mode==='race'")
   assert page.locator('#stage-indicator').inner_text()==f'Etappe {index} av 3'
   page.evaluate(f'()=>__qa.setCar({{time:{seconds},s:__qa.track.length-.01,speed:30,checkpoint:3}})')
-  wait(page,"['finish','results'].includes(__qa.mode)")
-  if page.locator('#skip-rocket').is_visible():page.click('#skip-rocket')
+  wait(page,"__qa.mode==='finish' && !document.querySelector('#career-flight').classList.contains('hidden')")
+  assert page.locator('#rocket-score-label').inner_text()==f'Etappe {index} av 3'
+  assert page.locator('#rocket-stage-points').inner_text() in page.locator('.cup-stage-scores .is-complete').last.text_content()
+  assert page.locator('#rocket-total-points').inner_text().split(': ',1)[1]==page.locator('.cup-total strong').text_content()
+  if index==2:
+   page.evaluate('__qa.setAge(4.4)')
+   wait(page,"Number(document.querySelector('#rocket-height').textContent)>0")
+   page.evaluate('__qa.setAge(8.8)')
+  else:
+   page.click('#skip-rocket')
   wait(page,"__qa.mode==='results'")
   assert page.locator('.cup-stage-scores .is-complete').count()==index
   if index<3:
@@ -77,8 +85,12 @@ def exercise(page,label,touch):
  page.evaluate("()=>{Object.assign(__qa.game,{juice:140,correct:5,cleared:8,hits:16,fired:24});__qa.setCar({time:95,s:__qa.track.length-.01,speed:30,checkpoint:3});}")
  wait(page,"__qa.mode==='finish'");page.wait_for_timeout(550);shot(page,label+'-rocket-dock')
  page.evaluate('__qa.setAge(6);__qa.world.cameraInitialized=false');page.wait_for_timeout(350);shot(page,label+'-rocket')
- page.evaluate('__qa.setAge(11.8);__qa.world.cameraInitialized=false');wait(page,"document.querySelectorAll('.career-rung.reached').length===6")
- page.wait_for_timeout(600);shot(page,label+'-rocket-top');page.click('#skip-rocket');page.wait_for_timeout(200)
+ page.evaluate('__qa.setAge(10.4);__qa.world.cameraInitialized=false');wait(page,"document.querySelectorAll('.career-rung.reached').length===6")
+ shot(page,label+'-rocket-top')
+ # A slow screenshot can consume the remaining real-time flight. Skip only
+ # if it is still running; the cup flow separately exercises the actual button.
+ page.evaluate("if(__qa.mode==='finish')document.querySelector('#skip-rocket').click()")
+ wait(page,"__qa.mode==='results'")
  assert 'Toppleder' in page.locator('#score-entry').inner_text()
  if touch:page.click('.phone-board-details > summary')
  assert 'Rolf Test' in page.locator('#result-score-rows').inner_text()

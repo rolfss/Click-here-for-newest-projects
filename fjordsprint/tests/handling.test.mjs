@@ -13,10 +13,35 @@ test('Quarter, half and full steering produce proportional yaw instead of early 
 test('No invisible attraction to the road: zero steering holds world heading through a bend',()=>{const t=new Track({...courses[0],width:1000}),c={...initialState(),s:420,speed:40},worldHeading=t.at(c.s).yaw;run(c,{},.8,t);assert.ok(Math.abs(angle(c.heading+t.at(c.s).yaw-worldHeading))<1e-8);});
 test('Brake-steer initiates controllable slip; releasing inputs restores grip',()=>{const c={...initialState(),speed:55};run(c,{steer:.7,throttle:1},.1);run(c,{steer:.7,throttle:1,brake:.7},.5);assert.ok(c.drift>.8);assert.ok(Math.abs(c.slip)>.1);const slip=Math.abs(c.slip);run(c,{throttle:1},.8);assert.ok(c.drift<.01);assert.ok(Math.abs(c.slip)<slip*.1);});
 test('Braking alone does not drift and stops harder than throttle lift',()=>{const a={...initialState(),speed:40},b={...a};run(a,{brake:1},1);run(b,{},1);assert.ok(a.speed<b.speed-25);assert.ok(a.drift<1e-6);});
-test('A drift does not manufacture knowledge juice or free boost',()=>{const c={...initialState(),speed:50};run(c,{steer:.7,throttle:1,drift:true},.8);assert.equal(c.boost,40);});
+test('A drift does not manufacture knowledge juice or free boost',()=>{const c={...initialState(),speed:50},reserve=c.boost;run(c,{steer:.7,throttle:1,drift:true},.8);assert.equal(c.boost,reserve);});
+test('Manual brake and turn can start a drift straight after automatic braking',()=>{
+ const car={...initialState(),speed:55};
+ run(car,{brake:.7,autoBrake:true},.1);
+ run(car,{brake:.7,steer:.5},.35);
+ assert.ok(car.drift>.9);
+ assert.ok(Math.abs(car.slip)>.15);
+ assert.ok(car.speed>42);
+ run(car,{throttle:1},.8);
+ assert.ok(car.drift<.01);
+ assert.ok(Math.abs(car.slip)<.03);
+});
 test('Air steering changes the body, never the world velocity; airbrake reduces pitch spin',()=>{const a={...initialState(),speed:45,air:90,vy:0,flightPitch:.3,flightSpin:-.2},b={...a};run(a,{steer:1},.5);run(b,{steer:1,brake:1},.5);assert.ok(a.heading>.02);assert.ok(Math.abs(a.travelHeading)<1e-8);assert.ok(Math.abs(b.flightSpin)<Math.abs(a.flightSpin)*.1);assert.equal(a.speed,b.speed);});
 test('Landing compresses the suspension then settles, with no loss of progress',()=>{const c={...initialState(),speed:30,s:200,air:.1,vy:-7,flightPitch:.2};run(c,{},.05);assert.equal(c.air,0);assert.ok(c.suspension>0);run(c,{},1.5);assert.ok(Math.abs(c.suspension)<.001);assert.ok(c.s>200);});
 test('Turbo expiry preserves momentum instead of snapping to another speed limit',()=>{const c={...initialState(),speed:103,turbo:.001};stepCar(c,{},h,flat,{});assert.ok(c.speed>102.7);});
+test('The opening reserve supports a four-second burst, and a road pad restores another usable burst',()=>{
+ const car={...initialState(),speed:40};
+ const throttle={throttle:1,boost:true};
+ run(car,throttle,4);
+ assert.ok(car.boosting&&car.boost>0);
+ run(car,throttle,.5);
+ assert.equal(car.boost,0);
+ assert.equal(car.boosting,false);
+ const track=new Track({...flat.config,pads:[.1]});
+ car.s=track.pads[0]-.1;
+ assert.ok(stepCar(car,throttle,h,track).includes('pad'));
+ run(car,throttle,2,track);
+ assert.ok(car.boosting&&car.boost>0);
+});
 test('A glancing barrier touch costs less speed than a head-on oblique impact',()=>{const t=new Track({...courses[0],points:flat.config.points,pads:[],jumps:[],quiz:[]});const impact=heading=>{const c={...initialState(),s:50,x:t.config.width/2-1.551,speed:55,heading,travelHeading:heading};stepCar(c,{},h,t,{});assert.equal(c.crashes,1);return c.speed;};assert.ok(impact(.07)>impact(.7)+12);});
 test('Course-clock progress is deterministic for equivalent 30 and 120 Hz inputs',()=>{const a=initialState(),b=initialState();for(let i=0;i<600;i++)stepCar(a,{throttle:1,steer:.02},h,flat,{});for(let i=0;i<150;i++)stepCar(b,{throttle:1,steer:.02},1/30,flat,{});assert.ok(Math.abs(a.s-b.s)<1e-8);assert.ok(Math.abs(a.x-b.x)<1e-8);});
 test('All six course/steering combinations finish without wall contact or numerical failure',()=>{const evidence=[];for(const cfg of courses)for(const assist of [true,false]){const t=new Track(cfg),c=initialState(),drive=createDemoDriver();for(let tick=0;tick<120*240&&!c.finished;tick++){stepCar(c,drive(c,t,assist),h,t,{assist});assert.ok([c.x,c.s,c.speed,c.heading,c.travelHeading,c.slip].every(Number.isFinite));}assert.ok(c.finished);assert.equal(c.crashes,0);evidence.push({track:cfg.id,assist,time:+c.time.toFixed(2),kmh:Math.round(c.maxSpeed*3.6)});}console.log(JSON.stringify(evidence));});

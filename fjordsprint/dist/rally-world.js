@@ -1,6 +1,6 @@
 import * as T from './vendor/three.module.js';
-import {World as BaseWorld} from './world.js?v=3.3.0';
-import {HospitalWorld} from './hso-world.js?v=3.3.0';
+import {World as BaseWorld} from './world.js?v=3.3.2';
+import {HospitalWorld} from './hso-world.js?v=3.3.2';
 import {CAREERS,EXCUSES,aimTarget,clamp} from './rally-rules.js?v=3.3.0';
 const up=new T.Vector3(0,1,0),mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.65,...extra});
 const boxG=new T.BoxGeometry(1,1,1),ballG=new T.IcosahedronGeometry(1,1);
@@ -43,23 +43,18 @@ class RallyScene{
  }
 }
 export class World extends BaseWorld{
- build(track){super.build(track);this.rally=new RallyScene(this);this.hospitals=new HospitalWorld(this);}
+ build(track){super.build(track);this.rally=new RallyScene(this);this.hospitals=new HospitalWorld(this);this.driftTilt=0;}
  placeCar(obj,state){const f=super.placeCar(obj,state);if(state.flightPitch!==undefined)obj.rotation.x=state.flightPitch;else{obj.rotation.x+=state.pitch||0;obj.rotation.z+=clamp(state.roll||0,-.14,.14);obj.position.y-=state.suspension||0;}return f;}
  render(state,dt,mode,options={}){
-  this.totalTime+=dt;this.living.update(this.totalTime,state.s);this.details.update(this.totalTime,state.s);this.updateMascots(state,mode,options.encounters||[]);this.updateEffects(state,dt);
+  this.totalTime+=dt;this.living.update(this.totalTime,state.s);this.details.update(this.totalTime,state.s);this.updateMascots(state,mode,options.encounters||[]);
   const menu=mode==='menu',flight=['finish','results'].includes(mode),f=this.placeCar(this.car,options.motion===false?{...state,stagger:0,roll:0,pitch:0}:state),speed=state.speed||0;
   this.carShadow.position.copy(this.car.position);this.carShadow.position.y=f.p.y+.05;this.carShadow.material.opacity=.24/(1+state.air*.3);
   const speedCues=options.motion!==false&&mode==='race'&&!state.sightseeing;
-  const speedFraming=speedCues?T.MathUtils.smoothstep(speed,12,68):0;
-  const boostFraming=speedCues?(state.boosting?3.6:state.turbo>0?1.8:0):0;
-  this.exhaust.visible=mode==='race'&&(state.boosting||state.turbo>0);
-  if(this.exhaust.visible){
-   const stretch=1+speedFraming*.53;
-   for(const flame of this.exhaust.children){
-    flame.scale.y=stretch;
-    flame.position.z=3.15+(stretch-1)*1.1;
-   }
-  }
+  const speedFraming=speedCues?T.MathUtils.smoothstep(speed,10,84):0;
+  const boostFraming=speedCues&&state.boosting?(state.turbo>0?1:.87):0;
+  const driftFraming=speedCues&&options.camera!=='hood'&&state.air<.12?clamp((state.slip||0)*3,-1,1)*(state.drift||0):0;
+  this.raceEffects.update(state,dt,mode,options.motion!==false,f);
+  this.updateSkids(state,mode);
   this.rally.update(state,dt,mode,options.challenge,options);this.hospitals.update(state,mode);
   let desired,target;if(flight){const angle=options.motion===false?0:Math.sin(Math.min(state.rocketAge,12)*.23)*.22,portrait=this.camera.aspect<.8;desired=this.car.position.clone().addScaledVector(f.t,portrait?-28:-19).addScaledVector(f.r,(portrait?18:12)+angle*8);desired.y+=7;target=this.car.position.clone();target.y+=3;if(portrait)target.addScaledVector(f.r,-4);}
   else if(menu){desired=f.p.clone().addScaledVector(f.t,-19).addScaledVector(f.r,10+(options.motion===false?0:Math.sin(this.totalTime*.12)*3));desired.y+=9;target=f.p.clone().addScaledVector(f.t,23);target.y+=2;}
@@ -68,17 +63,19 @@ export class World extends BaseWorld{
   else{
    const heading=state.travelHeading??state.heading;
    const velocity=f.t.clone().multiplyScalar(Math.cos(heading)).addScaledVector(f.r,Math.sin(heading));
-   desired=this.car.position.clone().addScaledVector(velocity,-13-speedFraming*2.8);
-   desired.y+=5.8+speedFraming*.48;
+   desired=this.car.position.clone().addScaledVector(velocity,-13-speedFraming*2.3-boostFraming*1.8).addScaledVector(f.r,-driftFraming*.72);
+   desired.y+=5.8+speedFraming*.38-boostFraming*.28;
    target=this.car.position.clone().addScaledVector(velocity,23+speedFraming*11);
    target.y+=1.5;
-   const lookAhead=Math.min(state.s+36+speedFraming*17,this.track.roadLength);
+   const lookAhead=Math.min(state.s+36+speedFraming*17+boostFraming*8,this.track.roadLength);
    target.lerp(this.track.position(lookAhead,state.x*.35,2),.28+speedFraming*.1);
   }
   if(!this.cameraInitialized){this.camera.position.copy(desired);this.camTarget.copy(target);this.cameraInitialized=true;}else{this.camera.position.lerp(desired,1-Math.exp(-dt*(menu?2:flight?13:15)));this.camTarget.lerp(target,1-Math.exp(-dt*(flight?16:state.sightseeing?2.5:12)));}
   this.camera.lookAt(this.camTarget);
-  const fov=62+speedFraming*8+boostFraming;
-  this.camera.fov=options.motion===false?62:this.camera.fov+(fov-this.camera.fov)*(1-Math.exp(-dt*5));
+  this.driftTilt=T.MathUtils.lerp(this.driftTilt,driftFraming,1-Math.exp(-dt*10));
+  if(speedCues&&options.camera!=='hood')this.camera.rotateZ(this.driftTilt*(this.camera.aspect<.8?.018:.028));
+  const fov=62+speedFraming*9+boostFraming*6;
+  this.camera.fov=options.motion===false?62:T.MathUtils.lerp(this.camera.fov,fov,1-Math.exp(-dt*(boostFraming?9:5)));
   this.camera.updateProjectionMatrix();
   const texel=180/this.sun.shadow.mapSize.x;this.lightAnchor.copy(this.car.position);const rx=this.lightAnchor.dot(this.lightRight),uy=this.lightAnchor.dot(this.lightUp);this.lightAnchor.addScaledVector(this.lightRight,Math.round(rx/texel)*texel-rx).addScaledVector(this.lightUp,Math.round(uy/texel)*texel-uy);this.sun.position.copy(this.lightAnchor).add(this.lightOffset);this.sun.target.position.copy(this.lightAnchor);if(this.aurora)this.aurora.material.uniforms.time.value=this.totalTime;this.renderer.render(this.scene,this.camera);
  }

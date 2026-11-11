@@ -142,7 +142,7 @@ export class HospitalWorld{
  }
  clearScenery(){const dummy=new T.Matrix4(),position=new T.Vector3();this.world.scene.updateMatrixWorld(true);
   // Remove existing trees/rocks that would grow through the new hospital pads.
-  for(const object of this.world.scene.children){if(!object.isInstancedMesh||object===this.world.effects||object===this.world.skids)continue;let changed=false;for(let i=0;i<object.count;i++){object.getMatrixAt(i,dummy);position.setFromMatrixPosition(dummy).applyMatrix4(object.matrixWorld);if(this.items.some(h=>Math.hypot(position.x-h.p.x,position.z-h.p.z)<29)){dummy.makeScale(0,0,0);object.setMatrixAt(i,dummy);changed=true;}}if(changed)object.instanceMatrix.needsUpdate=true;}
+  for(const object of this.world.scene.children){if(!object.isInstancedMesh||object===this.world.skids)continue;let changed=false;for(let i=0;i<object.count;i++){object.getMatrixAt(i,dummy);position.setFromMatrixPosition(dummy).applyMatrix4(object.matrixWorld);if(this.items.some(h=>Math.hypot(position.x-h.p.x,position.z-h.p.z)<29)){dummy.makeScale(0,0,0);object.setMatrixAt(i,dummy);changed=true;}}if(changed)object.instanceMatrix.needsUpdate=true;}
  }
  addPit(){const t=this.world.track,root=new T.Group(),f=t.at(35);root.position.copy(t.position(35,24));root.position.y=groundHeight(this.world.terrainGeometry,root.position.x,root.position.z)+.4;root.rotation.y=-f.yaw;this.root.add(root);
   this.box(root,10,3.4,5,this.m.white,0,1.7,0);this.box(root,11,.4,6,this.m.navy,0,3.6,0);this.plane(root,9,2.25,this.brandMat,0,2.4,2.52);this.box(root,3,2.5,.1,this.m.glass,-2,1.3,2.55);

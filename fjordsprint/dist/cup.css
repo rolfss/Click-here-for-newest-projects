@@ -97,3 +97,19 @@
   border-radius: .3rem;
   background: #254653;
 }
+
+.rocket-score {
+  display: grid;
+  gap: 4px;
+  width: max-content;
+  margin: 0 0 14px auto;
+  padding: 10px 14px;
+  border: 1px solid #f3ce855c;
+  border-radius: 10px;
+  background: #0b2232ef;
+  box-shadow: 0 8px 24px #06131b52;
+}
+.rocket-score[hidden], .rocket-score [hidden] { display: none; }
+.rocket-score span { color: #c9dce0; font-size: 12px; }
+.rocket-score strong { color: #ffdf9d; font-size: clamp(20px,2.4vw,33px); line-height: 1.06; font-variant-numeric: tabular-nums; }
+.rocket-altimeter #skip-rocket { min-height: 44px; border-color: #f3ce8588; }

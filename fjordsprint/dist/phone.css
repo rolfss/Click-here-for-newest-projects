@@ -133,8 +133,19 @@
 .phone-ui-ready.mobile-ui .mobile-pedals { width: clamp(140px,44vw,184px); gap: 8px; }
 .phone-ui-ready.mobile-ui .mobile-pedals button { min-height: 56px; font-size: 14px; padding: 8px 4px; }
 .phone-ui-ready.mobile-ui .mobile-pedals button small { font-size: 10px; letter-spacing: 0; }
-.phone-ui-ready.mobile-ui .mobile-pedals #mobile-brake { min-height: 56px; }
-.phone-ui-ready.mobile-ui .mobile-pedals #mobile-brake small { white-space: normal; font-size: 9px; }
+.phone-ui-ready.mobile-ui .mobile-pedals #mobile-brake { grid-column: auto; min-height: 56px; }
+.phone-ui-ready.mobile-ui .mobile-pedals #mobile-drift { background: #50466aee; border-color: #c7b5e9; }
+.phone-ui-ready.mobile-ui .mobile-pedals #mobile-drift small { font-size: 9px; }
+@media (orientation: portrait) {
+  .phone-ui-ready.mobile-ui:not(.mobile-help-on) .mobile-pedals {
+    width: clamp(140px,calc(100vw - 172px),184px);
+    grid-template-columns: repeat(3,minmax(0,1fr));
+    gap: 5px;
+  }
+  .phone-ui-ready.mobile-ui:not(.mobile-help-on) .mobile-pedals button { font-size: 11px; }
+  .phone-ui-ready.mobile-ui:not(.mobile-help-on) .mobile-pedals small { display: none; }
+  .phone-ui-ready.mobile-ui:not(.mobile-help-on) #mobile-gas { grid-column: span 2; }
+}
 .phone-ui-ready.mobile-ui #mobile-recover, .phone-ui-ready.mobile-ui #mobile-water-toggle {
   bottom: calc(var(--safe-bottom) + var(--controls-height) + 10px); min-height: 48px; font-size: 12px;
 }
@@ -249,6 +260,7 @@
 .phone-ui-ready.mobile-ui .rocket-altimeter > strong { font-size: 46px; }
 .phone-ui-ready.mobile-ui .rocket-altimeter p { font-size: 11px; max-width: 240px; }
 .phone-ui-ready.mobile-ui .rocket-altimeter button { font-size: 13px; min-height: 48px; }
+.phone-ui-ready.mobile-ui .rocket-score { margin-bottom: 10px; padding: 8px 10px; }
 @media (orientation: landscape) and (max-height: 600px) {
   .phone-ui-ready.mobile-ui { --controls-height: 96px; }
   .phone-ui-ready.mobile-ui .menu-title { width: min(440px,calc(100% - 40px)); margin: 12px auto 20px; }
@@ -270,13 +282,13 @@
   .phone-ui-ready.mobile-ui .steer-track { top: 39px; }
   .phone-ui-ready.mobile-ui .steer-arrow { top: 19px; }
   .phone-ui-ready.mobile-ui #thumb-steer small { bottom: 8px; font-size: 10px; }
-  .phone-ui-ready.mobile-ui .mobile-pedals { width: 216px; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; }
+  .phone-ui-ready.mobile-ui .mobile-pedals { width: 250px; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; }
   .phone-ui-ready.mobile-ui .mobile-pedals button, .phone-ui-ready.mobile-ui .mobile-pedals #mobile-brake { min-height: 64px; font-size: 13px; }
   .phone-ui-ready.mobile-ui .mobile-pedals #mobile-brake { grid-column: auto; }
-  .phone-ui-ready.mobile-ui:not(.mobile-help-on) .mobile-pedals { width: 270px; grid-template-columns: repeat(4,minmax(0,1fr)); }
+  .phone-ui-ready.mobile-ui:not(.mobile-help-on) .mobile-pedals { width: 300px; grid-template-columns: repeat(5,minmax(0,1fr)); }
   .phone-ui-ready.mobile-ui #mobile-recover { left: calc(var(--safe-left) + 142px); bottom: var(--safe-bottom); max-width: 70px; padding: 6px; }
   .phone-ui-ready.mobile-ui #mobile-water-toggle { bottom: calc(var(--safe-bottom) + 74px); font-size: 11px; }
-  .phone-ui-ready.mobile-ui .race-bottom { left: auto; right: 242px; bottom: calc(var(--safe-bottom) + 54px); }
+  .phone-ui-ready.mobile-ui .race-bottom { left: auto; right: 276px; bottom: calc(var(--safe-bottom) + 54px); }
   .phone-ui-ready.mobile-ui:not(.mobile-help-on) .race-bottom { display: none; }
   .phone-ui-ready.mobile-ui #toast { bottom: calc(var(--safe-bottom) + 104px); left: 50%; width: 52%; font-size: 12px; }
   .phone-ui-ready.mobile-ui #mascot-alert { top: calc(var(--safe-top) + 116px)!important; max-width: 240px!important; font-size: 11px!important; }
@@ -295,6 +307,10 @@
   .phone-ui-ready.mobile-ui .rocket-altimeter { left: 16px; right: auto; text-align: left; }
   .phone-ui-ready.mobile-ui .rocket-altimeter > strong { font-size: 32px; }
   .phone-ui-ready.mobile-ui .rocket-altimeter p { margin: 5px 0; }
+  .phone-ui-ready.mobile-ui .rocket-score { margin-left: 0; }
+}
+@media (orientation: landscape) and (max-height: 360px) {
+  .phone-ui-ready.mobile-ui .rocket-title p { display: none; }
 }
 @media (max-width: 359px) {
   .phone-ui-ready.mobile-ui .menu-title, .phone-ui-ready.mobile-ui .course-picker { margin-left: 14px; margin-right: 14px; }
