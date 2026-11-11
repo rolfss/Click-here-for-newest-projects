@@ -46,6 +46,7 @@ try:
     shot(page,f'menu-{w}x{h}');reports.append({'screen':f'{w}x{h}','menu':True})
    page.set_viewport_size({'width':390,'height':844})
    open_action(page,'#leaderboard-btn');page.wait_for_selector('#modal-backdrop:not(.hidden)');no_overflow(page,'#modal');page.click('#close-modal')
+   page.click('#training-btn')
    page.click('#play-btn');page.click('#mobile-help-start');page.wait_for_selector('#driver-name')
    page.set_viewport_size({'width':320,'height':330});page.wait_for_timeout(180)
    page.fill('#driver-name','Telefonpilot');page.locator('#driver-form button').scroll_into_view_if_needed()

@@ -1,7 +1,7 @@
 import * as T from './vendor/three.module.js';
-import {World as BaseWorld} from './world.js';
-import {HospitalWorld} from './hso-world.js?v=3.1.0';
-import {CAREERS,EXCUSES,aimTarget,clamp} from './rally-rules.js?v=3.1.0';
+import {World as BaseWorld} from './world.js?v=3.3.0';
+import {HospitalWorld} from './hso-world.js?v=3.3.0';
+import {CAREERS,EXCUSES,aimTarget,clamp} from './rally-rules.js?v=3.3.0';
 const up=new T.Vector3(0,1,0),mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.65,...extra});
 const boxG=new T.BoxGeometry(1,1,1),ballG=new T.IcosahedronGeometry(1,1);
 function part(root,geometry,material,x,y,z,sx=1,sy=1,sz=1){const mesh=new T.Mesh(geometry,material);mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);mesh.castShadow=true;root.add(mesh);return mesh;}
@@ -48,15 +48,38 @@ export class World extends BaseWorld{
  render(state,dt,mode,options={}){
   this.totalTime+=dt;this.living.update(this.totalTime,state.s);this.details.update(this.totalTime,state.s);this.updateMascots(state,mode,options.encounters||[]);this.updateEffects(state,dt);
   const menu=mode==='menu',flight=['finish','results'].includes(mode),f=this.placeCar(this.car,options.motion===false?{...state,stagger:0,roll:0,pitch:0}:state),speed=state.speed||0;
-  this.carShadow.position.copy(this.car.position);this.carShadow.position.y=f.p.y+.05;this.carShadow.material.opacity=.24/(1+state.air*.3);this.exhaust.visible=state.boosting;
+  this.carShadow.position.copy(this.car.position);this.carShadow.position.y=f.p.y+.05;this.carShadow.material.opacity=.24/(1+state.air*.3);
+  const speedCues=options.motion!==false&&mode==='race'&&!state.sightseeing;
+  const speedFraming=speedCues?T.MathUtils.smoothstep(speed,12,68):0;
+  const boostFraming=speedCues?(state.boosting?3.6:state.turbo>0?1.8:0):0;
+  this.exhaust.visible=mode==='race'&&(state.boosting||state.turbo>0);
+  if(this.exhaust.visible){
+   const stretch=1+speedFraming*.53;
+   for(const flame of this.exhaust.children){
+    flame.scale.y=stretch;
+    flame.position.z=3.15+(stretch-1)*1.1;
+   }
+  }
   this.rally.update(state,dt,mode,options.challenge,options);this.hospitals.update(state,mode);
   let desired,target;if(flight){const angle=options.motion===false?0:Math.sin(Math.min(state.rocketAge,12)*.23)*.22,portrait=this.camera.aspect<.8;desired=this.car.position.clone().addScaledVector(f.t,portrait?-28:-19).addScaledVector(f.r,(portrait?18:12)+angle*8);desired.y+=7;target=this.car.position.clone();target.y+=3;if(portrait)target.addScaledVector(f.r,-4);}
   else if(menu){desired=f.p.clone().addScaledVector(f.t,-19).addScaledVector(f.r,10+(options.motion===false?0:Math.sin(this.totalTime*.12)*3));desired.y+=9;target=f.p.clone().addScaledVector(f.t,23);target.y+=2;}
   else if(state.sightseeing&&this.hospitals.items.some(h=>h.s>state.s+10&&h.s-state.s<300)){const h=this.hospitals.items.find(h=>h.s>state.s+10&&h.s-state.s<300);desired=this.car.position.clone().addScaledVector(f.t,-18).addScaledVector(f.r,-h.side*6);desired.y+=8;const focus=h.p.clone();focus.y=h.y+12;target=this.car.position.clone().addScaledVector(f.t,23);target.y+=1.5;target.lerp(focus,.86);}
   else if(options.camera==='hood'){desired=this.car.position.clone().addScaledVector(f.t,1.3);desired.y+=1.65;target=this.track.position(Math.min(state.s+60,this.track.roadLength),state.x*.5,2);}
-  else{const heading=state.travelHeading??state.heading,velocity=f.t.clone().multiplyScalar(Math.cos(heading)).addScaledVector(f.r,Math.sin(heading));desired=this.car.position.clone().addScaledVector(velocity,-13-speed*.035);desired.y+=5.8+speed*.008;target=this.car.position.clone().addScaledVector(velocity,23+speed*.12);target.y+=1.5;target.lerp(this.track.position(Math.min(state.s+36+speed*.15,this.track.roadLength),state.x*.35,2),.28);}
+  else{
+   const heading=state.travelHeading??state.heading;
+   const velocity=f.t.clone().multiplyScalar(Math.cos(heading)).addScaledVector(f.r,Math.sin(heading));
+   desired=this.car.position.clone().addScaledVector(velocity,-13-speedFraming*2.8);
+   desired.y+=5.8+speedFraming*.48;
+   target=this.car.position.clone().addScaledVector(velocity,23+speedFraming*11);
+   target.y+=1.5;
+   const lookAhead=Math.min(state.s+36+speedFraming*17,this.track.roadLength);
+   target.lerp(this.track.position(lookAhead,state.x*.35,2),.28+speedFraming*.1);
+  }
   if(!this.cameraInitialized){this.camera.position.copy(desired);this.camTarget.copy(target);this.cameraInitialized=true;}else{this.camera.position.lerp(desired,1-Math.exp(-dt*(menu?2:flight?13:15)));this.camTarget.lerp(target,1-Math.exp(-dt*(flight?16:state.sightseeing?2.5:12)));}
-  this.camera.lookAt(this.camTarget);const fov=options.motion===false||flight?62:62+speed*.065+(state.boosting?3:0);this.camera.fov+=(fov-this.camera.fov)*Math.min(1,dt*4);this.camera.updateProjectionMatrix();
+  this.camera.lookAt(this.camTarget);
+  const fov=62+speedFraming*8+boostFraming;
+  this.camera.fov=options.motion===false?62:this.camera.fov+(fov-this.camera.fov)*(1-Math.exp(-dt*5));
+  this.camera.updateProjectionMatrix();
   const texel=180/this.sun.shadow.mapSize.x;this.lightAnchor.copy(this.car.position);const rx=this.lightAnchor.dot(this.lightRight),uy=this.lightAnchor.dot(this.lightUp);this.lightAnchor.addScaledVector(this.lightRight,Math.round(rx/texel)*texel-rx).addScaledVector(this.lightUp,Math.round(uy/texel)*texel-uy);this.sun.position.copy(this.lightAnchor).add(this.lightOffset);this.sun.target.position.copy(this.lightAnchor);if(this.aurora)this.aurora.material.uniforms.time.value=this.totalTime;this.renderer.render(this.scene,this.camera);
  }
 }

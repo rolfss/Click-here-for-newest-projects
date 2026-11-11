@@ -30,6 +30,25 @@ def click_menu(page,selector):
   page.wait_for_selector('body.phone-ui-ready',timeout=10000)
  if not page.locator(selector).is_visible():page.click('#phone-menu-toggle')
  page.click(selector)
+def verify_cup_flow(page):
+ page.click('#close-modal');page.click('#cup-btn')
+ assert 'tre etapper' in page.locator('#race-intro').inner_text()
+ page.click('#play-btn');page.fill('#driver-name','Cupfører');page.click('#driver-form button')
+ for index,seconds in enumerate([64,82,90],1):
+  wait(page,"__qa.mode==='race'")
+  assert page.locator('#stage-indicator').inner_text()==f'Etappe {index} av 3'
+  page.evaluate(f'()=>__qa.setCar({{time:{seconds},s:__qa.track.length-.01,speed:30,checkpoint:3}})')
+  wait(page,"['finish','results'].includes(__qa.mode)")
+  if page.locator('#skip-rocket').is_visible():page.click('#skip-rocket')
+  wait(page,"__qa.mode==='results'")
+  assert page.locator('.cup-stage-scores .is-complete').count()==index
+  if index<3:
+   assert page.evaluate("localStorage.getItem('fjordsprint-cup-v1')") is None
+   page.click('#next-btn')
+ assert page.locator('#result-title').inner_text()=='Fjellcupen fullført!'
+ assert len(page.evaluate("JSON.parse(localStorage.getItem('fjordsprint-cup-v1'))"))==1
+ page.click('.cup-open-board')
+ assert 'Cupfører' in page.locator('#cup-board-rows').inner_text()
 def exercise(page,label,touch):
  page.goto(url,wait_until='networkidle');page.wait_for_selector('#menu:not(.hidden)',timeout=60000)
  assert page.evaluate('__qa.world.renderer.info.render.calls')>0
@@ -39,6 +58,7 @@ def exercise(page,label,touch):
  assert page.locator('[data-tour]').count()==3
  shot(page,label+'-directory');page.click('#close-modal');shot(page,label+'-menu')
  page.evaluate("__qa.world.setQuality('low')")
+ page.click('#training-btn')
  page.click('#play-btn');page.click('#mobile-help-start' if touch else '#help-start');page.wait_for_selector('#driver-name')
  assert page.evaluate('__qa.mode')=='menu'
  page.fill('#driver-name','<img>');page.click('#driver-form button');assert page.locator('#driver-error').inner_text()
@@ -89,6 +109,7 @@ def exercise(page,label,touch):
  page.reload(wait_until='networkidle');page.wait_for_selector('#menu:not(.hidden)');click_menu(page,'#leaderboard-btn')
  assert 'Ingen aktive resultater' in page.locator('#leaderboard-rows').inner_text()
  assert page.evaluate("localStorage.getItem('fjordsprint-career-scores-v3')")=='[]'
+ if label=='desktop':verify_cup_flow(page)
  return campuses
 try:
  with sync_playwright() as p:

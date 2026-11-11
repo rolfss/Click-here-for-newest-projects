@@ -48,7 +48,7 @@ Kontroller: venstre spak styrer, RT/LT gir gass/brems, A boost, X drift, B gjeno
 
 ## Innhold som er bevart
 
-Tre fiktive baner: Fjordlinjen, Tindepasset og Nordlysryggen. Fjellcupen åpner banene etter hvert; Trening åpner alle. Tre arkivporter per bane gir spørsmål i fokustid. Riktig svar gir boost. Flyvende kontrollører slipper ekstra spørsmålspakker; riktig ekspertsvar gir turbo, feil gir fartstap. Det finnes også boostfelt, hopp, medaljer, karrierefremgang, dyr, tilskuere, original syntetisert musikk og et eget målområde.
+Fjellcupen går fra Fjordlinjen over Tindepasset til Nordlysryggen. Ren kjøring, flyt, tempo, effektiv boost og arkivoppgaver gir poeng på hver etappe. Fullfør alle tre for å sette en totalscore på poengtavlen. I Trening kan du velge en enkelt etappe. Tre arkivporter per bane gir spørsmål i fokustid. En fuglepakke kan kjøres gjennom for et ekspertspørsmål. Riktig svar gir fire sekunder med turbo, feil gir fartstap, og du kan styre utenom ringen. Det finnes også boostfelt, hopp, medaljer, karrierefremgang, dyr, tilskuere, original syntetisert musikk og et eget målområde.
 
 Assistert styring og Sport har egne rekorder. Arkivrally, spørsmålssett og rent tidsløp har egne klasser. Den fysiske kjøremodellen er ikke balansert om i denne oppdateringen; eksisterende personlige rekorder beholdes.
 

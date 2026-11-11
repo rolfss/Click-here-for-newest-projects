@@ -1,9 +1,10 @@
 import * as T from './vendor/three.module.js';
-import {carveRoadClearance,groundHeight} from './terrain.js';
+import {carveRoadClearance,groundHeight} from './terrain.js?v=3.3.0';
 import {buildLivingWorld,createMascot} from './living-world.js';
 import {mascotNames} from './encounters.js';
 import {buildFinishVenue} from './finish.js';
 import {buildRoadsideDetails} from './roadside-details.js';
+import {addRoadsideCabins} from './roadside-architecture.js';
 const clamp=T.MathUtils.clamp,up=new T.Vector3(0,1,0);
 function rand(seed){return()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};}
 const material=(c,options={})=>new T.MeshStandardMaterial({color:c,roughness:.86,...options});
@@ -21,7 +22,7 @@ export class World{
   const hemi=new T.HemisphereLight(0xc9e5ff,0x465144,2.4);this.scene.add(hemi);this.sun=new T.DirectionalLight(track.config.sun,3.5);this.sun.position.set(-300,700,-600);this.sun.castShadow=true;this.sun.shadow.mapSize.set(1024,1024);Object.assign(this.sun.shadow.camera,{left:-90,right:90,top:90,bottom:-90,near:1,far:1300});this.sun.shadow.bias=-.0015;this.scene.add(this.sun,this.sun.target);
   this.addSky();this.addTerrain();this.addRoad();this.finishVenue=buildFinishVenue({scene:this.scene,track});this.addScenery();this.living=buildLivingWorld({scene:this.scene,track,terrainGeometry:this.terrainGeometry,seed:830});this.details=buildRoadsideDetails({scene:this.scene,track,terrainGeometry:this.terrainGeometry,seed:1221});this.addMascots();this.car=this.makeCar(false);this.scene.add(this.car);this.ghost=this.makeCar(true);this.ghost.visible=false;this.scene.add(this.ghost);
   const shadowMat=new T.MeshBasicMaterial({color:0x091b22,transparent:true,opacity:.24,depthWrite:false});this.carShadow=new T.Mesh(new T.CircleGeometry(2.4,20),shadowMat);this.carShadow.rotation.x=-Math.PI/2;this.scene.add(this.carShadow);
-  this.exhaust=new T.Group();const em=material(0x78ffe7,{emissive:0x4affcd,emissiveIntensity:3,transparent:true,opacity:.9});for(let x of [-.63,.63]){let e=new T.Mesh(new T.ConeGeometry(.24,2.2,7),em);e.rotation.x=-Math.PI/2;e.position.set(x,.58,3.15);this.exhaust.add(e);}this.car.add(this.exhaust);this.exhaust.visible=false;
+  this.exhaust=new T.Group();const em=material(0x78ffe7,{emissive:0x4affcd,emissiveIntensity:3,transparent:true,opacity:.9});for(let x of [-.63,.63]){let e=new T.Mesh(new T.ConeGeometry(.24,2.2,7),em);e.rotation.x=Math.PI/2;e.position.set(x,.58,3.15);this.exhaust.add(e);}this.car.add(this.exhaust);this.exhaust.visible=false;
   this.effects=new T.InstancedMesh(new T.IcosahedronGeometry(.24,0),new T.MeshBasicMaterial({color:0xbed4ce,transparent:true,opacity:.37,depthWrite:false}),64);this.effects.instanceMatrix.setUsage(T.DynamicDrawUsage);this.effects.frustumCulled=false;this.scene.add(this.effects);this.effectDummy=new T.Object3D();this.effectCursor=0;this.effectTick=0;for(let i=0;i<64;i++){this.particles.push({life:0,p:new T.Vector3(),v:new T.Vector3()});this.effectDummy.scale.setScalar(0);this.effectDummy.updateMatrix();this.effects.setMatrixAt(i,this.effectDummy.matrix);}
   this.skids=new T.InstancedMesh(new T.PlaneGeometry(.29,1.6),new T.MeshBasicMaterial({color:0x101c23,transparent:true,opacity:.5,depthWrite:false,side:T.DoubleSide}),180);this.skids.frustumCulled=false;this.scene.add(this.skids);this.skidCursor=0;for(let i=0;i<180;i++)this.skids.setMatrixAt(i,this.effectDummy.matrix);
   this.lightOffset=new T.Vector3(-220,500,-180);const lightZ=this.lightOffset.clone().normalize();this.lightRight=new T.Vector3().crossVectors(up,lightZ).normalize();this.lightUp=new T.Vector3().crossVectors(lightZ,this.lightRight);this.lightAnchor=new T.Vector3();
@@ -51,8 +52,26 @@ export class World{
   for(let i=0;i<34;i++){const x=i<17?-1700-this.random()*1100:950+this.random()*1700,z=650-this.random()*(len+1400),h=350+this.random()*1050;const radius=320+this.random()*650;if(this.track.distanceToRoad(x,z)>radius+h*.10+90)this.mountain(x,z,h,radius);}
  }
  mountain(x,z,h,r){
-  const g=new T.ConeGeometry(r,h,7,4);const a=g.attributes.position;for(let i=0;i<a.count;i++){const y=a.getY(i);a.setX(i,a.getX(i)+Math.sin(y*.015)*h*.06);a.setZ(i,a.getZ(i)+Math.cos(y*.011)*h*.04);}g.computeVertexNormals();const m=new T.Mesh(g,material(this.track.config.id==='aurora'?0x617082:0x79928e,{flatShading:true}));m.position.set(x,h/2-20,z);m.rotation.y=this.random()*6;this.scene.add(m);
-  let cap=new T.Mesh(new T.ConeGeometry(r*.32,h*.32,7,2),material(0xe2eeec,{flatShading:true}));cap.position.set(x+Math.sin(h*.5*.015)*h*.06,h*.84-20,z+Math.cos(h*.5*.011)*h*.04);cap.rotation.y=m.rotation.y;this.scene.add(cap);
+  const geometry=new T.ConeGeometry(r,h,7,6);
+  const positions=geometry.attributes.position,colors=[];
+  const night=this.track.config.id==='aurora';
+  const stone=new T.Color(night?0x617082:0x79928e),snow=new T.Color(night?0xc9d8e6:0xe2eeec),shade=new T.Color();
+  for(let i=0;i<positions.count;i++){
+   const px=positions.getX(i),py=positions.getY(i),pz=positions.getZ(i);
+   positions.setX(i,px+Math.sin(py*.015)*h*.06);
+   positions.setZ(i,pz+Math.cos(py*.011)*h*.04);
+   const localHeight=py/h+.5;
+   const vein=Math.sin(px*.018+pz*.011)*.06+Math.sin(pz*.027)*.03;
+   const snowline=(night?.63:.72)+vein;
+   shade.copy(stone).multiplyScalar(.92+vein).lerp(snow,T.MathUtils.smoothstep(localHeight,snowline,snowline+.16));
+   colors.push(shade.r,shade.g,shade.b);
+  }
+  geometry.setAttribute('color',new T.Float32BufferAttribute(colors,3));
+  geometry.computeVertexNormals();
+  const mountain=new T.Mesh(geometry,material(0xffffff,{vertexColors:true,flatShading:true}));
+  mountain.position.set(x,h/2-20,z);
+  mountain.rotation.y=this.random()*6;
+  this.scene.add(mountain);
  }
  roadStrip(left,right,height,mat){const positions=[],uvs=[],indices=[];for(let i=0;i<this.track.roadSamples.length;i++){let {p,r}=this.track.roadSamples[i];positions.push(p.x+r.x*left,p.y+height,p.z+r.z*left,p.x+r.x*right,p.y+height,p.z+r.z*right);uvs.push(0,i/3,1,i/3);if(i<this.track.roadSamples.length-1){let a=i*2;indices.push(a,a+1,a+2,a+1,a+3,a+2);}}const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(positions,3));g.setAttribute('uv',new T.Float32BufferAttribute(uvs,2));g.setIndex(indices);g.computeVertexNormals();let mesh=new T.Mesh(g,mat);mesh.receiveShadow=true;this.scene.add(mesh);return mesh;}
  addRoad(){
@@ -75,13 +94,12 @@ export class World{
   let treeG=new T.ConeGeometry(1,1,6),treeM=material(this.track.config.id==='aurora'?0x214a4e:0x234e44,{flatShading:true}),trunkM=material(0x5c5443);const n=650,trees=new T.InstancedMesh(treeG,treeM,n*2),trunks=new T.InstancedMesh(new T.CylinderGeometry(.35,.5,1,5),trunkM,n),dummy=new T.Object3D();
   for(let i=0;i<n;i++){let s=this.random()*this.track.length,f=this.track.at(s),offset=(35+this.random()*330)*(this.random()<.45?-1:1),x=f.p.x+f.r.x*offset,z=f.p.z+f.r.z*offset,y=groundHeight(this.terrainGeometry,x,z),h=7+this.random()*17;if(y<2||y>350||this.track.distanceToRoad(x,z)<this.track.config.width/2+8)h=0;dummy.rotation.set(0,this.random()*6,0);dummy.position.set(x,y+h*.38,z);dummy.scale.set(h*.30,h,h*.30);dummy.updateMatrix();trees.setMatrixAt(i*2,dummy.matrix);dummy.position.y=y+h*.72;dummy.scale.set(h*.23,h*.74,h*.23);dummy.updateMatrix();trees.setMatrixAt(i*2+1,dummy.matrix);dummy.position.y=y+h*.12;dummy.scale.set(1,h*.35,1);dummy.updateMatrix();trunks.setMatrixAt(i,dummy.matrix);}trees.castShadow=true;trees.receiveShadow=true;this.scene.add(trees,trunks);
   const rockG=new T.IcosahedronGeometry(1,0),rockM=material(0x84948f,{flatShading:true});let rocks=new T.InstancedMesh(rockG,rockM,180);for(let i=0;i<180;i++){const s=this.random()*this.track.length,f=this.track.at(s),off=(28+this.random()*110)*(this.random()>.5?1:-1),p=f.p.clone().addScaledVector(f.r,off),size=this.track.distanceToRoad(p.x,p.z)<this.track.config.width/2+12?0:2+this.random()*8;dummy.position.set(p.x,groundHeight(this.terrainGeometry,p.x,p.z),p.z);dummy.scale.set(size,size*.8,size*.7);dummy.rotation.set(this.random(),this.random()*6,0);dummy.updateMatrix();rocks.setMatrixAt(i,dummy.matrix);}this.scene.add(rocks);
-  for(let i=0;i<8;i++){let f=this.track.at(140+i*this.track.length/9),side=i%2?1:-1,p=f.p.clone().addScaledVector(f.r,side*(45+this.random()*50));this.cabin(p.x,groundHeight(this.terrainGeometry,p.x,p.z),p.z,i);}
+  this.cabins=addRoadsideCabins(this.scene,this.track,this.terrainGeometry);
   // Support piers emphasize the engineered road along the steep mountain wall.
   let pierMat=material(0x78898b);for(let s=70;s<this.track.length;s+=80){let f=this.track.at(s);for(let side of [-1,1]){let p=f.p.clone().addScaledVector(f.r,side*(this.track.config.width/2-2));box(this.scene,2.2,30,2.2,pierMat,p.x,p.y-16,p.z);}}
   // A tall waterfall on the western cliffs, visible on the climbing leg.
   const wf=this.track.at(this.track.length*.40),wp=wf.p.clone().addScaledVector(wf.r,-115);let fall=new T.Mesh(new T.PlaneGeometry(10,105),new T.MeshStandardMaterial({color:0xd5eeea,transparent:true,opacity:.63,roughness:.18,side:T.DoubleSide}));fall.position.set(wp.x,Math.max(55,wp.y-35),wp.z);fall.rotation.y=-wf.yaw;this.scene.add(fall);
  }
- cabin(x,y,z,i){let g=new T.Group();box(g,10,6,8,material(i%3===0?0xc99058:0x9f4540),0,3,0);let roof=new T.Mesh(new T.CylinderGeometry(7.2,7.2,11,3,1),material(0x293b43));roof.rotation.z=Math.PI/2;roof.rotation.y=Math.PI/2;roof.position.y=6;g.add(roof);const win=material(0xffdda2,{emissive:0xffce7a,emissiveIntensity:.6});for(let xx of [-3,3])box(g,1.5,1.8,.1,win,xx,3.4,4.03);box(g,1.6,3,.12,material(0x243e3e),0,1.5,4.06);g.position.set(x,y,z);g.rotation.y=this.random()*1.2;this.scene.add(g);}
  makeCar(ghost){let g=new T.Group();const teal=material(ghost?0xb3cbff:0x82eee0,{metalness:.36,roughness:.3,transparent:ghost,opacity:ghost?.30:1}),dark=material(0x152934,{metalness:.55,roughness:.25,transparent:ghost,opacity:ghost?.20:1}),glass=material(0x26586c,{metalness:.8,roughness:.13,transparent:ghost,opacity:ghost?.2:1}),red=material(0xff7055,{emissive:0xff3421,emissiveIntensity:.6,transparent:ghost,opacity:ghost?.3:1});
   g.userData.paint=teal;g.userData.rearLight=red;box(g,2.8,.7,4.7,teal,0,.8,0);box(g,2.5,.2,5,dark,0,.47,0);box(g,2.3,.52,1.8,glass,0,1.38,-.15);box(g,2.4,.12,1.6,teal,0,1.69,0);box(g,.42,.045,4.72,dark,0,1.17,0);box(g,3.2,.16,.75,dark,0,1.55,2.05);for(let x of [-1,1])box(g,.15,.75,.18,dark,x,1.18,2.05);
   const tire=material(0x111d25,{roughness:.88,transparent:ghost,opacity:ghost?.22:1}),hub=material(0xb9d3cf,{metalness:.8,roughness:.3,transparent:ghost,opacity:ghost?.22:1});g.userData.wheels=[];for(let x of [-1.45,1.45])for(let z of [-1.48,1.55]){let w=new T.Group(),mesh=new T.Mesh(new T.CylinderGeometry(.58,.58,.44,16),tire);mesh.rotation.z=Math.PI/2;w.add(mesh);let h=new T.Mesh(new T.CylinderGeometry(.31,.31,.455,8),hub);h.rotation.z=Math.PI/2;w.add(h);w.position.set(x,.58,z);g.add(w);g.userData.wheels.push(w);}

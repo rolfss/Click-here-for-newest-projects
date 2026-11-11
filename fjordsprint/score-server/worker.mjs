@@ -1,5 +1,6 @@
 import { cleanName, validBoard, rankScores, SCORE_TTL } from '../dist/leaderboard.js';
 import { ConferenceScores } from './conference.mjs';
+import { RUN_BOARD } from '../dist/run-scoring.js';
 import { InputError, json, smallJSON } from './http.mjs';
 const HOUR = 3600000, SESSION_TTL = 30 * 60000;
 
@@ -104,14 +105,17 @@ export default {
   async fetch(request, env) {
     const origin = request.headers.get('Origin');
     const allowed = (env.ALLOWED_ORIGINS || 'https://rolfss.github.io').split(',').map(s => s.trim());
-    const { pathname } = new URL(request.url);
+    const { pathname, searchParams } = new URL(request.url);
     if (request.method === 'GET' && pathname === '/health') return json({ ready: true, ttlHours: 72 });
     const conferenceRead = request.method === 'GET' && ['/conference/scores', '/conference/admin'].includes(pathname);
     if (origin ? !allowed.includes(origin) : !conferenceRead) return json({ error: 'Denne opprinnelsen er ikke tillatt.' }, 403);
     const cors = { 'Access-Control-Allow-Origin': origin, 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': pathname === '/conference/admin' ? 'Authorization' : 'Content-Type', 'Access-Control-Max-Age': '600', 'Vary': 'Origin' };
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     try {
-      const id = env.LEADERBOARD.idFromName('fjordsprint-v2');
+      const namespace = pathname.startsWith('/conference/') && searchParams.get('board') === RUN_BOARD
+        ? RUN_BOARD
+        : 'fjordsprint-v2';
+      const id = env.LEADERBOARD.idFromName(namespace);
       const response = await env.LEADERBOARD.get(id).fetch(request);
       const out = new Response(response.body, response);
       if (origin) for (const [key, value] of Object.entries(cors)) out.headers.set(key, value);

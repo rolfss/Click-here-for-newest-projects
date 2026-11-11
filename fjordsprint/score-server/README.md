@@ -3,11 +3,15 @@
 Konferanseløpet bruker rutene under `/conference/`. Se [oppsett og kontroll av konferanseløpet](../CONFERENCE.md) for utrulling, arrangørnøkkel og kobling til GitHub Pages.
 
 - `POST /conference/sessions` binder løpsklassen, kallenavnet og det korte M365-brukernavnet til en løpsbillett som varer i 30 minutter.
-- `POST /conference/scores` registrerer poeng og løpstid én gang per billett. Identiteten er allerede bundet til billetten.
+- `POST /conference/scores` registrerer et fullført løp én gang per billett. Identiteten er allerede bundet til billetten.
 - `GET /conference/scores` viser dagens 50 beste kallenavn med rang, poeng og løpstid. Beste løp per brukernavn teller. Døgnet skifter klokken 08.00 i `Europe/Oslo`.
 - `GET /conference/admin?day=YYYY-MM-DD` krever arrangørnøkkel i `Authorization: Bearer …` og viser dagens eller en tidligere dags vinner med brukernavn.
 
-Ved døgnskiftet beholdes vinneren til arrangørens premieoppslag. Resten av forrige dags resultater fjernes fra den aktive databasen. Løpsbillettene utløper automatisk. Poeng beregnes i spillet og kontrolleres mot mulige poengsummer og løpstider på serveren.
+Klassen `fjordsprint-three-stage-v1` bruker `board=fjordsprint-three-stage-v1` som parameter på alle fire rutene. Startforespørselen oppgir også løpsklassen i JSON. Sluttforespørselen sender billetten og en liste med tre målinger fra etappene, i rekkefølgen Fjordlinjen, Tindepasset og Nordlysryggen. Serveren kontrollerer rekkefølgen, målingene og løpstiden, beregner poeng per etappe og returnerer kvitteringen med totalsummen. Målingene kommer fra spillklienten. En billett og en gyldig måling bekrefter ikke en servervalidert reprise.
+
+Ruter uten `board` viser den opprinnelige konkurransen på Fjordlinjen og mottar poeng og tid for én etappe.
+
+Ved døgnskiftet beholdes vinneren til arrangørens premieoppslag. Den offentlige listen begynner på nytt. Løpskvitteringer slettes ved døgnskiftet eller når fristen for å gjenta innsendingen utløper, avhengig av hva som kommer sist.
 
 ## Eldre felles toppliste
 
