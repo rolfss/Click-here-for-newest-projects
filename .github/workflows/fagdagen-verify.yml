@@ -1,4 +1,4 @@
-name: Verify the live Fagdagen browser app
+name: Activate and verify the archive quiz
 on:
   push:
     branches: [fagdagen-web-2026]
@@ -11,29 +11,48 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - name: Check the published app
+      - name: Open the quiz and verify public routes
         run: |
           node --input-type=module <<'NODE'
-          const origin = 'https://fagdagen-2026.ambitious-hat.workers.dev';
-          for (const path of ['/', '/spill', '/api/quiz/status', '/api/fjord/leaderboard']) {
-            const response = await fetch(origin + path, { signal: AbortSignal.timeout(10000) });
-            if (!response.ok) {
-              const body = (await response.text()).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 420);
-              console.log('FAGDAG_HTTP ' + JSON.stringify({ path, status: response.status, mitigation: response.headers.get('cf-mitigated'), body }));
-              throw new Error(path + ' returned ' + response.status);
-            }
-            if (path.endsWith('/status')) {
-              const status = await response.json();
-              if (status.count !== 10 || typeof status.active !== 'boolean') throw new Error('Unexpected quiz status');
-              console.log('FAGDAG_QUIZ_ACTIVE ' + status.active);
-            } else if (path.endsWith('/leaderboard')) {
-              const data = await response.json();
-              if (!Array.isArray(data.rows)) throw new Error('Unexpected Fjordsprint leaderboard');
-              console.log('FAGDAG_FJORD_OK ' + data.rows.length);
-            } else {
-              await response.body?.cancel();
+          import assert from 'node:assert/strict';
+          import { setTimeout as wait } from 'node:timers/promises';
+          const origin = 'https://fagdagen-2026.familiar-lightyear.workers.dev';
+          const packet = {"senderPublicKey":{"key_ops":[],"ext":true,"kty":"EC","x":"3obgRDktSNtimXt149TueRScQwUacs2o2GjWIXYvp4A","y":"NEXYZ-m5k2QO1xVyBzx3C7opyDgNKSuNsiFdkmliGzA","crv":"P-256"},"iv":"3U4j2Qvjz3QGUOq9","ciphertext":"SFbHUCl_aXbjSABQCfDb0AyyhBRuByhi-9abega3O7dkPETW-PEfTjnxcQ9OgWSwU2PziviZ5Kh4f3c"};
+          const address = (path) => origin + path;
+          async function request(path, options) {
+            for (let attempt = 0; attempt < 5; attempt++) {
+              try {
+                const response = await fetch(address(path), { ...options, redirect: 'error', signal: AbortSignal.timeout(7000) });
+                if (![403, 429, 500, 502, 503, 504].includes(response.status) || attempt === 4) return response;
+                await response.body?.cancel();
+              } catch (error) {
+                if (attempt === 4) throw error;
+              }
+              await wait(3000);
             }
           }
+          const activation = await request('/api/organizer/bootstrap', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(packet)
+          });
+          assert([200, 410].includes(activation.status), 'Activation HTTP ' + activation.status);
+          assert((await activation.json()).active === true, 'Activation was not confirmed');
+          const status = await request('/api/quiz/status').then(r => r.json());
+          assert(status.active === true && status.state === 'open' && status.count === 10, 'Public quiz not open');
+          const clock = new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Oslo',hour:'2-digit',minute:'2-digit'});
+          assert.equal(clock.format(new Date(status.resetsAt)), '08:00');
+          const board = await request('/api/quiz/leaderboard?offset=0').then(r => r.json());
+          assert(Array.isArray(board.rows) && board.total <= 1500 && Number.isInteger(board.total), 'Leaderboard unavailable');
+          const page = await request('/spill');
+          assert(page.ok && (await page.text()).includes('Arkivfaglig quiz'), 'Quiz page unavailable');
+          const qr = await request('/quiz-qr.png');
+          assert(qr.ok && (qr.headers.get('Content-Type') ?? '').includes('image/svg+xml'), 'QR unavailable');
+          await qr.body?.cancel();
+          const invalid = await request('/api/quiz/start', { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' });
+          assert.equal(invalid.status,400,'Registration did not accept requests');
+          await invalid.body?.cancel();
+          const fjord = await request('/api/fjord/leaderboard');
+          assert(fjord.ok && Array.isArray((await fjord.json()).rows), 'Fjordsprint unavailable');
+          console.log('FAGDAG_ARCHIVE_QUIZ_LIVE ' + status.resetsAt);
           NODE
       - name: Link the verification run
         if: always()
@@ -42,15 +61,11 @@ jobs:
           FAGDAG_VERIFY_RESULT: ${{ job.status }}
         run: |
           node --input-type=module <<'NODE'
-          const env = process.env;
-          const response = await fetch(env.GITHUB_API_URL + '/repos/' + env.GITHUB_REPOSITORY + '/statuses/' + env.GITHUB_SHA, {
-            method: 'POST',
-            headers: { Authorization: 'Bearer ' + env.FAGDAG_VERIFY_TOKEN, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              state: env.FAGDAG_VERIFY_RESULT === 'success' ? 'success' : 'failure',
-              context: 'Fagdagen / Live verification',
-              target_url: env.GITHUB_SERVER_URL + '/' + env.GITHUB_REPOSITORY + '/actions/runs/' + env.GITHUB_RUN_ID
-            })
+          const e = process.env;
+          const response = await fetch(e.GITHUB_API_URL + '/repos/' + e.GITHUB_REPOSITORY + '/statuses/' + e.GITHUB_SHA, {
+            method:'POST', headers:{Authorization:'Bearer ' + e.FAGDAG_VERIFY_TOKEN,'Content-Type':'application/json'},
+            body:JSON.stringify({state:e.FAGDAG_VERIFY_RESULT==='success'?'success':'failure',
+              context:'Fagdagen / Live verification',target_url:e.GITHUB_SERVER_URL+'/'+e.GITHUB_REPOSITORY+'/actions/runs/'+e.GITHUB_RUN_ID})
           });
-          if (!response.ok) throw new Error('Could not report verification status');
+          if (!response.ok) throw Error('Could not report verification status');
           NODE
