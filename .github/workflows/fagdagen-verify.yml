@@ -1,0 +1,52 @@
+name: Verify the live Fagdagen browser app
+on:
+  push:
+    branches: [fagdagen-web-2026]
+    paths: ['.github/workflows/fagdagen-verify.yml']
+permissions:
+  contents: read
+  statuses: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check the published app
+        run: |
+          node --input-type=module <<'NODE'
+          const origin = 'https://fagdagen-2026.ambitious-hat.workers.dev';
+          for (const path of ['/', '/spill', '/api/quiz/status', '/api/fjord/leaderboard']) {
+            const response = await fetch(origin + path, { signal: AbortSignal.timeout(10000) });
+            if (!response.ok) throw new Error(path + ' returned ' + response.status);
+            if (path.endsWith('/status')) {
+              const status = await response.json();
+              if (status.count !== 10 || typeof status.active !== 'boolean') throw new Error('Unexpected quiz status');
+              console.log('FAGDAG_QUIZ_ACTIVE ' + status.active);
+            } else if (path.endsWith('/leaderboard')) {
+              const data = await response.json();
+              if (!Array.isArray(data.rows)) throw new Error('Unexpected Fjordsprint leaderboard');
+              console.log('FAGDAG_FJORD_OK ' + data.rows.length);
+            } else {
+              await response.body?.cancel();
+            }
+          }
+          NODE
+      - name: Link the verification run
+        if: always()
+        env:
+          FAGDAG_VERIFY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FAGDAG_VERIFY_RESULT: ${{ job.status }}
+        run: |
+          node --input-type=module <<'NODE'
+          const env = process.env;
+          const response = await fetch(env.GITHUB_API_URL + '/repos/' + env.GITHUB_REPOSITORY + '/statuses/' + env.GITHUB_SHA, {
+            method: 'POST',
+            headers: { Authorization: 'Bearer ' + env.FAGDAG_VERIFY_TOKEN, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              state: env.FAGDAG_VERIFY_RESULT === 'success' ? 'success' : 'failure',
+              context: 'Fagdagen / Live verification',
+              target_url: env.GITHUB_SERVER_URL + '/' + env.GITHUB_REPOSITORY + '/actions/runs/' + env.GITHUB_RUN_ID
+            })
+          });
+          if (!response.ok) throw new Error('Could not report verification status');
+          NODE
