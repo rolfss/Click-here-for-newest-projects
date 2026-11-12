@@ -1,9 +1,0 @@
-node_modules/
-.wrangler/
-.dev.vars*
-worker-configuration.d.ts
-local/config.json
-local/*.log
-.private/
-**/owner-notes*.json
-**/bonsai-status*.json

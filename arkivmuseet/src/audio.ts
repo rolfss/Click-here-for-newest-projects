@@ -1,9 +1,0 @@
-// Original procedural ambience. No samples or external audio requests.
-export class MuseumAudio{
- ctx:AudioContext|null=null;gain:GainNode|null=null;volume=.22;enabled=false;
- async start(){if(!this.ctx){this.ctx=new AudioContext();this.gain=this.ctx.createGain();this.gain.gain.value=0;this.gain.connect(this.ctx.destination);const buffer=this.ctx.createBuffer(1,this.ctx.sampleRate*3,this.ctx.sampleRate);const a=buffer.getChannelData(0);let last=0;for(let i=0;i<a.length;i++){last=(last+(Math.random()*2-1)*.015)/1.02;a[i]=last;}const noise=this.ctx.createBufferSource();noise.buffer=buffer;noise.loop=true;const filter=this.ctx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=260;noise.connect(filter);filter.connect(this.gain);noise.start();}await this.ctx.resume();this.enabled=true;this.setVolume(this.volume);}
- setVolume(v:number){this.volume=v;if(this.gain&&this.ctx)this.gain.gain.setTargetAtTime(this.enabled?v:0,this.ctx.currentTime,.2);}
- toggle(){if(this.enabled){this.enabled=false;this.setVolume(this.volume);}else void this.start();}
- pause(p:boolean){if(this.gain&&this.ctx)this.gain.gain.setTargetAtTime(p?0:this.enabled?this.volume:0,this.ctx.currentTime,.15);}
- step(){if(!this.ctx||!this.enabled||!this.gain)return;const ctx=this.ctx,t=ctx.currentTime;const b=ctx.createBuffer(1,ctx.sampleRate*.16,ctx.sampleRate);const a=b.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=(Math.random()*2-1)*Math.exp(-i/(a.length*.15));const s=ctx.createBufferSource();s.buffer=b;const f=ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=420;const g=ctx.createGain();g.gain.value=.18;s.connect(f);f.connect(g);g.connect(this.gain);const delay=ctx.createDelay();delay.delayTime.value=.15;const echo=ctx.createGain();echo.gain.value=.2;g.connect(delay);delay.connect(echo);echo.connect(this.gain);s.start(t);s.onended=()=>setTimeout(()=>{s.disconnect();f.disconnect();g.disconnect();delay.disconnect();echo.disconnect();},400);}
-}

@@ -1,9 +1,0 @@
-node_modules/
-dist/
-*.tsbuildinfo
-qa-output/
-qa-investigation/
-public/sak17.html
-qa-visit/
-qa-logs/
-public/etterforskning.html

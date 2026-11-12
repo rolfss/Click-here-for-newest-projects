@@ -1,7 +1,0 @@
-import {test} from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {validateCases} from '../scripts/validate-cases.mjs';
-const cases=JSON.parse(readFileSync(new URL('../cases/cases.json',import.meta.url))),legal=JSON.parse(readFileSync(new URL('../cases/legal-sources.json',import.meta.url)));
-test('Alle publiserte saker har sporbar dokumentasjon',()=>assert.equal(validateCases(cases,legal),true));
-test('Publisering av en påstand uten kilde stoppes',()=>{const c=structuredClone(cases);c[0].documentedFacts[0].sourceIds=[];assert.throws(()=>validateCases(c,legal),/usporbar/);});
-test('Sitat uten samsvar med kildeutdrag stoppes',()=>{const c=structuredClone(cases);c[0].quotes[0].text='Et oppdiktet sitat';assert.throws(()=>validateCases(c,legal),/Sitat/);});
-test('Ukjente kilde-ID-er og duplikate saks-ID-er stoppes',()=>{const c=structuredClone(cases);c[0].shortNarrative.sourceIds=['missing'];assert.throws(()=>validateCases(c,legal),/usporbar/);c[0].shortNarrative.sourceIds=['osen25'];c[1].id=c[0].id;assert.throws(()=>validateCases(c,legal),/duplisert/);});
-test('Historisk nyansering beholdes',()=>{assert.match(cases.find(c=>c.id==='tokke').disputedOrUncertainClaims.join(' '),/ikke bevis for endelig tap/);assert.match(cases.find(c=>c.id==='hanekleiv').legalFrameworkAtTime[0].text,/hevder ikke/);assert.match(cases.find(c=>c.id==='innsyn').currentLegalRelevance[0].text,/tredje ledd/);assert.match(cases.find(c=>c.id==='npe').authorityFindings[0].text,/innvendinger/);});

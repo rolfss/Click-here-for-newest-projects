@@ -1,7 +1,0 @@
-.dev.vars
-.dev.vars.*
-.env
-.env.*
-.wrangler/
-node_modules/
-eval-results/

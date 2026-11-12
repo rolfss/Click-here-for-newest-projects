@@ -1,0 +1,11 @@
+{
+  "name": "fagdagen-2026-browser",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/prepare-assets.mjs",
+    "deploy": "npm run build && wrangler deploy"
+  },
+  "dependencies": { "pdfjs-dist": "5.6.205" },
+  "devDependencies": { "wrangler": "4.102.0" }
+}

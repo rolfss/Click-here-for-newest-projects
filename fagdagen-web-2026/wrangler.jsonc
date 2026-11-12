@@ -1,0 +1,14 @@
+{
+  "name": "fagdagen-2026",
+  "main": "worker-cloudflare.mjs",
+  "compatibility_date": "2026-06-19",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "html_handling": "none",
+    "run_worker_first": true
+  },
+  "durable_objects": { "bindings": [{ "name": "QUIZ", "class_name": "StandQuiz" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["StandQuiz"] }]
+}
