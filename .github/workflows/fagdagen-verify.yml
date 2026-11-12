@@ -34,7 +34,11 @@ jobs:
           const activation = await request('/api/organizer/bootstrap', {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(packet)
           });
-          assert([200, 410].includes(activation.status), 'Activation HTTP ' + activation.status);
+          if (![200, 410].includes(activation.status)) {
+            const body = (await activation.text()).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,280);
+            console.log('FAGDAG_ACTIVATION_RESPONSE', activation.status, activation.headers.get('cf-mitigated'), body);
+            throw new Error('Activation HTTP ' + activation.status);
+          }
           assert((await activation.json()).active === true, 'Activation was not confirmed');
           const status = await request('/api/quiz/status').then(r => r.json());
           assert(status.active === true && status.state === 'open' && status.count === 10, 'Public quiz not open');
