@@ -3,6 +3,7 @@ const dayMs = 24 * hourMs;
 const resetHour = 8;
 const dailyCapacity = 1500;
 const boardPageSize = 30;
+const pointsPerCorrect = 1000;
 const osloClock = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'Europe/Oslo', year: 'numeric', month: 'numeric', day: 'numeric',
   hour: 'numeric', hourCycle: 'h23',
@@ -177,6 +178,18 @@ export function quizStatus(now, test, total) {
   };
 }
 
+export function quizQuestions(bank, test) {
+  return test ? practiceQuestions : bank.questions;
+}
+
+export function quizScore(correct, timeMs, questionCount, questionMs) {
+  if (correct === 0) return 0;
+  const maxTimeMs = questionCount * questionMs;
+  const remaining = Math.max(0, Math.min(maxTimeMs, maxTimeMs - timeMs));
+  const speedBonus = Math.floor((pointsPerCorrect - 1) * remaining / maxTimeMs);
+  return correct * pointsPerCorrect + speedBonus;
+}
+
 function rowForToken(db, scope, hash) {
   return db.prepare('SELECT * FROM quiz_runs WHERE scope = ? AND token_hash = ?').bind(scope, hash).first();
 }
@@ -189,8 +202,8 @@ async function runState(db, row, questions, period, questionMs) {
       SELECT COUNT(*) FROM quiz_players AS ahead WHERE ahead.scope = best.scope AND ahead.finished_at IS NOT NULL AND
       (-ahead.correct, ahead.time_ms, ahead.finished_at, ahead.best_token_hash) < (-best.correct, best.time_ms, best.finished_at, best.best_token_hash)
     ) AS rank FROM quiz_players AS best WHERE scope = ? AND player_key = ?`).bind(row.scope, row.player_key).first();
-    return { completed: true, name: row.name, score: row.correct * 1000, correct: row.correct, total, rank: best.rank,
-      timeMs: row.time_ms, bestScore: best.correct * 1000, bestTimeMs: best.time_ms, bestCorrect: best.correct,
+    return { completed: true, name: row.name, score: quizScore(row.correct, row.time_ms, total, questionMs), correct: row.correct, total, rank: best.rank,
+      timeMs: row.time_ms, bestScore: quizScore(best.correct, best.time_ms, total, questionMs), bestTimeMs: best.time_ms, bestCorrect: best.correct,
       isBest: best.best_token_hash === row.token_hash, serverTime: iso(now) };
   }
   const question = questions[row.position];
@@ -259,7 +272,7 @@ async function quizRoute(request, env, url, bank) {
   const now = Date.now();
   const period = quizPeriod(now, test);
   const { scope } = period;
-  const questions = test ? practiceQuestions : bank.questions;
+  const questions = quizQuestions(bank, test);
   const questionMs = bank.time_limit_seconds * 1000;
   const route = url.pathname;
   if (request.method === 'GET' && route === '/api/quiz/status') return json({ ...quizStatus(now, test, questions.length), active: true });
@@ -277,7 +290,8 @@ async function quizRoute(request, env, url, bank) {
     ]);
     const total = Math.min(dailyCapacity, count?.scored ?? 0);
     const next = offset + data.results.length;
-    return json({ rows: data.results.map((r, i) => ({ rank: offset + i + 1, name: r.name, score: r.correct * 1000, timeMs: r.time_ms })),
+    return json({ rows: data.results.map((r, i) => ({ rank: offset + i + 1, name: r.name,
+      score: quizScore(r.correct, r.time_ms, questions.length, questionMs), timeMs: r.time_ms })),
       total, nextOffset: next < total ? next : null, ...periodDetails(period), updatedAt: iso(now) });
   }
   if (request.method === 'POST' && route === '/api/quiz/start') return startQuiz(request, { DB: db, QUIZ_ID_KEY: env.QUIZ_ID_KEY }, period, questions, questionMs);

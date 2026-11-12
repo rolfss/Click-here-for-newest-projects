@@ -1,6 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 import sealedQuiz from './sealed-quiz.mjs';
-import { fjordLeaderboard, initializeQuizStorage, json, openContact, quizFetch, quizPeriod, quizStatus } from './quiz-engine.mjs';
+import { fjordLeaderboard, initializeQuizStorage, json, openContact, quizFetch, quizPeriod, quizQuestions, quizScore, quizStatus } from './quiz-engine.mjs';
 import { qrSvg } from './public/qr.mjs';
 
 const setupKeyPattern = /^[A-Za-z0-9_-]{43}$/;
@@ -166,9 +166,13 @@ export class StandQuiz extends DurableObject {
       WHERE scope = ? AND finished_at IS NOT NULL ORDER BY correct DESC, time_ms, finished_at, best_token_hash`,
       quizPeriod(Date.now(), test).scope).toArray();
     const lines = ['Plass;Kallenavn;M365-brukernavn;Poeng;Svartid (ms)'];
+    const { bank, secret } = this.#unlocked;
+    const count = quizQuestions(bank, test).length;
+    const questionMs = bank.time_limit_seconds * 1000;
     for (const [index, row] of rows.entries()) {
-      const contact = await openContact(row.contact, this.#unlocked.secret);
-      lines.push([index + 1, row.name, contact, row.correct * 1000, row.time_ms].map(csvCell).join(';'));
+      const contact = await openContact(row.contact, secret);
+      const score = quizScore(row.correct, row.time_ms, count, questionMs);
+      lines.push([index + 1, row.name, contact, score, row.time_ms].map(csvCell).join(';'));
     }
     return new Response(`\uFEFF${lines.join('\r\n')}\r\n`, { headers: {
       'Content-Type': 'text/csv; charset=utf-8',
