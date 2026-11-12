@@ -1,10 +1,14 @@
 import { DurableObject } from 'cloudflare:workers';
 import sealedQuiz from './sealed-quiz.mjs';
-import { fjordLeaderboard, json, openContact, quizFetch, quizStatus } from './quiz-engine.mjs';
+import { fjordLeaderboard, initializeQuizStorage, json, openContact, quizFetch, quizPeriod, quizStatus } from './quiz-engine.mjs';
 import { qrSvg } from './public/qr.mjs';
 
 const setupKeyPattern = /^[A-Za-z0-9_-]{43}$/;
 const encoder = new TextEncoder();
+const bootstrapAad = encoder.encode('fagdagen-2026-bootstrap-v1');
+const bootstrapAlgorithm = { name: 'ECDH', namedCurve: 'P-256' };
+const aesAlgorithm = { name: 'AES-GCM', length: 256 };
+const bootstrapLimit = 1024;
 const fjordUrl = 'https://rolfss.github.io/Click-here-for-newest-projects/fjordsprint/?conference=1';
 const unavailable = () => json({ error: 'Midlertidig feil. Prøv igjen.', code: 'unavailable' }, 503, { 'Retry-After': '2' });
 
@@ -19,14 +23,58 @@ function sameBytes(a, b) {
   return mismatch === 0;
 }
 
-async function organizerKey(request) {
-  const authorization = request.headers.get('Authorization');
-  const key = authorization?.startsWith('Bearer ') ? authorization.slice(7) : null;
+async function verifiedSetupKey(key) {
   if (!key || !setupKeyPattern.test(key)) return null;
   const raw = base64urlBytes(key);
   const canonical = btoa(String.fromCharCode(...raw)).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '');
   if (raw.length !== 32 || canonical !== key || !sameBytes(new Uint8Array(await crypto.subtle.digest('SHA-256', raw)), base64urlBytes(sealedQuiz.digest))) return null;
   return key;
+}
+
+function organizerKey(request) {
+  const authorization = request.headers.get('Authorization');
+  return verifiedSetupKey(authorization?.startsWith('Bearer ') ? authorization.slice(7) : null);
+}
+
+async function readBootstrapBody(request) {
+  if (!/^application\/json(?:\s*;|$)/i.test(request.headers.get('Content-Type') ?? '') ||
+    Number(request.headers.get('Content-Length')) > bootstrapLimit || !request.body) return null;
+  const reader = request.body.getReader();
+  const bytes = new Uint8Array(bootstrapLimit);
+  let size = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) return JSON.parse(new TextDecoder().decode(bytes.subarray(0, size)));
+      if (size + value.length > bootstrapLimit) {
+        await reader.cancel();
+        return null;
+      }
+      bytes.set(value, size);
+      size += value.length;
+    }
+  } catch {
+    return null;
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+async function decryptBootstrap(body, privateJwk) {
+  const { senderPublicKey, iv, ciphertext } = body ?? {};
+  const { kty, crv, x, y } = senderPublicKey ?? {};
+  if (kty !== 'EC' || crv !== 'P-256' || typeof x !== 'string' || !setupKeyPattern.test(x) ||
+    typeof y !== 'string' || !setupKeyPattern.test(y) || typeof iv !== 'string' || !/^[A-Za-z0-9_-]{16}$/.test(iv) ||
+    typeof ciphertext !== 'string' || !/^[A-Za-z0-9_-]{79}$/.test(ciphertext)) return null;
+  try {
+    const privateKey = await crypto.subtle.importKey('jwk', privateJwk, bootstrapAlgorithm, false, ['deriveKey']);
+    const publicKey = await crypto.subtle.importKey('jwk', { kty, crv, x, y }, bootstrapAlgorithm, false, []);
+    const sharedKey = await crypto.subtle.deriveKey({ name: 'ECDH', public: publicKey }, privateKey, aesAlgorithm, false, ['decrypt']);
+    const clear = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: base64urlBytes(iv), additionalData: bootstrapAad }, sharedKey, base64urlBytes(ciphertext));
+    return verifiedSetupKey(new TextDecoder().decode(clear));
+  } catch {
+    return null;
+  }
 }
 
 async function unlockBank(key) {
@@ -63,23 +111,60 @@ export class StandQuiz extends DurableObject {
     }) }) };
 
     ctx.blockConcurrencyWhile(async () => {
-      this.#sql.exec(`CREATE TABLE IF NOT EXISTS quiz_runs (
-        token_hash TEXT PRIMARY KEY NOT NULL, scope TEXT NOT NULL, player_key TEXT NOT NULL, name TEXT NOT NULL,
-        position INTEGER NOT NULL DEFAULT 0, correct INTEGER NOT NULL DEFAULT 0, time_ms INTEGER NOT NULL DEFAULT 0,
-        question_at INTEGER NOT NULL, finished_at INTEGER, contact TEXT, UNIQUE (scope, player_key)
-      )`);
-      this.#sql.exec(`CREATE INDEX IF NOT EXISTS quiz_rank ON quiz_runs (scope, correct DESC, time_ms, finished_at, token_hash)
-        WHERE finished_at IS NOT NULL`);
+      initializeQuizStorage(ctx.storage);
       this.#sql.exec('CREATE TABLE IF NOT EXISTS quiz_configuration (id INTEGER PRIMARY KEY CHECK (id = 1), setup_key TEXT NOT NULL)');
+      this.#sql.exec('CREATE TABLE IF NOT EXISTS quiz_bootstrap (id INTEGER PRIMARY KEY CHECK (id = 1), private_jwk TEXT NOT NULL)');
       const saved = this.#sql.exec('SELECT setup_key FROM quiz_configuration WHERE id = 1').toArray()[0];
-      if (saved) this.#unlocked = await unlockBank(saved.setup_key);
+      if (saved) {
+        this.#unlocked = await unlockBank(saved.setup_key);
+        this.#sql.exec('DELETE FROM quiz_bootstrap WHERE id = 1');
+      }
     });
   }
 
+  #bootstrapKey() {
+    const saved = this.#sql.exec('SELECT private_jwk FROM quiz_bootstrap WHERE id = 1').toArray()[0];
+    return saved ? JSON.parse(saved.private_jwk) : null;
+  }
+
+  async #activate(key) {
+    if (!this.#unlocked) {
+      const unlocked = await unlockBank(key);
+      this.#sql.exec('INSERT INTO quiz_configuration (id, setup_key) VALUES (1, ?) ON CONFLICT DO NOTHING', key);
+      this.#unlocked = unlocked;
+    }
+    this.#sql.exec('DELETE FROM quiz_bootstrap WHERE id = 1');
+  }
+
+  async #bootstrap(request) {
+    const closed = () => json({ active: true, code: 'bootstrap_closed' }, 410);
+    if (this.#unlocked) return closed();
+    if (request.method === 'GET') {
+      let privateJwk = this.#bootstrapKey();
+      if (!privateJwk) {
+        const pair = await crypto.subtle.generateKey(bootstrapAlgorithm, true, ['deriveKey']);
+        const jwk = await crypto.subtle.exportKey('jwk', pair.privateKey);
+        if (this.#unlocked) return closed();
+        this.#sql.exec('INSERT INTO quiz_bootstrap (id, private_jwk) VALUES (1, ?) ON CONFLICT DO NOTHING', JSON.stringify(jwk));
+        privateJwk = this.#bootstrapKey();
+      }
+      const { kty, crv, x, y } = privateJwk;
+      return json({ publicKey: { kty, crv, x, y } });
+    }
+    if (request.method !== 'POST') return json({ code: 'method_not_allowed' }, 405, { Allow: 'GET, POST' });
+    const privateJwk = this.#bootstrapKey();
+    if (!privateJwk) return json({ code: 'bootstrap_required' }, 409);
+    const key = await decryptBootstrap(await readBootstrapBody(request), privateJwk);
+    if (!key) return json({ code: 'invalid_bootstrap' }, 400);
+    if (this.#unlocked) return closed();
+    await this.#activate(key);
+    return json({ active: true });
+  }
+
   async #exportResults(test) {
-    const rows = this.#sql.exec(`SELECT name, contact, correct, time_ms FROM quiz_runs
-      WHERE scope = ? AND finished_at IS NOT NULL ORDER BY correct DESC, time_ms, finished_at, token_hash`,
-      test ? 'practice-2026' : 'fagdagen-2026').toArray();
+    const rows = this.#sql.exec(`SELECT name, contact, correct, time_ms FROM quiz_players
+      WHERE scope = ? AND finished_at IS NOT NULL ORDER BY correct DESC, time_ms, finished_at, best_token_hash`,
+      quizPeriod(Date.now(), test).scope).toArray();
     const lines = ['Plass;Kallenavn;M365-brukernavn;Poeng;Svartid (ms)'];
     for (const [index, row] of rows.entries()) {
       const contact = await openContact(row.contact, this.#unlocked.secret);
@@ -97,15 +182,12 @@ export class StandQuiz extends DurableObject {
     const url = new URL(request.url);
     const test = url.searchParams.get('test') === '1';
     try {
+      if (url.pathname === '/api/organizer/bootstrap') return await this.#bootstrap(request);
       if (url.pathname.startsWith('/api/organizer/')) {
         const key = await organizerKey(request);
         if (!key) return json({ error: 'Bruk arrangørlenken.', code: 'organizer_required' }, 401);
         if (request.method === 'POST' && url.pathname === '/api/organizer/activate') {
-          if (!this.#unlocked) {
-            const unlocked = await unlockBank(key);
-            this.#sql.exec('INSERT INTO quiz_configuration (id, setup_key) VALUES (1, ?) ON CONFLICT DO NOTHING', key);
-            this.#unlocked = unlocked;
-          }
+          await this.#activate(key);
           return json({ active: true });
         }
         if (request.method === 'GET' && url.pathname === '/api/organizer/results') {
@@ -119,7 +201,7 @@ export class StandQuiz extends DurableObject {
           return json({ ...quizStatus(Date.now(), test, test ? 3 : 10), active: false });
         }
         if (request.method === 'GET' && url.pathname === '/api/quiz/leaderboard') {
-          return json({ rows: [], updatedAt: new Date().toISOString() });
+          return json({ rows: [], total: 0, nextOffset: null, updatedAt: new Date().toISOString() });
         }
         return json({ error: 'Quizen er ikke åpnet av arrangøren ennå.', code: 'not_active' }, 503);
       }

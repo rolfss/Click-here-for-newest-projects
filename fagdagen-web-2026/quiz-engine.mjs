@@ -1,5 +1,12 @@
-const opensAt = Date.parse('2026-11-13T09:00:00+01:00');
-const closesAt = Date.parse('2026-11-13T17:00:00+01:00');
+const hourMs = 60 * 60 * 1000;
+const dayMs = 24 * hourMs;
+const resetHour = 8;
+const dailyCapacity = 1500;
+const boardPageSize = 30;
+const osloClock = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Europe/Oslo', year: 'numeric', month: 'numeric', day: 'numeric',
+  hour: 'numeric', hourCycle: 'h23',
+});
 const transportGraceMs = 650;
 const practiceQuestions = [
   { number: 1, question: 'Hvilken måned arrangeres Fagdagen 2026?', answers: choices('Mai', 'November', 'Juni', 'Februar'), correct_answer_id: 'B' },
@@ -10,7 +17,7 @@ const namePattern = /^[\p{L}\p{N} ._-]{2,20}$/u;
 const usernamePattern = /^[A-Za-z0-9'.!#^_~-]{1,64}$/;
 const tokenPattern = /^[A-Za-z0-9_-]{22,100}$/;
 const fjordSource = 'https://fjordsprint-scores.rolfsselas.workers.dev/conference/scores?board=fjordsprint-three-stage-v1';
-const ranks = 'correct DESC, time_ms ASC, finished_at ASC, token_hash ASC';
+const ranks = 'correct DESC, time_ms ASC, finished_at ASC, best_token_hash ASC';
 const encoder = new TextEncoder();
 let fjordCache;
 let fjordPending;
@@ -32,6 +39,74 @@ function fail(status, message, code) {
 
 function iso(value) {
   return new Date(value).toISOString();
+}
+
+function osloParts(time) {
+  return Object.fromEntries(osloClock.formatToParts(time).map(({ type, value }) => [type, Number(value)]));
+}
+
+export function quizPeriod(now, test) {
+  if (test) return { scope: 'practice-2026', day: null, resetTime: null };
+  const { year, month, day, hour } = osloParts(now);
+  const calendarDate = Date.UTC(year, month - 1, day - (hour < resetHour ? 1 : 0));
+  const dayId = iso(calendarDate).slice(0, 10);
+  const nextMorningUtc = calendarDate + dayMs + resetHour * hourMs;
+  // As in Fjordsprint, Oslo's clock changes precede the local 08:00 reset.
+  const resetTime = nextMorningUtc - (osloParts(nextMorningUtc).hour - resetHour) * hourMs;
+  return { scope: `fagdagen-2026:${dayId}`, day: dayId, resetTime };
+}
+
+function periodDetails(period) {
+  return { day: period.day, resetsAt: period.resetTime === null ? null : iso(period.resetTime) };
+}
+
+export function initializeQuizStorage(storage) {
+  const sql = storage.sql;
+  storage.transactionSync(() => {
+    const [existing] = sql.exec("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'quiz_runs'").toArray();
+    const legacy = /UNIQUE\s*\(\s*scope\s*,\s*player_key\s*\)/i.test(existing?.sql ?? '');
+    if (legacy) sql.exec('ALTER TABLE quiz_runs RENAME TO quiz_runs_once');
+    sql.exec(`CREATE TABLE IF NOT EXISTS quiz_runs (
+      token_hash TEXT PRIMARY KEY NOT NULL, scope TEXT NOT NULL, player_key TEXT NOT NULL, name TEXT NOT NULL,
+      position INTEGER NOT NULL DEFAULT 0, correct INTEGER NOT NULL DEFAULT 0, time_ms INTEGER NOT NULL DEFAULT 0,
+      question_at INTEGER NOT NULL, finished_at INTEGER, contact TEXT
+    )`);
+    sql.exec(`CREATE TABLE IF NOT EXISTS quiz_players (
+      scope TEXT NOT NULL, player_key TEXT NOT NULL, best_token_hash TEXT, name TEXT, contact TEXT,
+      correct INTEGER, time_ms INTEGER, finished_at INTEGER, PRIMARY KEY (scope, player_key)
+    )`);
+    sql.exec(`CREATE TABLE IF NOT EXISTS quiz_daily_counts (
+      scope TEXT PRIMARY KEY NOT NULL, players INTEGER NOT NULL, scored INTEGER NOT NULL
+    )`);
+    sql.exec(`CREATE INDEX IF NOT EXISTS quiz_players_rank ON quiz_players
+      (scope, correct DESC, time_ms, finished_at, best_token_hash) WHERE finished_at IS NOT NULL`);
+    sql.exec(`CREATE TRIGGER IF NOT EXISTS quiz_enroll_player AFTER INSERT ON quiz_runs BEGIN
+      INSERT INTO quiz_players (scope, player_key) VALUES (NEW.scope, NEW.player_key) ON CONFLICT DO NOTHING;
+    END`);
+    sql.exec(`CREATE TRIGGER IF NOT EXISTS quiz_count_player AFTER INSERT ON quiz_players BEGIN
+      INSERT INTO quiz_daily_counts (scope, players, scored) VALUES (NEW.scope, 1, 0)
+      ON CONFLICT(scope) DO UPDATE SET players = players + 1;
+    END`);
+    sql.exec(`CREATE TRIGGER IF NOT EXISTS quiz_count_first_score AFTER UPDATE OF best_token_hash ON quiz_players
+      WHEN OLD.best_token_hash IS NULL AND NEW.best_token_hash IS NOT NULL BEGIN
+        UPDATE quiz_daily_counts SET scored = scored + 1 WHERE scope = NEW.scope;
+      END`);
+    sql.exec(`CREATE TRIGGER IF NOT EXISTS quiz_update_best AFTER UPDATE OF finished_at ON quiz_runs
+      WHEN OLD.finished_at IS NULL AND NEW.finished_at IS NOT NULL BEGIN
+        UPDATE quiz_players SET best_token_hash = NEW.token_hash, name = NEW.name, contact = NEW.contact,
+          correct = NEW.correct, time_ms = NEW.time_ms, finished_at = NEW.finished_at
+        WHERE scope = NEW.scope AND player_key = NEW.player_key AND
+          (best_token_hash IS NULL OR NEW.correct > correct OR (NEW.correct = correct AND NEW.time_ms < time_ms));
+      END`);
+    if (legacy) {
+      sql.exec(`INSERT INTO quiz_runs (token_hash, scope, player_key, name, position, correct, time_ms, question_at, finished_at, contact)
+        SELECT token_hash, scope, player_key, name, position, correct, time_ms, question_at, finished_at, contact FROM quiz_runs_once`);
+      sql.exec(`UPDATE quiz_players SET best_token_hash = old.token_hash, name = old.name, contact = old.contact,
+        correct = old.correct, time_ms = old.time_ms, finished_at = old.finished_at FROM quiz_runs_once AS old
+        WHERE quiz_players.scope = old.scope AND quiz_players.player_key = old.player_key AND old.finished_at IS NOT NULL`);
+      sql.exec('DROP TABLE quiz_runs_once');
+    }
+  });
 }
 
 function asHex(buffer) {
@@ -93,33 +168,30 @@ async function readBody(request) {
 
 export function quizStatus(now, test, total) {
   return {
-    state: test || (now >= opensAt && now < closesAt) ? 'open' : now < opensAt ? 'upcoming' : 'closed',
-    opensAt: test ? null : iso(opensAt),
-    closesAt: test ? null : iso(closesAt),
+    state: 'open',
+    opensAt: null,
+    closesAt: null,
+    ...periodDetails(quizPeriod(now, test)),
     count: total,
     serverTime: iso(now),
   };
-}
-
-function checkOpen(now, test) {
-  if (test) return;
-  if (now < opensAt) fail(403, 'Quizen åpner kl. 09.00.', 'upcoming');
-  if (now >= closesAt) fail(403, 'Quizen er avsluttet.', 'closed');
 }
 
 function rowForToken(db, scope, hash) {
   return db.prepare('SELECT * FROM quiz_runs WHERE scope = ? AND token_hash = ?').bind(scope, hash).first();
 }
 
-async function runState(db, row, questions, test, questionMs) {
+async function runState(db, row, questions, period, questionMs) {
   const now = Date.now();
   const total = questions.length;
   if (row.finished_at !== null) {
-    const ahead = await db.prepare(`SELECT COUNT(*) AS count FROM quiz_runs
-      WHERE scope = ? AND finished_at IS NOT NULL AND
-      (-correct, time_ms, finished_at, token_hash) < (?, ?, ?, ?)`)
-      .bind(row.scope, -row.correct, row.time_ms, row.finished_at, row.token_hash).first();
-    return { completed: true, name: row.name, score: row.correct * 1000, correct: row.correct, total, rank: ahead.count + 1, timeMs: row.time_ms, serverTime: iso(now) };
+    const best = await db.prepare(`SELECT best_token_hash, correct, time_ms, 1 + (
+      SELECT COUNT(*) FROM quiz_players AS ahead WHERE ahead.scope = best.scope AND ahead.finished_at IS NOT NULL AND
+      (-ahead.correct, ahead.time_ms, ahead.finished_at, ahead.best_token_hash) < (-best.correct, best.time_ms, best.finished_at, best.best_token_hash)
+    ) AS rank FROM quiz_players AS best WHERE scope = ? AND player_key = ?`).bind(row.scope, row.player_key).first();
+    return { completed: true, name: row.name, score: row.correct * 1000, correct: row.correct, total, rank: best.rank,
+      timeMs: row.time_ms, bestScore: best.correct * 1000, bestTimeMs: best.time_ms, bestCorrect: best.correct,
+      isBest: best.best_token_hash === row.token_hash, serverTime: iso(now) };
   }
   const question = questions[row.position];
   const deadline = row.question_at + questionMs;
@@ -131,13 +203,13 @@ async function runState(db, row, questions, test, questionMs) {
     question: {
       id: String(question.number), index: row.position, text: question.question,
       options: question.answers, selection: 'single',
-      deadlineAt: iso(test ? deadline : Math.min(deadline, closesAt)),
+      deadlineAt: iso(Math.min(deadline, period.resetTime ?? Infinity)),
     },
   };
 }
 
-async function startQuiz(request, env, scope, questions, test, questionMs) {
-  checkOpen(Date.now(), test);
+async function startQuiz(request, env, period, questions, questionMs) {
+  const { scope, resetTime } = period;
   const { name, username, usernameConfirmation, startKey } = await readBody(request);
   const nickname = typeof name === 'string' ? name.normalize('NFC').trim().replace(/\s+/gu, ' ') : '';
   const user = typeof username === 'string' ? username.trim() : '';
@@ -149,23 +221,25 @@ async function startQuiz(request, env, scope, questions, test, questionMs) {
     hashToken(scope, startKey), hashPlayer(scope, user, env.QUIZ_ID_KEY), sealContact(user, env.QUIZ_ID_KEY),
   ]);
   const now = Date.now();
-  checkOpen(now, test);
+  if (resetTime !== null && now >= resetTime) fail(409, 'En ny konkurransedag har startet. Prøv igjen.', 'day_reset');
   const db = env.DB;
+  const practice = resetTime === null;
   await db.prepare(`INSERT INTO quiz_runs (token_hash, scope, player_key, name, question_at, contact)
-    VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING`).bind(tokenHash, scope, playerKey, nickname, now, contact).run();
+    SELECT ?, ?, ?, ?, ?, ? WHERE ? OR EXISTS (SELECT 1 FROM quiz_players WHERE scope = ? AND player_key = ?)
+      OR COALESCE((SELECT players FROM quiz_daily_counts WHERE scope = ?), 0) < ?
+    ON CONFLICT DO NOTHING`).bind(tokenHash, scope, playerKey, nickname, now, contact, Number(practice), scope, playerKey, scope, dailyCapacity).run();
   const row = await rowForToken(db, scope, tokenHash);
+  if (!row && !practice) fail(409, 'Dagens deltakergrense er nådd. En ny runde åpner kl. 08.00.', 'day_full');
   if (!row || row.player_key !== playerKey) fail(409, 'Dette brukernavnet har allerede en økt. Fortsett på enheten du startet på.', 'already_started');
-  return json({ token: startKey, ...(await runState(db, row, questions, test, questionMs)) });
+  return json({ token: startKey, ...(await runState(db, row, questions, period, questionMs)) });
 }
 
-async function answerQuiz(request, db, row, questions, test, questionMs) {
-  const receivedAt = Date.now();
+async function answerQuiz(request, db, row, questions, period, questionMs, receivedAt) {
   const { questionId, choices: selected } = await readBody(request);
   if (!Array.isArray(selected) || selected.length > 1 || typeof questionId !== 'string') fail(400, 'Velg ett svar.', 'invalid_answer');
   const answeredIndex = questions.findIndex(question => String(question.number) === questionId);
   if (answeredIndex < 0 || answeredIndex > row.position) fail(409, 'Spørsmålet har endret seg. Last inn økten på nytt.', 'question_changed');
-  if (row.finished_at !== null || answeredIndex < row.position) return json(await runState(db, row, questions, test, questionMs));
-  checkOpen(receivedAt, test);
+  if (row.finished_at !== null || answeredIndex < row.position) return json(await runState(db, row, questions, period, questionMs));
   const question = questions[row.position];
   if (selected.length && !question.answers.some(option => option.id === selected[0])) fail(400, 'Ugyldig svaralternativ.', 'invalid_answer');
   const elapsed = Math.max(0, receivedAt - row.question_at);
@@ -177,30 +251,42 @@ async function answerQuiz(request, db, row, questions, test, questionMs) {
   const updated = await db.prepare(`UPDATE quiz_runs SET position = position + 1, correct = correct + ?, time_ms = time_ms + ?,
     question_at = ?, finished_at = ? WHERE token_hash = ? AND position = ? AND finished_at IS NULL RETURNING *`)
     .bind(correct, duration, nextAt, final ? nextAt : null, row.token_hash, row.position).first();
-  return json(await runState(db, updated ?? await rowForToken(db, row.scope, row.token_hash), questions, test, questionMs));
+  return json(await runState(db, updated ?? await rowForToken(db, row.scope, row.token_hash), questions, period, questionMs));
 }
 
 async function quizRoute(request, env, url, bank) {
   const test = url.searchParams.get('test') === '1';
-  const scope = test ? 'practice-2026' : 'fagdagen-2026';
+  const now = Date.now();
+  const period = quizPeriod(now, test);
+  const { scope } = period;
   const questions = test ? practiceQuestions : bank.questions;
   const questionMs = bank.time_limit_seconds * 1000;
   const route = url.pathname;
-  if (request.method === 'GET' && route === '/api/quiz/status') return json({ ...quizStatus(Date.now(), test, questions.length), active: true });
+  if (request.method === 'GET' && route === '/api/quiz/status') return json({ ...quizStatus(now, test, questions.length), active: true });
   if (!env.DB) throw new Error('DB unavailable');
   const db = env.DB.withSession ? env.DB.withSession('first-primary') : env.DB;
   if (request.method === 'GET' && route === '/api/quiz/leaderboard') {
-    const data = await db.prepare(`SELECT name, correct, time_ms FROM quiz_runs
-      WHERE scope = ? AND finished_at IS NOT NULL ORDER BY ${ranks} LIMIT 30`).bind(scope).all();
-    return json({ rows: data.results.map((r, i) => ({ rank: i + 1, name: r.name, score: r.correct * 1000, timeMs: r.time_ms })), updatedAt: iso(Date.now()) });
+    const offsetValue = url.searchParams.get('offset') ?? '0';
+    const offset = Number(offsetValue);
+    if (!/^\d{1,4}$/.test(offsetValue) || offset > dailyCapacity) fail(400, 'Ugyldig side for topplisten.', 'invalid_offset');
+    const limit = Math.min(boardPageSize, dailyCapacity - offset);
+    const [count, data] = await Promise.all([
+      db.prepare('SELECT scored FROM quiz_daily_counts WHERE scope = ?').bind(scope).first(),
+      db.prepare(`SELECT name, correct, time_ms FROM quiz_players WHERE scope = ? AND finished_at IS NOT NULL
+        ORDER BY ${ranks} LIMIT ? OFFSET ?`).bind(scope, limit, offset).all(),
+    ]);
+    const total = Math.min(dailyCapacity, count?.scored ?? 0);
+    const next = offset + data.results.length;
+    return json({ rows: data.results.map((r, i) => ({ rank: offset + i + 1, name: r.name, score: r.correct * 1000, timeMs: r.time_ms })),
+      total, nextOffset: next < total ? next : null, ...periodDetails(period), updatedAt: iso(now) });
   }
-  if (request.method === 'POST' && route === '/api/quiz/start') return startQuiz(request, { DB: db, QUIZ_ID_KEY: env.QUIZ_ID_KEY }, scope, questions, test, questionMs);
+  if (request.method === 'POST' && route === '/api/quiz/start') return startQuiz(request, { DB: db, QUIZ_ID_KEY: env.QUIZ_ID_KEY }, period, questions, questionMs);
   if ((request.method === 'GET' && route === '/api/quiz/run') || (request.method === 'POST' && route === '/api/quiz/answer')) {
     const token = request.headers.get('Authorization')?.match(/^Bearer ([A-Za-z0-9_-]{22,100})$/)?.[1];
     if (!token) fail(401, 'Fant ingen quizøkt.', 'invalid_token');
     const row = await rowForToken(db, scope, await hashToken(scope, token));
     if (!row) fail(401, 'Fant ingen quizøkt.', 'invalid_token');
-    return request.method === 'GET' ? json(await runState(db, row, questions, test, questionMs)) : answerQuiz(request, db, row, questions, test, questionMs);
+    return request.method === 'GET' ? json(await runState(db, row, questions, period, questionMs)) : answerQuiz(request, db, row, questions, period, questionMs, now);
   }
   return json({ error: 'Ukjent endepunkt.' }, 404);
 }
