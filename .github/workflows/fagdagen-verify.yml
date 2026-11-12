@@ -17,7 +17,11 @@ jobs:
           const origin = 'https://fagdagen-2026.ambitious-hat.workers.dev';
           for (const path of ['/', '/spill', '/api/quiz/status', '/api/fjord/leaderboard']) {
             const response = await fetch(origin + path, { signal: AbortSignal.timeout(10000) });
-            if (!response.ok) throw new Error(path + ' returned ' + response.status);
+            if (!response.ok) {
+              const body = (await response.text()).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 420);
+              console.log('FAGDAG_HTTP ' + JSON.stringify({ path, status: response.status, mitigation: response.headers.get('cf-mitigated'), body }));
+              throw new Error(path + ' returned ' + response.status);
+            }
             if (path.endsWith('/status')) {
               const status = await response.json();
               if (status.count !== 10 || typeof status.active !== 'boolean') throw new Error('Unexpected quiz status');
