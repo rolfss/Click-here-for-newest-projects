@@ -1,0 +1,38 @@
+name: Check Fagdagen audience fullscreen
+on:
+  push:
+    branches: [fagdagen-web-live]
+permissions:
+  contents: read
+  statuses: write
+jobs:
+  fullscreen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check the fullscreen interface in Chromium
+        run: |
+          npm --prefix "$RUNNER_TEMP/fagdag-smoke" install --no-fund --no-audit playwright@1.56.1
+          "$RUNNER_TEMP/fagdag-smoke/node_modules/.bin/playwright" install chromium --only-shell
+          FAGDAG_PLAYWRIGHT="$RUNNER_TEMP/fagdag-smoke/node_modules/playwright" node .github/fagdag-fullscreen-smoke.mjs
+      - name: Record the check result
+        if: always()
+        env:
+          FAGDAG_QA_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FAGDAG_QA_RESULT: ${{ job.status }}
+        run: |
+          node --input-type=module <<'NODE'
+          const e = process.env;
+          const result = await fetch(e.GITHUB_API_URL + '/repos/' + e.GITHUB_REPOSITORY + '/statuses/' + e.GITHUB_SHA, {
+            method:'POST', headers:{Authorization:'Bearer ' + e.FAGDAG_QA_TOKEN,'Content-Type':'application/json'},
+            body:JSON.stringify({state:e.FAGDAG_QA_RESULT==='success'?'success':'failure',
+              context:'Fagdagen / Fullscreen check',target_url:e.GITHUB_SERVER_URL+'/'+e.GITHUB_REPOSITORY+'/actions/runs/'+e.GITHUB_RUN_ID})
+          });
+          if (!result.ok) throw Error('Could not report the fullscreen check result');
+          NODE
