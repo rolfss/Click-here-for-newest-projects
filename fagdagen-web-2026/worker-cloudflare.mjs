@@ -5,6 +5,7 @@ import { qrSvg } from './public/qr.mjs';
 import fjordWorker, { Leaderboard } from '../fjordsprint/score-server/worker.mjs';
 import { RUN_BOARD } from '../fjordsprint/dist/run-scoring.js';
 import { InputError } from '../fjordsprint/score-server/http.mjs';
+import { conferenceWindow } from '../fjordsprint/score-server/conference.mjs';
 import { createLegacyFjordFeed, mergeFjordScores } from './fjord-legacy.mjs';
 
 const setupKeyPattern = /^[A-Za-z0-9_-]{43}$/;
@@ -16,8 +17,12 @@ const bootstrapLimit = 1024;
 const fjordUrl = 'https://rolfss.github.io/Click-here-for-newest-projects/fjordsprint/?conference=1';
 const unavailable = () => json({ error: 'Midlertidig feil. Prøv igjen.', code: 'unavailable' }, 503, { 'Retry-After': '2' });
 const fjordRoutes = new Set(['/conference/scores', '/conference/sessions', '/conference/admin']);
+const restorePath = '/fjord-restore';
+const snapshotDigest = 'd7b4ef7faf2b259e02019d3f1a4477c079b5b1679cf1d6e8e7f3cfff2b073b97';
 
 export class FjordLeaderboard extends Leaderboard {
+  #legacy;
+
   constructor(ctx, env) {
     const legacy = createLegacyFjordFeed({ storage: ctx.storage });
     super(ctx, env, Date.now, {
@@ -26,6 +31,18 @@ export class FjordLeaderboard extends Leaderboard {
         if (!(await organizerKey(request))) throw new InputError('Bruk arrangørlenken.', 401);
       },
     });
+    this.#legacy = legacy;
+  }
+
+  async fetch(request) {
+    if (new URL(request.url).pathname !== restorePath) return super.fetch(request);
+    const text = await request.text();
+    const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode(text)));
+    const digest = Array.from(hash, value => value.toString(16).padStart(2, '0')).join('');
+    if (digest !== snapshotDigest) return json({ error: 'Ugyldig øyeblikksbilde.' }, 403);
+    const { day, rows } = JSON.parse(text);
+    if (day !== conferenceWindow(Date.now()).day) return json({ error: 'Konkurransedagen er avsluttet.' }, 410);
+    return json({ restored: await this.#legacy.restore(day, rows), count: rows.length });
   }
 }
 
@@ -65,6 +82,22 @@ async function fjordStandings(request, env) {
 async function fjordRequest(request, url, env) {
   if (url.searchParams.get('board') !== RUN_BOARD) return json({ error: 'Feil løpsklasse.' }, 400);
   return fjordWorker.fetch(request, { LEADERBOARD: env.FJORD });
+}
+
+async function restoreFjord(request, env) {
+  if (request.method === 'GET') return new Response(`<!doctype html><html lang="nb"><meta charset="utf-8">
+    <title>Gjenopprett Fjordsprint</title><form method="post"><label>Øyeblikksbilde
+    <textarea name="snapshot" required maxlength="2048"></textarea></label>
+    <button>Gjenopprett resultater</button></form></html>`, { headers: {
+    'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store',
+    'Content-Security-Policy': "default-src 'none'; form-action 'self'; frame-ancestors 'none'",
+    'X-Robots-Tag': 'noindex, nofollow',
+  } });
+  if (request.method !== 'POST' || Number(request.headers.get('Content-Length')) > 4096) return json({}, 405);
+  const body = await request.formData();
+  const snapshot = body.get('snapshot');
+  if (typeof snapshot !== 'string' || snapshot.length > 2048) return json({}, 400);
+  return env.FJORD.get(env.FJORD.idFromName(RUN_BOARD)).fetch(new Request(request.url, { method: 'POST', body: snapshot }));
 }
 
 function organizerKey(request) {
@@ -269,6 +302,7 @@ export default {
         return await env.QUIZ.get(env.QUIZ.idFromName('fagdagen-2026')).fetch(request);
       }
       if (url.pathname === '/api/fjord/leaderboard' && request.method === 'GET') return await fjordStandings(request, env);
+      if (url.pathname === restorePath) return await restoreFjord(request, env);
       if (fjordRoutes.has(url.pathname)) return await fjordRequest(request, url, env);
       if (request.method !== 'GET' && request.method !== 'HEAD') return json({ error: 'Metoden er ikke tilgjengelig.' }, 405);
       if (url.pathname === '/fjord-qr.png') return qrResponse(request, fjordUrl);
