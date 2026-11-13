@@ -61,17 +61,6 @@ export function createLegacyFjordFeed({ storage, fetcher = (url, options) => fet
   }
 
   return {
-    async restore(day, rows) {
-      const restored = readSnapshot({ day, rows }, 'rows');
-      if (!restored) return false;
-      initialization ??= initialize();
-      await initialization;
-      await pending?.promise;
-      if (snapshot?.day === day && snapshot.rows.length >= restored.rows.length) return true;
-      await storage.put(snapshotKey, restored);
-      snapshot = restored;
-      return true;
-    },
     async read(day) {
       if (typeof day !== 'string' || !dayPattern.test(day)) return [];
       initialization ??= initialize();
