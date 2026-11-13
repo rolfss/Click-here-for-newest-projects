@@ -337,17 +337,17 @@ async function readFjord() {
   const data = await response.json();
   if (!Array.isArray(data.scores)) throw new Error('Invalid Fjordsprint response');
   return {
-    rows: data.scores.slice(0, 30).map(r => ({ rank: r.rank, name: r.nickname, score: r.score, timeMs: r.timeMs })),
+    rows: data.scores.map(r => ({ rank: r.rank, name: r.nickname, score: r.score, timeMs: r.timeMs })),
     day: data.day,
     updatedAt: iso(Date.now()),
   };
 }
 
 export async function fjordLeaderboard() {
-  if (fjordCache && Date.now() - Date.parse(fjordCache.updatedAt) < 5000) return json(fjordCache);
+  if (fjordCache && Date.now() - Date.parse(fjordCache.updatedAt) < 5000) return json({ ...fjordCache, stale: true });
   fjordPending ??= readFjord().then(result => (fjordCache = result)).finally(() => { fjordPending = undefined; });
   try {
-    return json(await fjordPending);
+    return json({ ...await fjordPending, stale: true });
   } catch (error) {
     console.warn('Fjordsprint leaderboard unavailable:', error.message);
     if (fjordCache) return json({ ...fjordCache, stale: true });

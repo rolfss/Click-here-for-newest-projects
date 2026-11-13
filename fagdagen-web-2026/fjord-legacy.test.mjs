@@ -53,7 +53,9 @@ test('same-day storage survives outages and wrong-day responses without leaking 
   now += 30_000;
   next = () => Response.json({ day: '2026-11-14', scores: [] });
   assert.deepEqual(await feed.read('2026-11-14'), []);
-  assert.deepEqual(value, { day: '2026-11-14', rows: [] });
+  assert.deepEqual(value, { day, rows: sample });
+  assert.deepEqual(await feed.read(day, { refreshCurrent: false }), sample);
+  assert.deepEqual(feed.days(), [day]);
 });
 
 test('normalizes new times only for ranking, retains duplicate names, and keeps old ordering on exact ties', () => {
@@ -73,4 +75,13 @@ test('normalizes new times only for ranking, retains duplicate names, and keeps 
     ],
   });
   assert.equal(mergeFjordScores({ day, scores }, sample, { limit: 2 }).scores.length, 2);
+});
+
+test('the merged board keeps rows beyond the original public feed limit', () => {
+  const scores = Array.from({ length: 75 }, (_, index) => ({
+    rank: index + 1, nickname: `Fører ${index + 1}`, score: 18_000 - index, timeMs: 55_000,
+  }));
+  const result = mergeFjordScores({ day, scores }, sample);
+  assert.equal(result.scores.length, 77);
+  assert.equal(result.scores.at(-1).nickname, 'Fører 75');
 });

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#b9c9d3">
+  <title>Fagdagen 2026 · Sak og arkiv</title>
+  <link rel="stylesheet" href="./kiosk.css?v=3">
+  <link rel="stylesheet" href="./slides.css?v=2">
+  <script type="module" src="./kiosk.js?v=3"></script>
+</head>
+<body>
+  <header class="screen-head">
+    <div class="event">
+      <h1>Fagdagen 2026</h1>
+      <span class="event-topic">Sak og arkiv <span aria-hidden="true">·</span> Public 360°</span>
+    </div>
+    <div class="screen-actions">
+      <select id="fjord-day" class="screen-button" aria-label="Velg dag for Fjordsprint-resultatene" hidden>
+        <option value="">Fjordsprint · I dag</option>
+      </select>
+      <span id="test-label" class="test-label" hidden>Prøvevisning</span>
+      <a id="quiz-test" class="screen-button" href="/?test=1" hidden>Prøvespill</a>
+      <button id="quiz-export" class="screen-button" type="button" hidden>Last ned quizresultater</button>
+      <button id="fullscreen" class="screen-button" type="button" title="Fullskjerm (F)">Fullskjerm</button>
+    </div>
+  </header>
+  <main class="stand-layout">
+    <aside class="boards" aria-label="Konkurranser">
+      <section class="board board-fjord" id="fjord" aria-labelledby="fjord-title">
+        <header class="board-head">
+          <h2 id="fjord-title">Fjordsprint</h2>
+          <span class="board-status" data-status data-tone="muted">Kobler til</span>
+        </header>
+        <div class="board-results" id="fjord-results" tabindex="0" role="region" aria-label="Fjordsprint-resultater">
+          <table class="board-table" data-table hidden aria-label="Fjordsprint, toppliste">
+            <thead><tr><th scope="col" aria-label="Plass">#</th><th scope="col">Kallenavn</th><th scope="col">Poeng</th></tr></thead>
+            <tbody data-rows></tbody>
+          </table>
+          <p class="board-message" data-message>Henter poengtavlen …</p>
+          <a id="fjord-fallback" class="board-fallback" href="https://rolfss.github.io/Click-here-for-newest-projects/fjordsprint/conference-leaderboard.html" target="_blank" rel="noopener" hidden>Åpne Fjordsprints poengtavle</a>
+        </div>
+        <a class="board-join" href="https://rolfss.github.io/Click-here-for-newest-projects/fjordsprint/?conference=1" target="_blank" rel="noopener">
+          <span class="join-copy">
+            <strong>Kjør Fjordsprint</strong>
+            <span>Skann med mobilen</span>
+            <span class="join-prize">Topp 3 vinner premie!</span>
+          </span>
+          <img class="join-qr" src="./fjord-qr.png" width="160" height="160" alt="QR-kode til Fjordsprint">
+        </a>
+      </section>
+      <section class="board board-quiz" id="quiz" aria-labelledby="quiz-title">
+        <header class="board-head">
+          <h2 id="quiz-title">Arkivfaglig quiz</h2>
+          <span class="board-status" data-status data-tone="muted">Kobler til</span>
+        </header>
+        <div class="board-results">
+          <table class="board-table" data-table hidden aria-label="Arkivfaglig quiz, toppliste">
+            <thead><tr><th scope="col" aria-label="Plass">#</th><th scope="col">Kallenavn</th><th scope="col">Poeng</th></tr></thead>
+            <tbody data-rows></tbody>
+          </table>
+          <p class="board-message" data-message>Henter quizresultatene …</p>
+        </div>
+        <a id="quiz-join" class="board-join" href="./spill" target="_blank" rel="noopener">
+          <span class="join-copy">
+            <strong id="quiz-join-label">Ta quizen</strong>
+            <span id="quiz-join-help">Skann med mobilen</span>
+            <span class="join-prize">Topp 3 vinner premie!</span>
+          </span>
+          <img id="quiz-qr" class="join-qr" src="./quiz-qr.png" width="160" height="160" alt="QR-kode til arkivfaglig quiz">
+        </a>
+      </section>
+    </aside>
+    <section id="presentation" class="presentation-area" aria-label="Presentasjon">
+      <p class="presentation-message">Åpner lysbildevisningen …</p>
+    </section>
+  </main>
+  <noscript><p class="script-notice">Slå på JavaScript for å vise resultater og presentasjon.</p></noscript>
+</body>
+</html>

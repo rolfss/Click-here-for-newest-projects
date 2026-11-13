@@ -21,7 +21,12 @@ export class FjordLeaderboard extends Leaderboard {
   constructor(ctx, env) {
     const legacy = createLegacyFjordFeed({ storage: ctx.storage });
     super(ctx, env, Date.now, {
-      combineStandings: async standings => mergeFjordScores(standings, await legacy.read(standings.day)),
+      archiveStandings: true,
+      combineStandings: async (standings, currentDay) => {
+        const legacyRows = await legacy.read(standings.day, { refreshCurrent: standings.day === currentDay });
+        const days = [...new Set([...standings.days, ...legacy.days()])].sort().reverse();
+        return mergeFjordScores({ ...standings, days }, legacyRows);
+      },
       authorizeManager: async request => {
         if (!(await organizerKey(request))) throw new InputError('Bruk arrangørlenken.', 401);
       },
@@ -49,16 +54,19 @@ async function verifiedSetupKey(key) {
 }
 
 async function fjordStandings(request, env) {
+  const dayRequested = new URL(request.url).searchParams.get('day');
   try {
     const endpoint = new URL('/conference/scores', request.url);
     endpoint.searchParams.set('board', RUN_BOARD);
+    if (dayRequested !== null) endpoint.searchParams.set('day', dayRequested);
     const response = await fjordWorker.fetch(new Request(endpoint), { LEADERBOARD: env.FJORD });
+    if (response.status === 400 || (dayRequested !== null && !response.ok)) return response;
     if (!response.ok) return await fjordLeaderboard();
-    const { day, scores } = await response.json();
-    return json({ day, updatedAt: new Date().toISOString(), rows: scores.slice(0, 30).map(
+    const { day, scores, days = [day] } = await response.json();
+    return json({ day, days, updatedAt: new Date().toISOString(), rows: scores.map(
       ({ rank, nickname, score, timeMs }) => ({ rank, name: nickname, score, timeMs })) });
   } catch {
-    return await fjordLeaderboard();
+    return dayRequested === null ? await fjordLeaderboard() : unavailable();
   }
 }
 

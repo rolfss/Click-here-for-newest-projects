@@ -104,12 +104,13 @@ async function requireManager(request, expected) {
 }
 
 export class ConferenceScores {
-  constructor(storage, managerToken, clock, rateSession, { combineStandings, authorizeManager } = {}) {
+  constructor(storage, managerToken, clock, rateSession, { combineStandings, authorizeManager, archiveStandings = false } = {}) {
     this.storage = storage;
     this.sql = storage.sql;
     this.clock = clock;
     this.rateSession = rateSession;
     this.combineStandings = combineStandings;
+    this.archiveStandings = archiveStandings;
     this.authorizeManager = authorizeManager ?? (request => requireManager(request, managerToken));
     for (const statement of [
       `CREATE TABLE IF NOT EXISTS conference_tickets (
@@ -131,6 +132,12 @@ export class ConferenceScores {
         telemetry TEXT NOT NULL, stages TEXT NOT NULL
       )`
     ]) this.sql.exec(statement);
+    if (archiveStandings) {
+      this.sql.exec(`CREATE TABLE IF NOT EXISTS conference_archive (
+        day TEXT NOT NULL, rank INTEGER NOT NULL, nickname TEXT NOT NULL, score INTEGER NOT NULL,
+        timeMs INTEGER NOT NULL, rankingTimeMs INTEGER, PRIMARY KEY (day, rank)
+      )`);
+    }
     storage.transactionSync(() => {
       if (![...this.sql.exec('PRAGMA table_info(conference_tickets)')].some(column => column.name === 'ruleset')) {
         this.sql.exec('ALTER TABLE conference_tickets ADD COLUMN ruleset TEXT');
@@ -144,13 +151,25 @@ export class ConferenceScores {
 
   cleanup(now) {
     this.sql.exec('DELETE FROM conference_tickets WHERE expiresAt <= ?', now);
-    this.sql.exec('DELETE FROM conference_bests WHERE day < ?', conferenceWindow(now).day);
+    const { day } = conferenceWindow(now);
+    if (this.archiveStandings) {
+      if ([...this.sql.exec('SELECT 1 FROM conference_bests WHERE day < ? LIMIT 1', day)].length === 0) return;
+      this.storage.transactionSync(() => {
+        this.sql.exec(`INSERT INTO conference_archive (day, rank, nickname, score, timeMs, rankingTimeMs)
+          SELECT day, ROW_NUMBER() OVER (PARTITION BY day ORDER BY ${order}), nickname, score, timeMs, rankingTimeMs
+          FROM conference_bests WHERE day < ?`, day);
+        this.sql.exec('DELETE FROM conference_bests WHERE day < ?', day);
+      });
+    } else {
+      this.sql.exec('DELETE FROM conference_bests WHERE day < ?', day);
+    }
   }
 
   nextCleanup(now) {
     const [ticket] = this.sql.exec('SELECT MIN(expiresAt) AS next FROM conference_tickets');
     const window = conferenceWindow(now);
-    const [best] = this.sql.exec('SELECT 1 AS found FROM conference_bests WHERE day = ? LIMIT 1', window.day);
+    const [best] = this.sql.exec('SELECT day FROM conference_bests ORDER BY day LIMIT 1');
+    if (best?.day < window.day) return now;
     const next = Math.min(ticket.next ?? Infinity, best ? window.resetsAt : Infinity);
     return Number.isFinite(next) ? next : null;
   }
@@ -162,18 +181,24 @@ export class ConferenceScores {
     if (request.method === 'GET' && url.pathname === '/conference/scores') {
       const now = this.clock();
       this.cleanup(now);
-      const window = conferenceWindow(now);
-      const rows = [...this.sql.exec(
-        `SELECT nickname, score, timeMs, rankingTimeMs FROM conference_bests WHERE day = ? ORDER BY ${order} LIMIT 50`,
-        window.day
-      )];
+      const current = conferenceWindow(now);
+      const day = this.archiveStandings ? url.searchParams.get('day') ?? current.day : current.day;
+      const window = day === current.day ? current : { day, resetsAt: resetForDay(day) };
+      const rows = day < current.day
+        ? [...this.sql.exec('SELECT nickname, score, timeMs, rankingTimeMs FROM conference_archive WHERE day = ? ORDER BY rank', day)]
+        : [...this.sql.exec(`SELECT nickname, score, timeMs, rankingTimeMs FROM conference_bests
+            WHERE day = ? ORDER BY ${order}${this.archiveStandings ? '' : ' LIMIT 50'}`, day)];
       const scores = rows.map((row, index) => ({ rank: index + 1, ...publicResult(row) }));
       const standings = { ...window, scores,
         ...(board === RUN_BOARD ? { supportedRulesets: [CONFERENCE_RULESET] } : {}) };
+      if (this.archiveStandings) {
+        const days = [...this.sql.exec('SELECT DISTINCT day FROM conference_archive ORDER BY day DESC')];
+        standings.days = [current.day, ...days.map(row => row.day)];
+      }
       if (board === RUN_BOARD && this.combineStandings) {
         return json(await this.combineStandings({ ...standings, scores: scores.map((score, index) => ({
           ...score, rankingTimeMs: rows[index].rankingTimeMs,
-        })) }));
+        })) }, current.day));
       }
       return json(standings);
     }
@@ -272,7 +297,7 @@ export class ConferenceScores {
           (excluded.score = conference_bests.score AND excluded.rankingTimeMs < COALESCE(conference_bests.rankingTimeMs, conference_bests.timeMs))`,
       day, run.username.toLowerCase(), run.username, run.nickname, score, timeMs, now, ticket, rankingTimeMs);
 
-      // Materialize the current winner while scores are live so the 08:00 reset can discard the rest.
+      // Keep the organizer's winner lookup available after the public board resets.
       this.sql.exec(`INSERT INTO conference_winners(day, username, nickname, score, timeMs)
         SELECT day, username, nickname, score, timeMs FROM conference_bests
         WHERE day = ? ORDER BY ${order} LIMIT 1

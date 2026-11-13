@@ -22,6 +22,12 @@ if (parts.length) {
   }
 }
 
+// Keep the display source reviewable while the larger browser assets stay packed.
+await mkdir(publicRoot, { recursive: true });
+for (const file of ['index.html', 'kiosk.css', 'kiosk.js']) {
+  await cp(join(root, 'browser-source', file), join(publicRoot, file));
+}
+
 const vendor = join(root, 'node_modules', 'pdfjs-dist');
 const pdf = join(publicRoot, 'pdfjs');
 await mkdir(pdf, { recursive: true });
