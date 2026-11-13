@@ -1,4 +1,4 @@
-import { CONFERENCE_API_URL } from './conference-config.js';
+import { CONFERENCE_API_URL } from './conference-config.js?v=3.4.1';
 import { conferenceApiEndpoint, formatConferencePoints } from './conference-standings.js';
 import { cleanName } from './rally-rules.js?v=3.2.0';
 import { CONFERENCE_RULESET, RUN_BOARD } from './run-scoring.js?v=3.4.0';

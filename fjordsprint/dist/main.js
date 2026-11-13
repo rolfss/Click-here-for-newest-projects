@@ -17,7 +17,7 @@ import {loadProgress,rank,completeStage} from './progression.js';
 import {createLeaderboard,mountRallyUI,updateRallyUI,setRocketScore} from './rally-ui.js?v=3.3.2';
 import {RaceDirector} from './director.js';
 import {medalGhost} from './pace-ghost.js';
-import {createConferenceRace,conferenceSettings} from './conference-race.js?v=3.4.0';
+import {createConferenceRace,conferenceSettings} from './conference-race.js?v=3.4.1';
 import {CONFERENCE_RULESET,createStageTelemetry,recordDriving,completeStageTelemetry,scoreConferenceRun,scoreStages} from './run-scoring.js?v=3.4.0';
 import {createLocalCupBoard,renderCupResult} from './cup-ui.js';
 const conferenceMode=new URLSearchParams(location.search).get('conference')==='1';
