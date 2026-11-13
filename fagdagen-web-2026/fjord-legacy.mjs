@@ -94,7 +94,7 @@ export function createLegacyFjordFeed({ storage, fetcher = (url, options) => fet
 }
 
 /** Old scores use actual three-stage time. New rows can carry a separate ranking time. */
-export function mergeFjordScores({ scores, ...publicFields }, legacyRows, { limit = Infinity } = {}) {
+export function mergeFjordScores({ scores, ...publicFields }, legacyRows, { limit = Infinity, includeIdentity = false } = {}) {
   const oldEntries = legacyRows.flatMap(row => {
     const publicRow = readRow(row);
     return publicRow ? [{ publicRow, rankingTimeMs: publicRow.timeMs, sourceOrder: 0 }] : [];
@@ -103,12 +103,14 @@ export function mergeFjordScores({ scores, ...publicFields }, legacyRows, { limi
     const publicRow = readRow(row);
     const rankingTimeMs = Number.isSafeInteger(row?.rankingTimeMs) && row.rankingTimeMs > 0
       ? row.rankingTimeMs : publicRow?.timeMs;
-    return publicRow ? [{ publicRow, rankingTimeMs, sourceOrder: 1 }] : [];
+    return publicRow ? [{ publicRow, rankingTimeMs, sourceOrder: 1, username: row.username }] : [];
   });
   const ranked = [...oldEntries, ...newEntries].sort((a, b) => b.publicRow.score - a.publicRow.score ||
     a.rankingTimeMs - b.rankingTimeMs || a.sourceOrder - b.sourceOrder || a.publicRow.rank - b.publicRow.rank);
   return {
     ...publicFields,
-    scores: ranked.slice(0, limit).map(({ publicRow }, index) => ({ ...publicRow, rank: index + 1 })),
+    scores: ranked.slice(0, limit).map(({ publicRow, username }, index) => ({
+      ...publicRow, rank: index + 1, ...(includeIdentity ? { username: username ?? null } : {}),
+    })),
   };
 }

@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import { RUN_BOARD, scoreStages } from '../dist/run-scoring.js';
 import { CONFERENCE_BOARD, conferenceWindow } from './conference.mjs';
 import worker, { Leaderboard } from './worker.mjs';
+import { mergeFjordScores } from '../../fagdagen-web-2026/fjord-legacy.mjs';
 
 const pages = 'https://rolfss.github.io';
 const token = 'test-manager-token-never-used-in-production';
@@ -56,6 +57,36 @@ test('Fagdagen retains every ranked result after reset and archives only public 
   assert.equal(db.prepare('SELECT COUNT(*) AS n FROM conference_bests').get().n, 0);
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM pragma_table_info('conference_archive') WHERE name LIKE '%username%'").get().n, 0);
   assert.equal((await board('&day=2026-02-30')).status, 400);
+});
+
+test('only authenticated top six lookup includes current Fjordsprint usernames', async () => {
+  let now = date('2026-11-13T12:00:00Z');
+  const day = '2026-11-13';
+  const legacy = [{ rank: 1, nickname: 'Legacy', score: 25_000, timeMs: 100_000, username: 'ignored' }];
+  const { db, app } = namespace({ CONFERENCE_MANAGER_TOKEN: token }, () => now, undefined, {
+    archiveStandings: true,
+    combineStandings: (standings, currentDay, options) => mergeFjordScores(standings, legacy, options),
+  });
+  const insert = db.prepare(`INSERT INTO conference_bests
+    (day, usernameKey, username, nickname, score, timeMs, finishedAt, ticket, rankingTimeMs)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+  for (let i = 0; i < 7; i++) {
+    insert.run(day, `local${i}`, `local${i}`, `Spiller ${i}`, 25_000 - i, 60_000, now, `ticket${i}`, 200_000);
+  }
+  db.prepare(`INSERT INTO conference_winners (day, username, nickname, score, timeMs) VALUES (?,?,?,?,?)`)
+    .run(day, 'local0', 'Spiller 0', 25_000, 60_000);
+  const call = (path, auth, query = '') => app.fetch(new Request(`https://scores.example${path}?board=${RUN_BOARD}&day=${day}${query}`, {
+    headers: auth ? { Authorization: `Bearer ${token}` } : {},
+  }));
+  assert.equal((await call(admin, false, '&limit=6')).status, 401);
+  const top = await (await call(admin, true, '&limit=6')).json();
+  assert.deepEqual(top.scores.map(row => row.username), [null, 'local0', 'local1', 'local2', 'local3', 'local4']);
+  const published = await (await call(scores, false, '&limit=6')).json();
+  assert.deepEqual(top.scores.map(({ username, ...row }) => row), published.scores.slice(0, 6));
+  const existing = await (await call(admin, true)).json();
+  assert.deepEqual(existing, { day, resetsAt: top.resetsAt, winner: top.winner });
+  now = top.resetsAt;
+  assert.equal((await call(admin, true, '&limit=6')).status, 410);
 });
 
 function fixture(start = '2026-11-12T08:00:00Z', managerToken = token, seedFullRun) {

@@ -6,9 +6,9 @@
   <meta name="referrer" content="no-referrer">
   <meta name="theme-color" content="#b9c9d3">
   <title>Fagdagen 2026 · Sak og arkiv</title>
-  <link rel="stylesheet" href="./kiosk.css?v=4">
+  <link rel="stylesheet" href="./kiosk.css?v=5">
   <link rel="stylesheet" href="./slides.css?v=2">
-  <script type="module" src="./kiosk.js?v=4"></script>
+  <script type="module" src="./kiosk.js?v=5"></script>
 </head>
 <body>
   <header class="screen-head">
@@ -22,6 +22,7 @@
       </select>
       <span id="test-label" class="test-label" hidden>Prøvevisning</span>
       <a id="quiz-test" class="screen-button" href="/?test=1" hidden>Prøvespill</a>
+      <button id="organizer-top-six" class="screen-button" type="button" hidden>Topp 6 med brukernavn</button>
       <button id="quiz-export" class="screen-button" type="button" hidden>Last ned quizresultater</button>
       <button id="fullscreen" class="screen-button" type="button" title="Fullskjerm (F)">Fullskjerm</button>
     </div>
@@ -76,6 +77,25 @@
       <p class="presentation-message">Åpner lysbildevisningen …</p>
     </section>
   </main>
+  <dialog id="organizer-results" class="organizer-results" aria-labelledby="organizer-results-title">
+    <header>
+      <h2 id="organizer-results-title">Topp 6 · Arrangør</h2>
+      <form method="dialog"><button class="screen-button" autofocus>Lukk</button></form>
+    </header>
+    <p id="organizer-results-status" role="status"></p>
+    <div id="organizer-results-tables" class="organizer-tables" hidden>
+      <table>
+        <caption>Arkivfaglig quiz</caption>
+        <thead><tr><th scope="col">Plass</th><th scope="col">Kallenavn</th><th scope="col">Poeng</th><th scope="col">M365-brukernavn</th></tr></thead>
+        <tbody id="organizer-quiz-rows"></tbody>
+      </table>
+      <table>
+        <caption>Fjordsprint</caption>
+        <thead><tr><th scope="col">Plass</th><th scope="col">Kallenavn</th><th scope="col">Poeng</th><th scope="col">M365-brukernavn</th></tr></thead>
+        <tbody id="organizer-fjord-rows"></tbody>
+      </table>
+    </div>
+  </dialog>
   <noscript><p class="script-notice">Slå på JavaScript for å vise resultater og presentasjon.</p></noscript>
 </body>
 </html>

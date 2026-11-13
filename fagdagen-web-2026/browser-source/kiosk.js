@@ -37,6 +37,12 @@ const quizJoin = document.getElementById("quiz-join");
 const quizJoinLabel = document.getElementById("quiz-join-label");
 const quizJoinHelp = document.getElementById("quiz-join-help");
 const quizExport = document.getElementById("quiz-export");
+const topSixButton = document.getElementById("organizer-top-six");
+const resultsDialog = document.getElementById("organizer-results");
+const resultsStatus = document.getElementById("organizer-results-status");
+const resultsTables = document.getElementById("organizer-results-tables");
+const organizerQuizRows = document.getElementById("organizer-quiz-rows");
+const organizerFjordRows = document.getElementById("organizer-fjord-rows");
 const quizTest = document.getElementById("quiz-test");
 const quizQr = document.getElementById("quiz-qr");
 const fjordFallback = document.getElementById("fjord-fallback");
@@ -44,6 +50,7 @@ const organizerStorage = "fagdagen2026-organizer";
 const organizerKey = loadOrganizer();
 let quizStatus = null;
 let organizerActive = false;
+let resultsRequest;
 let refreshTimer;
 let refreshing = false;
 let fjordDays = [];
@@ -120,6 +127,7 @@ async function activateOrganizer() {
     });
     organizerActive = response.ok && (await response.json()).active === true;
     quizExport.hidden = !organizerActive;
+    topSixButton.hidden = !organizerActive || testMode;
   } catch {}
 }
 
@@ -143,6 +151,56 @@ quizExport.addEventListener("click", async () => {
   } finally {
     quizExport.disabled = false;
   }
+});
+
+function renderOrganizerResults(body, entries) {
+  const rows = entries.map(({ rank, name, score, username }) => {
+    const row = document.createElement("tr");
+    for (const value of [rank, name, numberFormat.format(score), username || "Ikke tilgjengelig"]) {
+      row.insertCell().textContent = value;
+    }
+    return row;
+  });
+  if (rows.length === 0) {
+    const row = document.createElement("tr");
+    const cell = row.insertCell();
+    cell.colSpan = 4;
+    cell.textContent = "Ingen registrerte resultater.";
+    rows.push(row);
+  }
+  body.replaceChildren(...rows);
+}
+
+topSixButton.addEventListener("click", async () => {
+  if (!organizerActive || resultsDialog.open || document.fullscreenElement) return;
+  const controller = new AbortController();
+  resultsRequest = controller;
+  resultsStatus.textContent = "Henter resultater …";
+  resultsDialog.showModal();
+  try {
+    const response = await fetch("/api/organizer/top-six", {
+      headers: { Authorization: "Bearer " + organizerKey }, cache: "no-store",
+      signal: AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]),
+    });
+    if (!response.ok) throw new Error("Resultatene er utilgjengelige.");
+    const { day, quiz: quizRows, fjord: fjordRows } = await response.json();
+    if (resultsRequest !== controller || !resultsDialog.open) return;
+    renderOrganizerResults(organizerQuizRows, quizRows);
+    renderOrganizerResults(organizerFjordRows, fjordRows);
+    resultsStatus.textContent = dayPattern.test(day) ? formatDay(day) : "";
+    resultsTables.hidden = false;
+  } catch {
+    if (resultsRequest === controller) resultsStatus.textContent = "Kunne ikke hente resultater. Lukk vinduet og prøv igjen.";
+  }
+});
+
+resultsDialog.addEventListener("close", () => {
+  resultsRequest?.abort();
+  resultsRequest = null;
+  resultsTables.hidden = true;
+  organizerQuizRows.replaceChildren();
+  organizerFjordRows.replaceChildren();
+  resultsStatus.textContent = "";
 });
 
 function setStatus(board, text, tone) {
@@ -372,6 +430,7 @@ document.addEventListener("fullscreenchange", () => {
   fullscreen.textContent = document.fullscreenElement ? "Avslutt fullskjerm" : "Fullskjerm";
   clearInterval(boardPageTimer);
   if (document.fullscreenElement) {
+    if (resultsDialog.open) resultsDialog.close();
     for (const board of boards) board.results.scrollTop = 0;
     boardPageTimer = setInterval(() => {
       if (!document.hidden) boards.forEach(advanceBoardPage);

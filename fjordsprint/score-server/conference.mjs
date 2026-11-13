@@ -209,7 +209,16 @@ export class ConferenceScores {
       const resetsAt = resetForDay(day);
       const [row] = this.sql.exec('SELECT username, nickname, score, timeMs FROM conference_winners WHERE day = ?', day);
       const winner = row ? { rank: 1, ...publicResult(row), username: row.username } : null;
-      return json({ day, resetsAt, winner });
+      const result = { day, resetsAt, winner };
+      if (board === RUN_BOARD && this.archiveStandings && this.combineStandings && url.searchParams.get('limit') === '6') {
+        if (day !== window.day) throw new InputError('Brukernavn for topp seks er bare tilgjengelige for pågående konkurransedag.', 410);
+        const rows = [...this.sql.exec(`SELECT username, nickname, score, timeMs, rankingTimeMs
+          FROM conference_bests WHERE day = ? ORDER BY ${order} LIMIT 6`, day)];
+        const standings = await this.combineStandings({ day, days: [day], resetsAt,
+          scores: rows.map((entry, index) => ({ ...entry, rank: index + 1 })) }, day, { includeIdentity: true, limit: 6 });
+        result.scores = standings.scores;
+      }
+      return json(result);
     }
     if (request.method !== 'POST' || !['/conference/sessions', '/conference/scores'].includes(url.pathname)) {
       return json({ error: 'Ikke funnet.' }, 404);

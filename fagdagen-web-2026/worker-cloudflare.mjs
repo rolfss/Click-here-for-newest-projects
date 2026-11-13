@@ -22,10 +22,10 @@ export class FjordLeaderboard extends Leaderboard {
     const legacy = createLegacyFjordFeed({ storage: ctx.storage });
     super(ctx, env, Date.now, {
       archiveStandings: true,
-      combineStandings: async (standings, currentDay) => {
+      combineStandings: async (standings, currentDay, options) => {
         const legacyRows = await legacy.read(standings.day, { refreshCurrent: standings.day === currentDay });
         const days = [...new Set([...standings.days, ...legacy.days()])].sort().reverse();
-        return mergeFjordScores({ ...standings, days }, legacyRows);
+        return mergeFjordScores({ ...standings, days }, legacyRows, options);
       },
       authorizeManager: async request => {
         if (!(await organizerKey(request))) throw new InputError('Bruk arrangørlenken.', 401);
@@ -73,6 +73,26 @@ async function fjordStandings(request, env) {
 async function fjordRequest(request, url, env) {
   if (url.searchParams.get('board') !== RUN_BOARD) return json({ error: 'Feil løpsklasse.' }, 400);
   return fjordWorker.fetch(request, { LEADERBOARD: env.FJORD });
+}
+
+async function organizerTopSix(request, env) {
+  if (!await organizerKey(request)) return json({ error: 'Bruk arrangørlenken.', code: 'organizer_required' }, 401);
+  const day = quizPeriod(Date.now(), false).day;
+  const endpoint = new URL('/conference/admin', request.url);
+  endpoint.search = new URLSearchParams({ board: RUN_BOARD, day, limit: '6' });
+  const headers = { Authorization: request.headers.get('Authorization') };
+  const [quizResponse, fjordResponse] = await Promise.all([
+    env.QUIZ.get(env.QUIZ.idFromName('fagdagen-2026')).fetch(new Request(request.url, { headers })),
+    fjordWorker.fetch(new Request(endpoint, { headers }), { LEADERBOARD: env.FJORD }),
+  ]);
+  if (!quizResponse.ok) return quizResponse;
+  if (!fjordResponse.ok) return fjordResponse;
+  const [{ day: quizDay, rows: quiz }, { day: fjordDay, scores }] = await Promise.all([
+    quizResponse.json(), fjordResponse.json(),
+  ]);
+  if (quizDay !== day || fjordDay !== day || !Array.isArray(scores)) return unavailable();
+  const fjord = scores.map(({ rank, nickname, score, username }) => ({ rank, name: nickname, score, username }));
+  return json({ day, quiz, fjord });
 }
 
 function organizerKey(request) {
@@ -205,19 +225,26 @@ export class StandQuiz extends DurableObject {
     return json({ active: true });
   }
 
-  async #exportResults(test) {
+  async #rankedResults(test, scope, limit = 1500) {
     const rows = this.#sql.exec(`SELECT name, contact, correct, time_ms FROM quiz_players
-      WHERE scope = ? AND finished_at IS NOT NULL ORDER BY correct DESC, time_ms, finished_at, best_token_hash`,
-      quizPeriod(Date.now(), test).scope).toArray();
-    const lines = ['Plass;Kallenavn;M365-brukernavn;Poeng;Svartid (ms)'];
+      WHERE scope = ? AND finished_at IS NOT NULL ORDER BY correct DESC, time_ms, finished_at, best_token_hash LIMIT ?`,
+      scope, limit).toArray();
     const { bank, secret } = this.#unlocked;
     const count = quizQuestions(bank, test).length;
     const questionMs = bank.time_limit_seconds * 1000;
+    const results = [];
     for (const [index, row] of rows.entries()) {
-      const contact = await openContact(row.contact, secret);
+      const username = await openContact(row.contact, secret);
       const score = quizScore(row.correct, row.time_ms, count, questionMs);
-      lines.push([index + 1, row.name, contact, score, row.time_ms].map(csvCell).join(';'));
+      results.push({ rank: index + 1, name: row.name, username: username || null, score, timeMs: row.time_ms });
     }
+    return results;
+  }
+
+  async #exportResults(test) {
+    const rows = await this.#rankedResults(test, quizPeriod(Date.now(), test).scope, -1);
+    const lines = ['Plass;Kallenavn;M365-brukernavn;Poeng;Svartid (ms)', ...rows.map(
+      ({ rank, name, username, score, timeMs }) => [rank, name, username ?? '', score, timeMs].map(csvCell).join(';'))];
     return new Response(`\uFEFF${lines.join('\r\n')}\r\n`, { headers: {
       'Content-Type': 'text/csv; charset=utf-8',
       'Content-Disposition': `attachment; filename="${test ? 'fagdag-quiz-provespill' : 'fagdag-quiz-resultater'}.csv"`,
@@ -240,6 +267,11 @@ export class StandQuiz extends DurableObject {
         }
         if (request.method === 'GET' && url.pathname === '/api/organizer/results') {
           return this.#unlocked ? await this.#exportResults(test) : json({ error: 'Åpne arrangørlenken først.', code: 'not_active' }, 409);
+        }
+        if (request.method === 'GET' && url.pathname === '/api/organizer/top-six') {
+          if (!this.#unlocked) return json({ error: 'Åpne arrangørlenken først.', code: 'not_active' }, 409);
+          const { scope, day } = quizPeriod(Date.now(), false);
+          return json({ day, rows: await this.#rankedResults(false, scope, 6) });
         }
         return json({ error: 'Ukjent endepunkt.' }, 404);
       }
@@ -273,6 +305,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     try {
+      if (url.pathname === '/api/organizer/top-six' && request.method === 'GET') return await organizerTopSix(request, env);
       if (url.pathname.startsWith('/api/quiz/') || url.pathname.startsWith('/api/organizer/')) {
         return await env.QUIZ.get(env.QUIZ.idFromName('fagdagen-2026')).fetch(request);
       }
