@@ -4,7 +4,7 @@ import {createChallenge,stepChallenge,awardAnswer,scoreRun,rocketPose} from './r
 const courses=baseCourses.map((course,i)=>({...course,...THEMES[i],region:REGION_ROUTES[i]}));
 import {initialState,stepCar,recoverCar,createDemoDriver,BOOST_PAD_CHARGE} from './rally-physics.js?v=3.3.2';
 import {World} from './polish-world.js?v=3.3.2';
-import {mountMobileControls,touchDevice} from './mobile-controls.js?v=3.3.2';
+import {mountMobileControls,touchDevice} from './mobile-controls.js?v=3.4.0';
 import {mobileAssist,scoreClass} from './mobile-drive.js?v=3.3.2';
 let mobile;
 import {RaceAudio} from './rally-audio.js?v=3.3.2';
@@ -17,8 +17,8 @@ import {loadProgress,rank,completeStage} from './progression.js';
 import {createLeaderboard,mountRallyUI,updateRallyUI,setRocketScore} from './rally-ui.js?v=3.3.2';
 import {RaceDirector} from './director.js';
 import {medalGhost} from './pace-ghost.js';
-import {createConferenceRace,conferenceSettings} from './conference-race.js?v=3.3.0';
-import {createStageTelemetry,recordDriving,completeStageTelemetry,scoreStages} from './run-scoring.js';
+import {createConferenceRace,conferenceSettings} from './conference-race.js?v=3.4.1';
+import {CONFERENCE_RULESET,createStageTelemetry,recordDriving,completeStageTelemetry,scoreConferenceRun,scoreStages} from './run-scoring.js?v=3.4.0';
 import {createLocalCupBoard,renderCupResult} from './cup-ui.js';
 const conferenceMode=new URLSearchParams(location.search).get('conference')==='1';
 const saveKey=conferenceMode?'fjordsprint-conference-v1':'fjordsprint-v1';
@@ -59,13 +59,13 @@ function menuCards(){
  $('#cup-btn').setAttribute('aria-pressed',settings.cup);$('#training-btn').setAttribute('aria-pressed',!settings.cup);
  $('#career-rank').textContent=rank(progress);
  $('#career-objective').textContent=settings.cup?'Fjordlinjen → Tindepasset → Nordlysryggen':'Velg en etappe og tren på linjevalg, bremsing og boost.';
- $('#race-intro').textContent=settings.cup?'FJORDSPRINT har tre etapper. Hver etappe gir poeng. Kjør alle tre for å sette en score på poengtavlen.':'Velg én etappe og øv i ditt eget tempo. I Fjellcupen teller alle tre etappene.';
- $('#play-btn').textContent=settings.cup?(conferenceMode?'KJØR KONFERANSELØPET ↗':'KJØR FJELLCUPEN ↗'):'KJØR '+courses[trackIndex].name.toUpperCase()+' ↗';
+ $('#race-intro').textContent=conferenceMode?'Kjør Fjordlinjen for å sette poeng på Fagdagens poengtavle. Ditt beste løp teller.':settings.cup?'FJORDSPRINT har tre etapper. Hver etappe gir poeng. Kjør alle tre for å sette en score på poengtavlen.':'Velg én etappe og øv i ditt eget tempo. I Fjellcupen teller alle tre etappene.';
+ $('#play-btn').textContent=conferenceMode?'KJØR FJORDLINJEN ↗':settings.cup?'KJØR FJELLCUPEN ↗':'KJØR '+courses[trackIndex].name.toUpperCase()+' ↗';
  $('#leaderboard-btn').textContent=conferenceMode?'Dagens poengtavle':settings.cup?'Fjellcupens poengtavle':'Poengtavle · 48 t';
  $('#career-mastery').textContent=progress.mastered.length+' / 18 EKSPERTSVAR · '+progress.dodges+' UNNAVIKELSER';
  $$('[data-course]').forEach(b=>b.onclick=()=>selectCourse(Number(b.dataset.course)));
 }
-function selectCourse(index){if(index<0||index>=courses.length)return;if((conferenceMode||settings.cup)&&!cupRun&&index!==0){toast('Velg Trening for å kjøre en enkelt etappe.');return;}trackIndex=index;track=new Track(courses[index]);if(world){world.build(track);world.car.userData.paint.color.set(settings.livery);}car=initialState();car.s=42;$('#course-region').textContent=track.config.region;$('#course-subtitle').textContent=track.config.subtitle;$('#course-description').textContent=track.config.description;$('#course-length').textContent=(track.length/1000).toFixed(1);$('#course-climb').textContent=Math.round(Math.max(...track.samples.map(s=>s.p.y)));mapCache=null;resetInterpolation();menuCards();updateMap();audio.cue('menu');}
+function selectCourse(index){if(index<0||index>=courses.length)return;if(conferenceMode&&index!==0)return;if(settings.cup&&!cupRun&&index!==0){toast('Velg Trening for å kjøre en enkelt etappe.');return;}trackIndex=index;track=new Track(courses[index]);if(world){world.build(track);world.car.userData.paint.color.set(settings.livery);}car=initialState();car.s=42;$('#course-region').textContent=track.config.region;$('#course-subtitle').textContent=track.config.subtitle;$('#course-description').textContent=track.config.description;$('#course-length').textContent=(track.length/1000).toFixed(1);$('#course-climb').textContent=Math.round(Math.max(...track.samples.map(s=>s.p.y)));mapCache=null;resetInterpolation();menuCards();updateMap();audio.cue('menu');}
 function setMode(next){mode=next;document.body.classList.toggle('racing',['race','countdown','quiz','paused','finish'].includes(next));show('#menu',next==='menu');show('#hud',['race','countdown','quiz','paused','finish'].includes(next));show('#results',next==='results');if(next!=='quiz')show('#quiz',false);}
 function startRace(demo=false){
  if(mode!=='paused')audio.start();
@@ -79,12 +79,13 @@ function startRace(demo=false){
  if(leaderboard.ensureDriver(begin))begin();
 }
 function restartRace(){
- if(!cupRun||cupRun.stages.length===stageNames.length){startRace();return;}
+ if(conferenceMode||!cupRun||cupRun.stages.length===stageNames.length){startRace();return;}
  openModal('Starte fjellcupen på nytt?', '<p>En ny runde starter på Fjordlinjen. Poengene i denne runden legges bort.</p><div class="inline-buttons"><button class="primary" id="restart-cup">Start ny runde</button><button class="secondary" id="cancel-restart">Fortsett runden</button></div>',mode!=='paused');
  $('#restart-cup').onclick=startRace;
  $('#cancel-restart').onclick=()=>closeModal();
 }
 function advanceRace(){
+ if(conferenceMode)return;
  if(raceDemo){startRace();return;}
  if(cupRun){
   if(mode!=='results'||cupRun.stages.length!==trackIndex+1||trackIndex>=courses.length-1)return;
@@ -101,7 +102,7 @@ function showLeaderboard(){
  if(conferenceMode||(!cupRun&&!settings.cup)){leaderboard.display();return;}
  localCupBoard.display(cupModeKey(cupRun?.settings||settings));
 }
-function runRace(demo=false){raceDemo=demo===true;mobile?.reset();document.activeElement?.blur?.();demoDriver=createDemoDriver();closeModal(false);audio.setRaceStage(track.config.id);audio.start();raceSettings={...settings,...cupRun?.settings};stageTelemetry=cupRun?createStageTelemetry(track.config.id):undefined;director.reset(records[keyFor(trackIndex,raceSettings)]?.splits||[]);leaderboard?.begin(keyFor(trackIndex,raceSettings),raceDemo);car=initialState();challenge=createChallenge(track,trackIndex);questionDeck=createQuestionDeck(trackIndex);finishAge=0;resetInterpolation();encounters=createEncounters(track,trackIndex);dodges=0;answers=[];recording=[];recordAt=0;ghostFrames=raceSettings.ghost&&raceSettings.ghostGoal==='personal'?records[keyFor(trackIndex,raceSettings)]?.ghost:null;ghostLabel='REKORDEN';if(raceSettings.ghost&&!ghostFrames){const goal={gold:0,silver:1,bronze:2}[raceSettings.ghostGoal]??2;ghostFrames=medalGhost(track,raceSettings.assist,track.config.medals[goal]);ghostLabel=['GULLSPØKELSET','SØLVSPØKELSET','BRONSESPØKELSET'][goal];}ghostIndex=0;quizState=null;keys={};touch={};countdown=3.2;lastCount=4;accumulator=0;world.cameraInitialized=false;setMode('countdown');$('#hud-track').textContent=track.config.name;$('#stage-indicator').hidden=!cupRun;$('#stage-indicator').textContent=cupRun?'Etappe '+(trackIndex+1)+' av '+stageNames.length:'';$('#hud-mode').textContent=`${raceDemo?'DEMOTUR · ':''}${raceSettings.quiz?'ARKIVRALLY':'TIDSLØP'} · ${raceSettings.assist?'ASSISTERT':'SPORT'}`;$$('.progress-track b').forEach((b,i)=>b.style.left=(track.config.quiz[i]*100)+'%');$('#countdown').textContent='3';$('#split').style.color='';$('#split').textContent=record()?`REKORD ${formatTime(record().time)}`:(ghostFrames?'VIRTUELT TEMPO · '+ghostLabel:'Sett din første rekord');updateHUD();audio.cue('countdown');}
+function runRace(demo=false){raceDemo=demo===true;mobile?.reset();document.activeElement?.blur?.();demoDriver=createDemoDriver();closeModal(false);audio.setRaceStage(track.config.id);audio.start();raceSettings={...settings,...cupRun?.settings};stageTelemetry=cupRun?createStageTelemetry(track.config.id):undefined;director.reset(records[keyFor(trackIndex,raceSettings)]?.splits||[]);leaderboard?.begin(keyFor(trackIndex,raceSettings),raceDemo);car=initialState();challenge=createChallenge(track,trackIndex);questionDeck=createQuestionDeck(trackIndex);finishAge=0;resetInterpolation();encounters=createEncounters(track,trackIndex);dodges=0;answers=[];recording=[];recordAt=0;ghostFrames=raceSettings.ghost&&raceSettings.ghostGoal==='personal'?records[keyFor(trackIndex,raceSettings)]?.ghost:null;ghostLabel='REKORDEN';if(raceSettings.ghost&&!ghostFrames){const goal={gold:0,silver:1,bronze:2}[raceSettings.ghostGoal]??2;ghostFrames=medalGhost(track,raceSettings.assist,track.config.medals[goal]);ghostLabel=['GULLSPØKELSET','SØLVSPØKELSET','BRONSESPØKELSET'][goal];}ghostIndex=0;quizState=null;keys={};touch={};countdown=3.2;lastCount=4;accumulator=0;world.cameraInitialized=false;setMode('countdown');$('#hud-track').textContent=track.config.name;$('#stage-indicator').hidden=conferenceMode||!cupRun;$('#stage-indicator').textContent=!conferenceMode&&cupRun?'Etappe '+(trackIndex+1)+' av '+stageNames.length:'';$('#hud-mode').textContent=`${raceDemo?'DEMOTUR · ':''}${raceSettings.quiz?'ARKIVRALLY':'TIDSLØP'} · ${raceSettings.assist?'ASSISTERT':'SPORT'}`;$$('.progress-track b').forEach((b,i)=>b.style.left=(track.config.quiz[i]*100)+'%');$('#countdown').textContent='3';$('#split').style.color='';$('#split').textContent=record()?`REKORD ${formatTime(record().time)}`:(ghostFrames?'VIRTUELT TEMPO · '+ghostLabel:'Sett din første rekord');updateHUD();audio.cue('countdown');}
 function toMenu(){closeModal(false);quizState=null;challenge=null;cupRun=undefined;stageTelemetry=undefined;audio.setRaceStage(null);setMode('menu');if(settings.cup&&trackIndex!==0)selectCourse(0);updateRallyUI(null,car,'menu');car=initialState();car.s=42;resetInterpolation();encounters=[];world.cameraInitialized=false;world.setGhost(null);menuCards();audio.start();}
 function pause(){if(!['race','quiz','countdown'].includes(mode))return;modalReturn=mode;keys={};touch={};mode='paused';audio.suspend();openModal('Pause',`<p>Fjellene går ingen steder.</p><div class="inline-buttons"><button id="resume" class="primary">FORTSETT</button><button id="restart-pause" class="secondary">Start på nytt</button><button id="settings-pause" class="secondary">Innstillinger</button><button id="exit-pause" class="text-btn">${conferenceMode?'Til startmenyen':'Banevalg'}</button></div><p class="note">Escape fortsetter løpet. Tiden står stille mens du er her.</p>`,false);$('#resume').onclick=()=>closeModal();$('#restart-pause').onclick=restartRace;$('#settings-pause').onclick=()=>settingsModal(true);$('#exit-pause').onclick=toMenu;}
 function openModal(title,html,storeReturn=true){if(storeReturn){modalReturn=mode;modalFocus=document.activeElement;if(['race','quiz','countdown'].includes(mode)){mode='paused';keys={};audio.suspend();}}$('#modal-content').innerHTML=`<h2 id="modal-title">${title}</h2>${html}`;show('#modal-backdrop',true);$('#modal').scrollTop=0;$('#close-modal').focus();}
@@ -145,6 +146,18 @@ function finishCupStage(){
  if(!cupRun)return;
  const stage=completeStageTelemetry(stageTelemetry,{car,challenge});
  cupRun.stages.push(stage);
+ if(conferenceMode){
+  const summary=scoreConferenceRun(cupRun.stages,CONFERENCE_RULESET);
+  setRocketScore({score:summary.score});
+  $('#result-eyebrow').textContent='KONFERANSELØPET · FJORDLINJEN';
+  $('#result-title').textContent='Fjordlinjen fullført!';
+  $('#result-time').textContent=formatTime(summary.timeMs/1000);
+  $('#result-progression').textContent='';
+  $('#menu-btn').textContent='Til startmenyen';
+  show('#next-btn',false);
+  leaderboard.finishRun(cupRun.stages,summary);
+  return;
+ }
  const summary=scoreStages(cupRun.stages);
  const complete=cupRun.stages.length===stageNames.length;
  setRocketScore({score:summary.stages.at(-1).score,stage:summary.stages.length,count:stageNames.length,total:summary.score});
@@ -165,7 +178,6 @@ function finishCupStage(){
  $('#stage-details-heading').hidden=false;
  $('#stage-details-heading').textContent='Løpsdetaljer · '+track.config.name;
  $('#retry-btn').textContent='KJØR NY RUNDE ↻';
- if(conferenceMode){leaderboard.submitRun(cupRun.stages,summary,{status,retry});return;}
  const persistent=localCupBoard.save(leaderboard.driver,cupModeKey(cupRun.settings),cupRun.stages);
  status.textContent=persistent?'Totalscoren er lagret på denne enheten.':'Totalscoren er tilgjengelig i denne økten.';
 }
@@ -208,7 +220,6 @@ function bind(){
 function configureConferenceMenu(){
  $('#leaderboard-btn').textContent='Dagens poengtavle';
  $('.preview-tag').textContent='KONFERANSELØPET';
- $('#play-btn').textContent='KJØR KONFERANSELØPET ↗';
  $('#menu-btn').textContent='Til startmenyen';
  $('.menu-footer span:nth-child(2)').textContent='Dagens poengtavle starter på nytt kl. 08.00 norsk tid.';
 }

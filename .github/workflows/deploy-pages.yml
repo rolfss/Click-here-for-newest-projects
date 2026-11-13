@@ -133,16 +133,18 @@ jobs:
           CONFERENCE_API_URL: ${{ vars.FJORDSPRINT_CONFERENCE_API_URL }}
         run: |
           node --input-type=module <<'NODE'
-          import { writeFileSync } from 'node:fs';
+          import { readFileSync, writeFileSync } from 'node:fs';
 
           const configuredUrl = (process.env.CONFERENCE_API_URL || '').trim();
-          if (configuredUrl) {
+          if (configuredUrl && configuredUrl.replace(/\/$/, '') !== 'https://fjordsprint-scores.rolfsselas.workers.dev') {
             const apiUrl = URL.parse(configuredUrl);
             if (!apiUrl || apiUrl.protocol !== 'https:' || apiUrl.username || apiUrl.password || apiUrl.search || apiUrl.hash) {
               throw new Error('FJORDSPRINT_CONFERENCE_API_URL må være en HTTPS-adresse uten innlogging, parametere eller anker.');
             }
-            const source = `export const CONFERENCE_API_URL = ${JSON.stringify(apiUrl.href)};\n`;
-            writeFileSync('_site/fjordsprint/conference-config.js', source);
+            const configPath = '_site/fjordsprint/conference-config.js';
+            const source = readFileSync(configPath, 'utf8');
+            writeFileSync(configPath, source.replace(/^export const CONFERENCE_API_URL = .*;$/m,
+              `export const CONFERENCE_API_URL = ${JSON.stringify(apiUrl.href)};`));
           }
           NODE
 

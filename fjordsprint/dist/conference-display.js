@@ -1,4 +1,4 @@
-import {CONFERENCE_API_URL} from './conference-config.js';
+import {CONFERENCE_API_URL, LEGACY_CONFERENCE_API_URL} from './conference-config.js?v=3.4.1';
 import {RUN_BOARD} from './run-scoring.js';
 import {
   fetchConferenceStandings,
@@ -41,7 +41,7 @@ async function refreshStandings() {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
   try {
-    const standings = await fetchConferenceStandings(CONFERENCE_API_URL, {
+    const standings = await fetchConferenceStandings(legacy ? LEGACY_CONFERENCE_API_URL : CONFERENCE_API_URL, {
       signal: controller.signal,
       board: legacy ? undefined : RUN_BOARD
     });

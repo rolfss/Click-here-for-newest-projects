@@ -1,7 +1,7 @@
-import { CONFERENCE_API_URL } from './conference-config.js';
+import { CONFERENCE_API_URL } from './conference-config.js?v=3.4.1';
 import { conferenceApiEndpoint, formatConferencePoints } from './conference-standings.js';
 import { cleanName } from './rally-rules.js?v=3.2.0';
-import { RUN_BOARD } from './run-scoring.js';
+import { CONFERENCE_RULESET, RUN_BOARD } from './run-scoring.js?v=3.4.0';
 
 export const conferenceSettings = Object.freeze({ quiz: true, assist: true, mobileHelp: true, autogas: false });
 
@@ -93,11 +93,18 @@ export function createConferenceRace({ openModal, eligible }) {
   }
 
   async function issueTicket(participant, onReady, message, button) {
+    if (button.disabled) return;
     button.disabled = true;
     message.textContent = 'Kobler til poengtavlen …';
     let raceTicket;
     try {
-      raceTicket = (await send('sessions', { board: RUN_BOARD, ...participant })).ticket;
+      const session = await send('sessions', { board: RUN_BOARD, ruleset: CONFERENCE_RULESET, ...participant });
+      if (session.ruleset !== CONFERENCE_RULESET) {
+        message.textContent = 'Poengtjenesten er ikke klar for Fjordlinjen. Vent litt, og prøv igjen.';
+        button.disabled = false;
+        return;
+      }
+      raceTicket = session.ticket;
       if (typeof raceTicket !== 'string' || !raceTicket) throw Error('Mangler løpsbillett.');
     } catch (error) {
       message.textContent = error.status === 429 ? 'For mange startforsøk. Vent litt og prøv igjen.' : 'Kunne ikke starte et tellende løp. Sjekk nettet og prøv igjen.';
@@ -116,7 +123,7 @@ export function createConferenceRace({ openModal, eligible }) {
       return;
     }
     if (!eligible()) {
-      openModal('Åpne løpet på mobilen', '<p>Skann konferansens QR-kode med mobilen for å kjøre de tre etappene med mobilhjelp.</p>');
+      openModal('Åpne løpet på mobilen', '<p>Skann konferansens QR-kode med mobilen for å kjøre Fjordlinjen med mobilhjelp.</p>');
       return;
     }
     if (!driver) {
@@ -135,13 +142,26 @@ export function createConferenceRace({ openModal, eligible }) {
     document.getElementById('pilot-name').textContent = driver.nickname;
   }
 
-  function submitRun(stages, summary, { status, retry }) {
+  function finishRun(stages, summary) {
+    const host = document.getElementById('score-entry');
+    host.innerHTML = `
+      <section class="cup-result" aria-label="Poeng i konferanseløpet">
+        <div class="cup-total"><span>Fjordlinjen</span><strong>${formatConferencePoints(summary.score)} poeng</strong></div>
+        <p class="board-note cup-save-status" role="status"></p>
+        <div class="inline-buttons"><button class="secondary cup-submit-retry" type="button" hidden>Send på nytt</button><button class="text-btn cup-open-board" type="button">Se poengtavlen →</button></div>
+      </section>`;
+    host.querySelector('.cup-open-board').onclick = display;
+    host.classList.remove('hidden');
+    submitRun(stages, summary, host.querySelector('.cup-save-status'), host.querySelector('.cup-submit-retry'));
+  }
+
+  function submitRun(stages, summary, status, retry) {
     const run = { ticket, stages: [...stages] };
     ticket = undefined;
     let retries = 0;
     async function submit() {
       retry.hidden = true;
-      status.textContent = 'Sender poengene fra alle tre etappene …';
+      status.textContent = 'Registrerer poengene …';
       try {
         const { score } = await send('scores', run);
         if (score?.score !== summary.score || score.timeMs !== summary.timeMs ||
@@ -150,7 +170,7 @@ export function createConferenceRace({ openModal, eligible }) {
           status.textContent = 'Poengtjenesten bekreftet et annet resultat. Åpne poengtavlen for å se hva som er lagret.';
           return;
         }
-        status.textContent = `${formatConferencePoints(score.score)} poeng er registrert. Din beste runde vises på poengtavlen.`;
+        status.textContent = 'Poengene er registrert. Din beste runde vises på poengtavlen.';
       } catch (error) {
         if (error.status >= 400 && error.status < 500 && error.status !== 429) {
           status.textContent = 'Resultatet ble avvist. Start et nytt konferanseløp for å få et tellende resultat.';
@@ -168,5 +188,5 @@ export function createConferenceRace({ openModal, eligible }) {
     submit();
   }
 
-  return { begin, submitRun, display, requestStart, changeDriver: onReady => askDriver(onReady, false) };
+  return { begin, finishRun, display, requestStart, changeDriver: onReady => askDriver(onReady, false) };
 }

@@ -1,4 +1,4 @@
-import {CONFERENCE_API_URL} from './conference-config.js';
+import {CONFERENCE_API_URL, LEGACY_CONFERENCE_API_URL} from './conference-config.js?v=3.4.1';
 import {RUN_BOARD} from './run-scoring.js';
 import {
   conferenceApiEndpoint,
@@ -25,9 +25,12 @@ const time = element('winner-time');
 const username = element('winner-username');
 const status = element('manager-status');
 const legacy = new URLSearchParams(location.search).get('board') === 'legacy';
+const threeStage = new URLSearchParams(location.search).get('board') === 'three-stage';
+const apiUrl = legacy || threeStage ? LEGACY_CONFERENCE_API_URL : CONFERENCE_API_URL;
 const historyLink = element('manager-history-link');
-historyLink.href = legacy ? './conference-manager.html' : './conference-manager.html?board=legacy';
-historyLink.textContent = legacy ? 'Til treetappersløpet' : 'Vis tidligere énetappes løp';
+historyLink.href = legacy || threeStage ? './conference-manager.html' : './conference-manager.html?board=three-stage';
+historyLink.textContent = legacy || threeStage ? 'Til Fagdagen (Fjordlinjen)' : 'Oppslag for treetappersløpet';
+element('manager-scope').textContent = legacy ? 'Tidligere énetappes løp' : threeStage ? 'Treetappersløpet' : 'Fagdagen · Resultater fra den nye Fjordlinjen';
 let token = '';
 let activeRequest;
 
@@ -90,7 +93,7 @@ async function findWinner(requestToken, day = '') {
   activeRequest = controller;
   const timeout = setTimeout(() => controller.abort(), 8000);
   try {
-    const endpoint = conferenceApiEndpoint(CONFERENCE_API_URL, 'conference/admin');
+    const endpoint = conferenceApiEndpoint(apiUrl, 'conference/admin');
     if (!legacy) endpoint.searchParams.set('board', RUN_BOARD);
     if (day) endpoint.searchParams.set('day', day);
     const response = await fetch(endpoint, {
@@ -169,7 +172,7 @@ window.addEventListener('pagehide', () => {
   if (token || activeRequest) lockManager('Visningen er låst.');
 });
 
-if (CONFERENCE_API_URL) {
+if (apiUrl) {
   setBusy(false);
 } else {
   message('Arrangørvisningen er ikke koblet til poengtjenesten.', true);

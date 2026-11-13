@@ -1,5 +1,7 @@
 export const RUN_BOARD = 'fjordsprint-three-stage-v1';
 export const RUN_STAGES = Object.freeze(['fjord', 'pass', 'aurora']);
+export const CONFERENCE_RULESET = 'fjord-stage-v1';
+export const CONFERENCE_STAGES = Object.freeze(['fjord']);
 
 const stageRules = {
   fjord: { minimumTimeMs: 24000, fastTimeMs: 53000, slowTimeMs: 150000, boostTargetM: 450, maximumDistanceM: 3500, questions: 5 },
@@ -7,6 +9,8 @@ const stageRules = {
   aurora: { minimumTimeMs: 34000, fastTimeMs: 78000, slowTimeMs: 190000, boostTargetM: 550, maximumDistanceM: 4800, questions: 7 }
 };
 export const MINIMUM_RUN_TIME_MS = RUN_STAGES.reduce((total, stage) => total + stageRules[stage].minimumTimeMs, 0);
+export const MINIMUM_CONFERENCE_TIME_MS = stageRules.fjord.minimumTimeMs;
+const fullRunFastTimeMs = RUN_STAGES.reduce((total, stage) => total + stageRules[stage].fastTimeMs, 0);
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 export function createStageTelemetry(stage) {
@@ -82,4 +86,24 @@ export function scoreStages(stages) {
     timeMs: scored.reduce((sum, stage) => sum + stage.timeMs, 0),
     stages: scored
   };
+}
+
+export function scoreConferenceRun(stages, ruleset) {
+  const summary = scoreStages(stages);
+  if (ruleset !== CONFERENCE_RULESET) return summary;
+  const multiplier = RUN_STAGES.length;
+  return {
+    ...summary,
+    score: summary.score * multiplier,
+    stages: summary.stages.map(stage => ({
+      ...stage,
+      score: stage.score * multiplier,
+      breakdown: Object.fromEntries(Object.entries(stage.breakdown).map(([key, value]) => [key, value * multiplier]))
+    }))
+  };
+}
+
+export function conferenceRankingTime(timeMs, ruleset) {
+  // Compare the same fraction of each format's fast reference time.
+  return ruleset === CONFERENCE_RULESET ? Math.round(timeMs * fullRunFastTimeMs / stageRules.fjord.fastTimeMs) : timeMs;
 }
