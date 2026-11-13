@@ -25,7 +25,7 @@ function readSnapshot(value, field) {
 }
 
 /** Fetch only public standings. The cache belongs to the Fjord Durable Object. */
-export function createLegacyFjordFeed({ storage, fetcher = fetch, clock = Date.now } = {}) {
+export function createLegacyFjordFeed({ storage, fetcher = (url, options) => fetch(url, options), clock = Date.now } = {}) {
   let snapshot;
   let initialization;
   let lastAttempt;
