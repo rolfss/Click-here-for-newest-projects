@@ -196,12 +196,12 @@ body {
   scrollbar-width: thin;
 }
 
-#fjord-results:focus-visible {
-  outline: 2px solid var(--screen-accent);
+.board-results:focus-visible {
+  outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
 
-#fjord-results thead th {
+.board-results thead th {
   position: sticky;
   top: 0;
   z-index: 1;
@@ -375,13 +375,8 @@ body {
   color: var(--screen-warning);
 }
 
-@media (max-height: 860px) and (min-width: 861px) {
-  .board-quiz .board-table tr:nth-child(n + 5) { display: none; }
-}
-
 @media (max-height: 690px) and (min-width: 861px) {
   :root { --board-padding: 9px; }
-  .board-quiz .board-table tr:nth-child(n + 4) { display: none; }
 }
 
 @media (max-width: 860px), (max-height: 545px) {
@@ -389,7 +384,7 @@ body {
   .stand-layout { grid-template-columns: minmax(0, 1fr); }
   .boards { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto; }
   .board { min-height: 290px; }
-  #fjord-results { max-height: min(45vh, 380px); }
+  .board-results { max-height: min(45vh, 380px); }
   .presentation-area { min-height: clamp(340px, 68vw, 560px); }
 }
 
@@ -432,8 +427,11 @@ body {
   row-gap: 4px;
 }
 
-:root:fullscreen .board-results { margin-inline: 8px; }
-:root:fullscreen #fjord-results { max-height: none; scrollbar-width: none; }
+:root:fullscreen .board-results {
+  margin-inline: 8px;
+  max-height: none;
+  scrollbar-width: none;
+}
 :root:fullscreen .board-table {
   table-layout: auto;
   font-size: clamp(0.82rem, 0.97vw, 1.25rem);
@@ -454,6 +452,3 @@ body {
 :root:fullscreen .board-join { gap: 8px; }
 :root:fullscreen .join-copy strong { font-size: clamp(0.89rem, 1.05vw, 1.375rem); }
 
-@media (max-height: 860px) {
-  :root:fullscreen .board-quiz .board-table tbody tr:nth-child(n + 4) { display: none; }
-}

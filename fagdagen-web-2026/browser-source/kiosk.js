@@ -18,6 +18,7 @@ const createBoard = (id, endpoint) => {
   const element = document.getElementById(id);
   return {
     endpoint,
+    results: element.querySelector(".board-results"),
     status: element.querySelector("[data-status]"),
     table: element.querySelector("[data-table]"),
     rows: element.querySelector("[data-rows]"),
@@ -29,9 +30,9 @@ const createBoard = (id, endpoint) => {
 };
 
 const fjord = createBoard("fjord", "/api/fjord/leaderboard");
-const quiz = createBoard("quiz", "/api/quiz/leaderboard" + quizQuery);
+const quiz = createBoard("quiz", `/api/quiz/leaderboard${testMode ? "?test=1&all=1" : "?all=1"}`);
+const boards = [fjord, quiz];
 const fjordDay = document.getElementById("fjord-day");
-const fjordResults = document.getElementById("fjord-results");
 const quizJoin = document.getElementById("quiz-join");
 const quizJoinLabel = document.getElementById("quiz-join-label");
 const quizJoinHelp = document.getElementById("quiz-join-help");
@@ -48,7 +49,7 @@ let refreshing = false;
 let fjordDays = [];
 let fjordToday;
 let fjordBoardTimer;
-let fjordPageTimer;
+let boardPageTimer;
 let fjordRequestVersion = 0;
 
 function loadOrganizer() {
@@ -90,14 +91,13 @@ async function getJson(path) {
   }
 }
 
-async function getScores(path, limit) {
+async function getScores(path) {
   const value = await getJson(path);
   if (!Array.isArray(value?.rows)) throw new Error("Ugyldig poengtavle");
   const rows = value.rows
     .filter((row) => Number.isSafeInteger(row?.rank) && row.rank > 0
       && typeof row.name === "string" && Number.isSafeInteger(row.score) && row.score >= 0)
     .sort((a, b) => a.rank - b.rank)
-    .slice(0, limit)
     .map(({ rank, name, score, entryId }) => ({ rank, name, score,
       entryId: typeof entryId === "string" ? entryId : null }));
   return { rows, day: value.day ?? null, days: Array.isArray(value.days) ? value.days : [],
@@ -289,7 +289,7 @@ async function pollFjord() {
 fjordDay.addEventListener("change", () => {
   fjord.scores = null;
   fjord.previousLive = null;
-  fjordResults.scrollTop = 0;
+  fjord.results.scrollTop = 0;
   fjord.table.hidden = true;
   fjord.message.hidden = false;
   fjord.message.textContent = "Henter poengtavlen …";
@@ -297,20 +297,19 @@ fjordDay.addEventListener("change", () => {
   void pollFjord();
 });
 
-function advanceFjordPage() {
-  if (!document.fullscreenElement || document.hidden) return;
-  const viewport = fjordResults.clientHeight;
-  const maxScroll = fjordResults.scrollHeight - viewport;
+function advanceBoardPage({ results, table, rows }) {
+  const viewport = results.clientHeight;
+  const maxScroll = results.scrollHeight - viewport;
   if (maxScroll <= 1) return;
-  if (fjordResults.scrollTop >= maxScroll - 1) {
-    fjordResults.scrollTop = 0;
+  if (results.scrollTop >= maxScroll - 1) {
+    results.scrollTop = 0;
     return;
   }
-  const headerHeight = fjord.table.tHead?.offsetHeight ?? 0;
-  const resultsTop = fjordResults.getBoundingClientRect().top;
-  const nextRow = Array.from(fjord.rows.rows).find(row => row.getBoundingClientRect().bottom > resultsTop + viewport + 1);
+  const headerHeight = table.tHead?.offsetHeight ?? 0;
+  const resultsTop = results.getBoundingClientRect().top;
+  const nextRow = Array.from(rows.rows).find(row => row.getBoundingClientRect().bottom > resultsTop + viewport + 1);
   const pageTop = nextRow ? nextRow.getBoundingClientRect().top - resultsTop - headerHeight : maxScroll;
-  fjordResults.scrollTop += pageTop > 1 ? pageTop : viewport - headerHeight;
+  results.scrollTop += pageTop > 1 ? pageTop : viewport - headerHeight;
 }
 
 async function refreshScores() {
@@ -320,7 +319,7 @@ async function refreshScores() {
   try {
     await activateOrganizer();
     const [quizUpdate, statusUpdate] = await Promise.allSettled([
-      getScores(quiz.endpoint, 5),
+      getScores(quiz.endpoint),
       getQuizStatus(),
     ]);
     if (statusUpdate.status === "fulfilled") quizStatus = statusUpdate.value;
@@ -371,10 +370,12 @@ async function toggleFullscreen() {
 fullscreen.addEventListener("click", toggleFullscreen);
 document.addEventListener("fullscreenchange", () => {
   fullscreen.textContent = document.fullscreenElement ? "Avslutt fullskjerm" : "Fullskjerm";
-  clearInterval(fjordPageTimer);
+  clearInterval(boardPageTimer);
   if (document.fullscreenElement) {
-    fjordResults.scrollTop = 0;
-    fjordPageTimer = setInterval(advanceFjordPage, 8000);
+    for (const board of boards) board.results.scrollTop = 0;
+    boardPageTimer = setInterval(() => {
+      if (!document.hidden) boards.forEach(advanceBoardPage);
+    }, 8000);
   }
   void syncScreenWakeLock();
 });

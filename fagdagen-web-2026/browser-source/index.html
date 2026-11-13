@@ -6,9 +6,9 @@
   <meta name="referrer" content="no-referrer">
   <meta name="theme-color" content="#b9c9d3">
   <title>Fagdagen 2026 · Sak og arkiv</title>
-  <link rel="stylesheet" href="./kiosk.css?v=3">
+  <link rel="stylesheet" href="./kiosk.css?v=4">
   <link rel="stylesheet" href="./slides.css?v=2">
-  <script type="module" src="./kiosk.js?v=3"></script>
+  <script type="module" src="./kiosk.js?v=4"></script>
 </head>
 <body>
   <header class="screen-head">
@@ -55,7 +55,7 @@
           <h2 id="quiz-title">Arkivfaglig quiz</h2>
           <span class="board-status" data-status data-tone="muted">Kobler til</span>
         </header>
-        <div class="board-results">
+        <div class="board-results" id="quiz-results" tabindex="0" role="region" aria-label="Quizresultater">
           <table class="board-table" data-table hidden aria-label="Arkivfaglig quiz, toppliste">
             <thead><tr><th scope="col" aria-label="Plass">#</th><th scope="col">Kallenavn</th><th scope="col">Poeng</th></tr></thead>
             <tbody data-rows></tbody>

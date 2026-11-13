@@ -28,6 +28,12 @@ const server = createServer((request, response) => {
         rank: index + 1, name: `Pilot ${index + 1}`, score: 30000 - index,
       })) };
     }
+    if (path === '/api/quiz/leaderboard') {
+      const rowCount = url.searchParams.get('all') === '1' && url.searchParams.get('test') === '1' ? 45 : 5;
+      data = { rows: Array.from({ length: rowCount }, (_, index) => ({
+        rank: index + 1, name: `Quizspiller ${index + 1}`, score: 10000 - index,
+      })) };
+    }
     response.end(JSON.stringify(data));
     return;
   }
@@ -44,6 +50,12 @@ try {
   await page.goto(`http://127.0.0.1:${server.address().port}/?test=1`);
   await page.locator('#fjord tbody tr').nth(23).waitFor({ state: 'visible' });
   assert.equal(await page.locator('#fjord tbody tr').count(), 24);
+  await page.locator('#quiz tbody tr').nth(44).waitFor({ state: 'visible' });
+  assert.equal(await page.locator('#quiz tbody tr').count(), 45);
+  const quizResults = page.locator('#quiz-results');
+  await quizResults.focus();
+  await page.keyboard.press('End');
+  await page.waitForFunction(() => document.querySelector('#quiz-results').scrollTop > 0);
   await page.locator('#fjord-day').selectOption(competitionDays[1]);
   await page.waitForFunction(() => document.querySelectorAll('#fjord tbody tr').length === 11);
   await page.locator('#fjord-day').selectOption('');
@@ -62,12 +74,13 @@ try {
   }
   const [game, quiz, deck] = await Promise.all(['#fjord', '#quiz', '#presentation'].map(selector => page.locator(selector).boundingBox()));
   assert(game.x === quiz.x && game.y < quiz.y && deck.x > game.x, 'Scores should stack to the left of the presentation');
-  await page.waitForFunction(() => document.querySelector('#fjord-results').scrollTop > 0, null, { timeout: 12000 });
+  await page.waitForFunction(() => ['#fjord-results', '#quiz-results'].every(selector =>
+    document.querySelector(selector).scrollTop > 0), null, { timeout: 12000 });
   await page.evaluate(() => document.exitFullscreen());
   await page.waitForFunction(() => document.fullscreenElement === null);
   for (const selector of visible) assert(await page.locator(selector).isVisible(), `${selector} should return`);
   assert(await slide.isVisible(), 'The loaded slide should remain visible after exiting');
-  console.log('Chromium: all Fjordsprint results and date history are available. Fullscreen rotates scores, hides controls and preserves slides.');
+  console.log('Chromium: all Fjordsprint and quiz results are available. Fullscreen rotates both boards, hides controls and preserves slides.');
 } finally {
   await browser.close();
   server.close();

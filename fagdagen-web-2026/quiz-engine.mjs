@@ -21,6 +21,7 @@ const tokenPattern = /^[A-Za-z0-9_-]{22,100}$/;
 const fjordSource = 'https://fjordsprint-scores.rolfsselas.workers.dev/conference/scores?board=fjordsprint-three-stage-v1';
 const ranks = 'correct DESC, time_ms ASC, finished_at ASC, best_token_hash ASC';
 const encoder = new TextEncoder();
+const quizBoardCache = new WeakMap();
 let fjordCache;
 let fjordPending;
 
@@ -81,8 +82,12 @@ export function initializeQuizStorage(storage) {
       correct INTEGER, time_ms INTEGER, finished_at INTEGER, PRIMARY KEY (scope, player_key)
     )`);
     sql.exec(`CREATE TABLE IF NOT EXISTS quiz_daily_counts (
-      scope TEXT PRIMARY KEY NOT NULL, players INTEGER NOT NULL, scored INTEGER NOT NULL
+      scope TEXT PRIMARY KEY NOT NULL, players INTEGER NOT NULL, scored INTEGER NOT NULL,
+      board_version INTEGER NOT NULL DEFAULT 0
     )`);
+    if (!sql.exec('PRAGMA table_info(quiz_daily_counts)').toArray().some(column => column.name === 'board_version')) {
+      sql.exec('ALTER TABLE quiz_daily_counts ADD COLUMN board_version INTEGER NOT NULL DEFAULT 0');
+    }
     sql.exec(`CREATE INDEX IF NOT EXISTS quiz_players_rank ON quiz_players
       (scope, correct DESC, time_ms, finished_at, best_token_hash) WHERE finished_at IS NOT NULL`);
     sql.exec(`CREATE TRIGGER IF NOT EXISTS quiz_enroll_player AFTER INSERT ON quiz_runs BEGIN
@@ -96,6 +101,10 @@ export function initializeQuizStorage(storage) {
       WHEN OLD.best_token_hash IS NULL AND NEW.best_token_hash IS NOT NULL BEGIN
         UPDATE quiz_daily_counts SET scored = scored + 1 WHERE scope = NEW.scope;
       END`);
+    sql.exec(`CREATE TRIGGER IF NOT EXISTS quiz_version_best AFTER UPDATE OF best_token_hash ON quiz_players
+      WHEN NEW.best_token_hash IS NOT OLD.best_token_hash BEGIN
+        UPDATE quiz_daily_counts SET board_version = board_version + 1 WHERE scope = NEW.scope;
+    END`);
     sql.exec(`CREATE TRIGGER IF NOT EXISTS quiz_update_best AFTER UPDATE OF finished_at ON quiz_runs
       WHEN OLD.finished_at IS NULL AND NEW.finished_at IS NOT NULL BEGIN
         UPDATE quiz_players SET best_token_hash = NEW.token_hash, name = NEW.name, contact = NEW.contact,
@@ -291,6 +300,33 @@ async function answerQuiz(request, db, row, questions, period, questionMs, recei
   return json(await runState(db, updated ?? await rowForToken(db, row.scope, row.token_hash), questions, period, questionMs));
 }
 
+async function quizBoardRows(db, scope, limit, offset, questionCount, questionMs) {
+  const { results } = await db.prepare(`SELECT name, correct, time_ms, player_key FROM quiz_players
+    WHERE scope = ? AND finished_at IS NOT NULL ORDER BY ${ranks} LIMIT ? OFFSET ?`).bind(scope, limit, offset).all();
+  return Promise.all(results.map(async (row, index) => ({
+    rank: offset + index + 1, name: row.name, score: quizScore(row.correct, row.time_ms, questionCount, questionMs),
+    timeMs: row.time_ms, entryId: (await hashToken('leaderboard', row.player_key)).slice(0, 24),
+  })));
+}
+
+async function completeQuizBoard(db, scope, test, questionCount, questionMs) {
+  const { board_version: version = 0 } = await db.prepare('SELECT board_version FROM quiz_daily_counts WHERE scope = ?')
+    .bind(scope).first() ?? {};
+  let cache = quizBoardCache.get(db);
+  if (!cache) quizBoardCache.set(db, cache = {});
+  const key = test ? 'practice' : 'live';
+  const saved = cache[key];
+  if (saved?.scope === scope && saved.version === version) return saved.rows;
+  const rows = quizBoardRows(db, scope, dailyCapacity, 0, questionCount, questionMs);
+  cache[key] = { scope, version, rows };
+  try {
+    return await rows;
+  } catch (error) {
+    if (cache[key].rows === rows) delete cache[key];
+    throw error;
+  }
+}
+
 async function quizRoute(request, env, url, bank) {
   const test = url.searchParams.get('test') === '1';
   const now = Date.now();
@@ -303,20 +339,20 @@ async function quizRoute(request, env, url, bank) {
   if (!env.DB) throw new Error('DB unavailable');
   const db = env.DB.withSession ? env.DB.withSession('first-primary') : env.DB;
   if (request.method === 'GET' && route === '/api/quiz/leaderboard') {
+    if (url.searchParams.get('all') === '1') {
+      const rows = await completeQuizBoard(db, scope, test, questions.length, questionMs);
+      return json({ rows, total: rows.length, nextOffset: null, ...periodDetails(period), updatedAt: iso(now) });
+    }
     const offsetValue = url.searchParams.get('offset') ?? '0';
     const offset = Number(offsetValue);
     if (!/^\d{1,4}$/.test(offsetValue) || offset > dailyCapacity) fail(400, 'Ugyldig side for topplisten.', 'invalid_offset');
     const limit = Math.min(boardPageSize, dailyCapacity - offset);
-    const [count, data] = await Promise.all([
+    const [count, rows] = await Promise.all([
       db.prepare('SELECT scored FROM quiz_daily_counts WHERE scope = ?').bind(scope).first(),
-      db.prepare(`SELECT name, correct, time_ms, player_key FROM quiz_players WHERE scope = ? AND finished_at IS NOT NULL
-        ORDER BY ${ranks} LIMIT ? OFFSET ?`).bind(scope, limit, offset).all(),
+      quizBoardRows(db, scope, limit, offset, questions.length, questionMs),
     ]);
     const total = Math.min(dailyCapacity, count?.scored ?? 0);
-    const next = offset + data.results.length;
-    const rows = await Promise.all(data.results.map(async (r, i) => ({ rank: offset + i + 1, name: r.name,
-      score: quizScore(r.correct, r.time_ms, questions.length, questionMs), timeMs: r.time_ms,
-      entryId: (await hashToken('leaderboard', r.player_key)).slice(0, 24) })));
+    const next = offset + rows.length;
     return json({ rows,
       total, nextOffset: next < total ? next : null, ...periodDetails(period), updatedAt: iso(now) });
   }
