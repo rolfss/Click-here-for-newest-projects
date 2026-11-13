@@ -1,5 +1,8 @@
 import { cleanName, scoreRun } from '../dist/rally-rules.js';
-import { MINIMUM_RUN_TIME_MS, RUN_BOARD, RUN_STAGES, scoreStages, validStageTelemetry } from '../dist/run-scoring.js';
+import {
+  CONFERENCE_RULESET, CONFERENCE_STAGES, MINIMUM_CONFERENCE_TIME_MS, MINIMUM_RUN_TIME_MS,
+  RUN_BOARD, RUN_STAGES, conferenceRankingTime, scoreConferenceRun, validStageTelemetry
+} from '../dist/run-scoring.js';
 import { InputError, json, smallJSON } from './http.mjs';
 
 export const CONFERENCE_BOARD = 'fjord-archive32touch-assist';
@@ -9,7 +12,7 @@ const TICKET_TTL = 30 * 60 * 1000;
 const MINIMUM_RUN_MS = 26000;
 const MAXIMUM_RUN_MS = 30 * 60 * 1000;
 const FJORDLINJEN_PAR_SECONDS = 66;
-const order = 'score DESC, timeMs ASC, finishedAt ASC, ticket ASC';
+const order = 'score DESC, COALESCE(rankingTimeMs, timeMs) ASC, finishedAt ASC, ticket ASC';
 const ticketPattern = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 const managerTokenPattern = /^[A-Za-z0-9_-]{32,128}$/;
 const oslo = new Intl.DateTimeFormat('en-GB', {
@@ -69,10 +72,13 @@ function maximumScore(timeMs) {
   return scoreRun(perfect, { time: (timeMs - 0.5) / 1000, crashes: 0 }, FJORDLINJEN_PAR_SECONDS).score;
 }
 
-function readRunStages(stages) {
-  if (!Array.isArray(stages) || stages.length !== RUN_STAGES.length ||
-      !RUN_STAGES.every((stage, index) => validStageTelemetry(stages[index], stage))) {
-    throw new InputError('Løpet mangler gyldige resultater fra alle tre etappene.');
+function readRunStages(stages, ruleset) {
+  const singleStage = ruleset === CONFERENCE_RULESET;
+  const expected = singleStage ? CONFERENCE_STAGES : RUN_STAGES;
+  if (!Array.isArray(stages) || stages.length !== expected.length ||
+      !expected.every((stage, index) => validStageTelemetry(stages[index], stage))) {
+    throw new InputError(singleStage ? 'Løpet mangler et gyldig resultat fra Fjordlinjen.' :
+      'Løpet mangler gyldige resultater fra alle tre etappene.');
   }
   return stages.map(({ stage, timeMs, crashes, bumps, correct, cleared, lineQuality, boostDistanceM }) => ({
     stage, timeMs, crashes, bumps, correct, cleared, lineQuality, boostDistanceM
@@ -108,15 +114,14 @@ export class ConferenceScores {
       `CREATE TABLE IF NOT EXISTS conference_tickets (
         id TEXT PRIMARY KEY, nickname TEXT NOT NULL, username TEXT,
         issuedAt INTEGER NOT NULL, expiresAt INTEGER NOT NULL,
-        day TEXT, score INTEGER, timeMs INTEGER
+        day TEXT, score INTEGER, timeMs INTEGER, ruleset TEXT
       )`,
       'CREATE INDEX IF NOT EXISTS conference_ticket_expiry ON conference_tickets(expiresAt)',
       `CREATE TABLE IF NOT EXISTS conference_bests (
         day TEXT NOT NULL, usernameKey TEXT NOT NULL, username TEXT NOT NULL, nickname TEXT NOT NULL,
-        score INTEGER NOT NULL, timeMs INTEGER NOT NULL, finishedAt INTEGER NOT NULL, ticket TEXT NOT NULL,
+        score INTEGER NOT NULL, timeMs INTEGER NOT NULL, finishedAt INTEGER NOT NULL, ticket TEXT NOT NULL, rankingTimeMs INTEGER,
         PRIMARY KEY (day, usernameKey)
       )`,
-      `CREATE INDEX IF NOT EXISTS conference_best_order ON conference_bests(day, ${order})`,
       `CREATE TABLE IF NOT EXISTS conference_winners (
         day TEXT PRIMARY KEY, username TEXT NOT NULL, nickname TEXT NOT NULL, score INTEGER NOT NULL, timeMs INTEGER NOT NULL
       )`,
@@ -125,6 +130,15 @@ export class ConferenceScores {
         telemetry TEXT NOT NULL, stages TEXT NOT NULL
       )`
     ]) this.sql.exec(statement);
+    storage.transactionSync(() => {
+      if (![...this.sql.exec('PRAGMA table_info(conference_tickets)')].some(column => column.name === 'ruleset')) {
+        this.sql.exec('ALTER TABLE conference_tickets ADD COLUMN ruleset TEXT');
+      }
+      if (![...this.sql.exec('PRAGMA table_info(conference_bests)')].some(column => column.name === 'rankingTimeMs')) {
+        this.sql.exec('ALTER TABLE conference_bests ADD COLUMN rankingTimeMs INTEGER');
+      }
+      this.sql.exec(`CREATE INDEX IF NOT EXISTS conference_best_mixed_order ON conference_bests(day, ${order})`);
+    });
   }
 
   cleanup(now) {
@@ -152,7 +166,8 @@ export class ConferenceScores {
         `SELECT nickname, score, timeMs FROM conference_bests WHERE day = ? ORDER BY ${order} LIMIT 50`,
         window.day
       )];
-      return json({ ...window, scores: rows.map((row, index) => ({ rank: index + 1, ...publicResult(row) })) });
+      return json({ ...window, scores: rows.map((row, index) => ({ rank: index + 1, ...publicResult(row) })),
+        ...(board === RUN_BOARD ? { supportedRulesets: [CONFERENCE_RULESET] } : {}) });
     }
     if (request.method === 'GET' && url.pathname === '/conference/admin') {
       await requireManager(request, this.managerToken);
@@ -169,15 +184,18 @@ export class ConferenceScores {
     const data = await smallJSON(request);
     if (url.pathname === '/conference/sessions') {
       if (data.board !== board) throw new InputError('Feil løpsklasse.');
+      if (data.ruleset !== undefined && (board !== RUN_BOARD || data.ruleset !== CONFERENCE_RULESET)) {
+        throw new InputError('Denne løpsversjonen støttes ikke. Last inn spillet på nytt.');
+      }
       const nickname = readNickname(data.nickname);
       const username = readShortUsername(data.username);
       await this.rateSession(request, this.clock());
-      return json(this.start(nickname, username));
+      return json(this.start(nickname, username, data.ruleset));
     }
     return json(this.finish(data, board));
   }
 
-  start(nickname, username) {
+  start(nickname, username, ruleset = null) {
     const now = this.clock();
     this.cleanup(now);
     const [active] = this.sql.exec('SELECT COUNT(*) AS n FROM conference_tickets WHERE day IS NULL');
@@ -185,35 +203,36 @@ export class ConferenceScores {
     const ticket = crypto.randomUUID();
     const expiresAt = now + TICKET_TTL;
     this.sql.exec(
-      'INSERT INTO conference_tickets(id, nickname, username, issuedAt, expiresAt) VALUES(?,?,?,?,?)',
-      ticket, nickname, username, now, expiresAt
+      'INSERT INTO conference_tickets(id, nickname, username, issuedAt, expiresAt, ruleset) VALUES(?,?,?,?,?,?)',
+      ticket, nickname, username, now, expiresAt, ruleset
     );
-    return { ticket, expiresAt };
+    return ruleset ? { ticket, expiresAt, ruleset } : { ticket, expiresAt };
   }
 
   finish({ ticket, score, timeMs, stages }, board) {
     if (typeof ticket !== 'string' || !ticketPattern.test(ticket)) throw new InputError('Mangler løpsbillett.');
     const isFullRun = board === RUN_BOARD;
-    let telemetry, earnedStages, maximumClockPenalty;
-    if (isFullRun) {
-      const stageTelemetry = readRunStages(stages);
-      telemetry = JSON.stringify(stageTelemetry);
-      ({ score, timeMs, stages: earnedStages } = scoreStages(stageTelemetry));
-      maximumClockPenalty = stageTelemetry.reduce((total, stage) => total + stage.crashes * 3000, 0);
-      if (timeMs > MAXIMUM_RUN_MS) throw new InputError('Ugyldig løpstid.');
-    } else {
-      if (!Number.isSafeInteger(timeMs) || timeMs < MINIMUM_RUN_MS || timeMs > MAXIMUM_RUN_MS) {
-        throw new InputError('Ugyldig løpstid.');
-      }
-      if (!Number.isSafeInteger(score) || score < 0 || score > maximumScore(timeMs)) {
-        throw new InputError('Ugyldig poengsum.');
-      }
-    }
     const now = this.clock();
     this.cleanup(now);
     return this.storage.transactionSync(() => {
       const [run] = this.sql.exec('SELECT * FROM conference_tickets WHERE id = ?', ticket);
       if (!run) throw new InputError('Løpsbilletten har utløpt. Start et nytt løp.');
+      const ruleset = isFullRun ? run.ruleset : null;
+      let telemetry, earnedStages, maximumClockPenalty;
+      if (isFullRun) {
+        const stageTelemetry = readRunStages(stages, ruleset);
+        telemetry = JSON.stringify(stageTelemetry);
+        ({ score, timeMs, stages: earnedStages } = scoreConferenceRun(stageTelemetry, ruleset));
+        maximumClockPenalty = stageTelemetry.reduce((total, stage) => total + stage.crashes * 3000, 0);
+        if (timeMs > MAXIMUM_RUN_MS) throw new InputError('Ugyldig løpstid.');
+      } else {
+        if (!Number.isSafeInteger(timeMs) || timeMs < MINIMUM_RUN_MS || timeMs > MAXIMUM_RUN_MS) {
+          throw new InputError('Ugyldig løpstid.');
+        }
+        if (!Number.isSafeInteger(score) || score < 0 || score > maximumScore(timeMs)) {
+          throw new InputError('Ugyldig poengsum.');
+        }
+      }
       if (run.day) {
         if (isFullRun) {
           const [receipt] = this.sql.exec('SELECT telemetry, stages FROM conference_run_receipts WHERE ticket = ?', ticket);
@@ -225,7 +244,9 @@ export class ConferenceScores {
       }
       // In-game time can exceed wall time due to the recovery penalty.
       const wallTime = now - run.issuedAt;
-      if (wallTime < (isFullRun ? MINIMUM_RUN_TIME_MS : MINIMUM_RUN_MS)) {
+      const minimum = ruleset === CONFERENCE_RULESET ? MINIMUM_CONFERENCE_TIME_MS :
+        isFullRun ? MINIMUM_RUN_TIME_MS : MINIMUM_RUN_MS;
+      if (wallTime < minimum) {
         throw new InputError('Løpet kan ikke være fullført så raskt.');
       }
       if (isFullRun && timeMs > wallTime + maximumClockPenalty + 2000) {
@@ -233,14 +254,15 @@ export class ConferenceScores {
       }
 
       const { day, resetsAt } = conferenceWindow(now);
-      this.sql.exec(`INSERT INTO conference_bests(day, usernameKey, username, nickname, score, timeMs, finishedAt, ticket)
-        VALUES(?,?,?,?,?,?,?,?)
+      const rankingTimeMs = conferenceRankingTime(timeMs, ruleset);
+      this.sql.exec(`INSERT INTO conference_bests(day, usernameKey, username, nickname, score, timeMs, finishedAt, ticket, rankingTimeMs)
+        VALUES(?,?,?,?,?,?,?,?,?)
         ON CONFLICT(day, usernameKey) DO UPDATE SET
           username = excluded.username, nickname = excluded.nickname, score = excluded.score,
-          timeMs = excluded.timeMs, finishedAt = excluded.finishedAt, ticket = excluded.ticket
+          timeMs = excluded.timeMs, finishedAt = excluded.finishedAt, ticket = excluded.ticket, rankingTimeMs = excluded.rankingTimeMs
         WHERE excluded.score > conference_bests.score OR
-          (excluded.score = conference_bests.score AND excluded.timeMs < conference_bests.timeMs)`,
-      day, run.username.toLowerCase(), run.username, run.nickname, score, timeMs, now, ticket);
+          (excluded.score = conference_bests.score AND excluded.rankingTimeMs < COALESCE(conference_bests.rankingTimeMs, conference_bests.timeMs))`,
+      day, run.username.toLowerCase(), run.username, run.nickname, score, timeMs, now, ticket, rankingTimeMs);
 
       // Materialize the current winner while scores are live so the 08:00 reset can discard the rest.
       this.sql.exec(`INSERT INTO conference_winners(day, username, nickname, score, timeMs)

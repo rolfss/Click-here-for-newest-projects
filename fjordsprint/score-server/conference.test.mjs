@@ -12,9 +12,10 @@ const scores = '/conference/scores';
 const admin = '/conference/admin';
 const date = value => Date.parse(value);
 
-function namespace(env, clock) {
+function namespace(env, clock, seed) {
   let alarm = null;
   const db = new DatabaseSync(':memory:');
+  seed?.(db);
   const storage = {
     sql: { exec(query, ...params) { return db.prepare(query).all(...params); } },
     transactionSync(callback) {
@@ -34,11 +35,11 @@ function namespace(env, clock) {
   return { db, app: new Leaderboard({ storage }, env, clock), alarm: () => alarm };
 }
 
-function fixture(start = '2026-11-12T08:00:00Z', managerToken = token) {
+function fixture(start = '2026-11-12T08:00:00Z', managerToken = token, seedFullRun) {
   let now = date(start);
   const env = { ALLOWED_ORIGINS: pages, CONFERENCE_MANAGER_TOKEN: managerToken };
   const legacy = namespace(env, () => now);
-  const fullRun = namespace(env, () => now);
+  const fullRun = namespace(env, () => now, seedFullRun);
   env.LEADERBOARD = {
     idFromName: name => name,
     get(name) { return (name === RUN_BOARD ? fullRun : legacy).app; }
@@ -261,4 +262,126 @@ test('full-run tickets require three plausible ordered stages and enough elapsed
   ]) assert.equal((await finish(stages)).status, 400);
   assert.equal((await f.post(scores, { ticket: id, score: 5000, timeMs: 65000 })).status, 400);
   assert.equal((await finish(stageTelemetry)).status, 200);
+});
+
+const singleStageRuleset = 'fjord-stage-v1';
+const perfectStages = [
+  { stage: 'fjord', timeMs: 53000, crashes: 0, bumps: 0, correct: 5, cleared: 12, lineQuality: 1000, boostDistanceM: 450 },
+  { stage: 'pass', timeMs: 72000, crashes: 0, bumps: 0, correct: 6, cleared: 12, lineQuality: 1000, boostDistanceM: 500 },
+  { stage: 'aurora', timeMs: 78000, crashes: 0, bumps: 0, correct: 7, cleared: 12, lineQuality: 1000, boostDistanceM: 550 }
+];
+const singleStageAt = timeMs => [{ ...perfectStages[0], timeMs }];
+
+async function singleStageTicket(f, nickname, username) {
+  const response = await f.post(fullRunPath(sessions), { board: RUN_BOARD, nickname, username, ruleset: singleStageRuleset });
+  assert.equal(response.status, 200);
+  const data = await response.json();
+  assert.equal(data.ruleset, singleStageRuleset);
+  assert.equal(typeof data.ticket, 'string');
+  return data.ticket;
+}
+
+test('one stage earns up to 30150 on the same board and displays the actual time', async () => {
+  const f = fixture();
+  const old = await fullRunTicket(f, 'Tre etapper');
+  f.advance(160000);
+  const oldResult = await f.post(fullRunPath(scores), { ticket: old, stages: [
+    { ...perfectStages[0], timeMs: 39000 }, { ...perfectStages[1], timeMs: 59000 }, { ...perfectStages[2], timeMs: 62000 }
+  ] });
+  assert.equal(oldResult.status, 200);
+  assert.equal((await oldResult.json()).score.score, 30150);
+
+  const oneStage = await singleStageTicket(f, 'Én etappe', 'Ola.N');
+  f.advance(53000);
+  const payload = { ticket: oneStage, stages: singleStageAt(53000), score: 1, timeMs: 0 };
+  const finish = () => f.post(fullRunPath(scores), payload);
+  const response = await finish();
+  assert.equal(response.status, 200);
+  const result = await response.json();
+  assert.equal(result.score.score, 30150);
+  assert.equal(result.score.timeMs, 53000);
+  assert.equal(result.score.stages.length, 1);
+  assert.equal(f.fullRun.db.prepare('SELECT rankingTimeMs FROM conference_bests WHERE ticket = ?').get(oneStage).rankingTimeMs, 203000);
+  const duplicate = await finish();
+  assert.equal(duplicate.status, 200);
+  assert.deepEqual(await duplicate.json(), { ...result, duplicate: true });
+  assert.equal((await f.post(fullRunPath(scores), { ...payload, stages: singleStageAt(52000) })).status, 409);
+
+  const tiedSameIdentity = await singleStageTicket(f, 'Dårligere tid', 'KARI.N');
+  f.advance(50000);
+  assert.equal((await f.post(fullRunPath(scores), { ticket: tiedSameIdentity, stages: singleStageAt(50000) })).status, 200);
+  const faster = await singleStageTicket(f, 'Raskere tid', 'Tore.N');
+  f.advance(35000);
+  assert.equal((await f.post(fullRunPath(scores), { ticket: faster, stages: singleStageAt(35000) })).status, 200);
+
+  const board = await (await f.call(fullRunPath(scores))).json();
+  assert.ok(board.supportedRulesets.includes(singleStageRuleset));
+  assert.deepEqual(board.scores, [
+    { rank: 1, nickname: 'Raskere tid', score: 30150, timeMs: 35000 },
+    { rank: 2, nickname: 'Tre etapper', score: 30150, timeMs: 160000 },
+    { rank: 3, nickname: 'Én etappe', score: 30150, timeMs: 53000 }
+  ]);
+  const winner = await f.call(fullRunPath(admin), { authorization: 'Bearer ' + token });
+  assert.equal((await winner.json()).winner.timeMs, 35000);
+});
+
+test('one-stage tickets require Fjordlinjen telemetry and cannot change format', async () => {
+  const f = fixture();
+  assert.equal((await f.post(fullRunPath(sessions), {
+    board: RUN_BOARD, nickname: 'Fjordreven', username: 'Kari.N', ruleset: 'future-format'
+  })).status, 400);
+  assert.equal((await f.post(sessions, {
+    board: CONFERENCE_BOARD, nickname: 'Fjordreven', username: 'Kari.N', ruleset: singleStageRuleset
+  })).status, 400);
+  const id = await singleStageTicket(f, 'Fjordreven', 'Kari.N');
+  const finish = stages => f.post(fullRunPath(scores), { ticket: id, stages });
+  f.advance(23999);
+  assert.equal((await finish(singleStageAt(24000))).status, 400);
+  f.advance(1);
+  assert.equal((await finish(singleStageAt(26001))).status, 400);
+  f.advance(30000);
+  for (const stages of [
+    [], [perfectStages[1]], perfectStages.slice(0, 2), perfectStages, singleStageAt(23999),
+    [{ ...perfectStages[0], correct: 6 }],
+    [{ ...perfectStages[0], lineQuality: 1001 }],
+    [{ ...perfectStages[0], boostDistanceM: 3501 }],
+    [{ ...perfectStages[0], bumps: 1 }]
+  ]) assert.equal((await finish(stages)).status, 400);
+  assert.equal((await f.post(scores, { ticket: id, score: 5000, timeMs: 53000 })).status, 400);
+  assert.equal((await finish(singleStageAt(53000))).status, 200);
+});
+
+test('existing three-stage results and a pre-deployment ticket survive the one-stage rollout', async () => {
+  const oldTicket = '11111111-1111-4111-8111-111111111111';
+  const originalTime = date('2026-11-12T08:00:00Z');
+  const f = fixture(undefined, token, db => {
+    db.exec(`CREATE TABLE conference_tickets (
+      id TEXT PRIMARY KEY, nickname TEXT NOT NULL, username TEXT,
+      issuedAt INTEGER NOT NULL, expiresAt INTEGER NOT NULL,
+      day TEXT, score INTEGER, timeMs INTEGER
+    ); CREATE TABLE conference_bests (
+      day TEXT NOT NULL, usernameKey TEXT NOT NULL, username TEXT NOT NULL, nickname TEXT NOT NULL,
+      score INTEGER NOT NULL, timeMs INTEGER NOT NULL, finishedAt INTEGER NOT NULL, ticket TEXT NOT NULL,
+      PRIMARY KEY (day, usernameKey)
+    ); CREATE INDEX conference_best_order ON conference_bests(day, score DESC, timeMs ASC, finishedAt ASC, ticket ASC);`);
+    db.prepare('INSERT INTO conference_tickets(id, nickname, username, issuedAt, expiresAt) VALUES (?,?,?,?,?)')
+      .run(oldTicket, 'Fra før oppdatering', 'Old.Run', originalTime, originalTime + 1800000);
+    db.prepare('INSERT INTO conference_bests VALUES (?,?,?,?,?,?,?,?)')
+      .run('2026-11-12', 'old.best', 'Old.Best', 'Eksisterende leder', 30150, 202999, originalTime, 'older-best');
+  });
+  f.advance(203000);
+  const invalid = await f.post(fullRunPath(scores), { ticket: oldTicket, stages: singleStageAt(34000) });
+  assert.equal(invalid.status, 400);
+  const accepted = await f.post(fullRunPath(scores), { ticket: oldTicket, stages: perfectStages });
+  assert.equal(accepted.status, 200);
+  assert.deepEqual((await accepted.json()).score, { nickname: 'Fra før oppdatering', ...scoreStages(perfectStages) });
+
+  const newTicket = await singleStageTicket(f, 'Ny runde', 'New.Run');
+  f.advance(53000);
+  assert.equal((await f.post(fullRunPath(scores), { ticket: newTicket, stages: singleStageAt(53000) })).status, 200);
+  assert.deepEqual((await (await f.call(fullRunPath(scores))).json()).scores, [
+    { rank: 1, nickname: 'Eksisterende leder', score: 30150, timeMs: 202999 },
+    { rank: 2, nickname: 'Fra før oppdatering', score: 30150, timeMs: 203000 },
+    { rank: 3, nickname: 'Ny runde', score: 30150, timeMs: 53000 }
+  ]);
 });
