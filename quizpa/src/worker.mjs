@@ -1,3 +1,4 @@
+import { redeemJoinCode } from './invitations.mjs';
 import { organizer } from './organizer.mjs';
 import { player } from './player.mjs';
 import { fail, Problem } from './rules.mjs';
@@ -14,8 +15,11 @@ export default {
       const now = Date.now();
       if (!env.DB) fail(503, 'storage_unavailable', 'Quizlageret er ikke tilkoblet.');
       if (area === 'health' && parts.length === 0 && request.method === 'GET') {
-        await sql(env, 'SELECT code FROM rounds LIMIT 1').first();
+        await sql(env, 'SELECT code FROM join_codes LIMIT 1').first();
         return json({ ok: true });
+      }
+      if (area === 'join' && parts.length === 0 && request.method === 'POST') {
+        return await redeemJoinCode(request, env, now);
       }
       if (area === 'play') return await player(request, env, parts, now);
       if (area === 'admin') return await organizer(request, env, parts, now);

@@ -1,4 +1,5 @@
 import { demo } from './demo.mjs';
+import { invitationQr, issueJoinCode } from './invitations.mjs';
 import { fail, validateQuiz, validateRound, visibleRound } from './rules.mjs';
 import { cookie, cookieValue, input, json, noStore, passwordVerifier, randomHex, rows, secureEqual, sha, signature, sql } from './support.mjs';
 import { ranking } from './player.mjs';
@@ -178,6 +179,12 @@ export async function organizer(request, env, parts, now) {
     if (parts.length === 2 && method === 'GET') {
       const entries = await ranking(env, round.code);
       return json({ round: { ...roundData(round, now), completed: entries.length }, entries });
+    }
+    if (parts.length === 3 && action === 'join-code' && method === 'GET') {
+      return json(await issueJoinCode(env, round, now));
+    }
+    if (parts.length === 3 && action === 'qr' && method === 'GET') {
+      return invitationQr(request, round.code);
     }
     if (parts.length === 3 && action === 'csv' && method === 'GET') {
       return exportRound(round.code, await ranking(env, round.code));

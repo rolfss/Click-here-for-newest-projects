@@ -247,3 +247,53 @@ test('holds and ranks 1,500 independent completed attempts in one database round
   assert.equal(new Set(entries.map(entry => entry.nickname)).size, 1500);
   assert.ok(entries.every(entry => entry.correct === 1));
 });
+
+test('QR invitations stay stable as eight-digit codes rotate and reject guesses', async t => {
+  const env = fixture(t);
+  const admin = client(env);
+  const visitor = client(env);
+  let now = Date.parse('2026-11-15T08:00:00Z');
+  t.mock.method(Date, 'now', () => now);
+
+  assert.match(await visitor('/bli-med'), /Åttesifret|åttesifrede/);
+  await admin('/api/admin/session', { setup, password });
+  const quiz = await admin('/api/admin/quizzes', { title: 'Invitasjoner', questions }, 201);
+  const settings = { quizId: quiz.id, revision: quiz.revision, feedbackMode: 'immediate', boardMode: 'always' };
+  const initial = await admin('/api/admin/rounds', settings, 201);
+  const other = await admin('/api/admin/rounds', settings, 201);
+  const future = await admin('/api/admin/rounds', { ...settings, opensAt: '2026-11-15T10:00' }, 201);
+  const roundPath = '/api/admin/rounds/' + initial.code;
+  const pinPath = roundPath + '/join-code';
+  await visitor(pinPath, undefined, 401);
+  const before = await admin(pinPath);
+  assert.match(before.code, /^\d{8}$/);
+  assert.equal(before.expiresAt, now + 120_000);
+  assert.equal((await admin(pinPath)).code, before.code);
+  assert.equal((await admin('/api/admin/rounds/' + future.code + '/join-code')).code, null);
+  const otherCode = (await admin('/api/admin/rounds/' + other.code + '/join-code')).code;
+  assert.notEqual(otherCode, before.code);
+
+  const qr = await admin(roundPath + '/qr');
+  assert.match(qr, /<svg[^>]*>/);
+  assert.equal(await admin(roundPath + '/qr?download=1'), qr);
+  assert.equal((await visitor('/api/join', { code: before.code })).path, '/spill/' + initial.code);
+  now = before.expiresAt - 1;
+  assert.equal((await visitor('/api/join', { code: before.code })).path, '/spill/' + initial.code);
+  now++;
+  assert.equal((await visitor('/api/join', { code: before.code }, 404)).code, 'code_missing');
+  const next = await admin(pinPath);
+  assert.notEqual(next.code, before.code);
+  assert.equal(await admin(roundPath + '/qr'), qr);
+
+  for (let attempt = 0; attempt < 18; attempt++) {
+    await visitor('/api/join', { code: before.code }, 404);
+  }
+  await visitor('/api/join', { code: before.code }, 429);
+  assert.equal((await visitor('/api/join', { code: next.code }, 429)).code, 'code_limit');
+  now = next.expiresAt;
+  const latest = await admin(pinPath);
+  assert.equal((await visitor('/api/join', { code: latest.code })).path, '/spill/' + initial.code);
+  await admin(roundPath + '/close', {});
+  assert.equal((await admin(pinPath)).code, null);
+  await visitor('/api/join', { code: latest.code }, 404);
+});

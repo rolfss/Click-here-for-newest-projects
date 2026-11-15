@@ -24,11 +24,22 @@ export function localDatabase(path = ':memory:') {
           const statement = db.prepare(query);
           return {
             async first() { return statement.get(...parameters) ?? null; },
-            async all() { return { results: statement.all(...parameters) }; },
+            all() { return { results: statement.all(...parameters) }; },
             async run() { return statement.run(...parameters); },
           };
         },
       };
+    },
+    async batch(statements) {
+      db.exec('BEGIN');
+      try {
+        const results = statements.map(statement => statement.all());
+        db.exec('COMMIT');
+        return results;
+      } catch (error) {
+        db.exec('ROLLBACK');
+        throw error;
+      }
     },
     close() { db.close(); },
   };

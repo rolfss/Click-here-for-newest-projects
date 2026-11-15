@@ -9,6 +9,9 @@ let pending = false;
 let timer;
 let recoveryCode = '';
 let board;
+let resultBoard;
+let resultBoardPending = false;
+let resultBoardError = false;
 let review;
 let shown = 50;
 let feedback;
@@ -39,8 +42,8 @@ function rememberJoin(value) {
   }
 }
 
-function stat(label, value) {
-  return '<div class="stat"><span>' + label + '</span><strong>' + value + '</strong></div>';
+function stat(label, value, attributes = '') {
+  return '<div class="stat"><span>' + label + '</span><strong' + attributes + '>' + value + '</strong></div>';
 }
 
 function gameBar(allowBoard = false) {
@@ -132,13 +135,52 @@ function ready() {
 function result() {
   const { round, player } = state;
   const reveal = round.feedbackMode === 'immediate' || round.status === 'closed';
+  const boardAfterClose = round.boardMode === 'after_close' && !round.boardVisible;
+  const rank = resultRank();
   return gameBar() + '<section class="panel"><div class="eyebrow">Runde fullført</div><h1>Bra spilt, ' + h(player.nickname) +
     '!</h1><div class="result-stats">' + stat('Poeng', number.format(player.points)) +
-    stat('Riktige svar', player.correct + ' av ' + round.questionCount) + (player.rank ? stat('Plass', player.rank) : '') +
-    '</div><div class="actions">' + (round.boardVisible ? button('board', 'Se topplisten', 'primary') : '') +
-    (reveal ? button('review', 'Se fasiten', 'secondary') : button('refresh', 'Oppdater resultat', 'ghost')) +
+    stat('Riktige svar', player.correct + ' av ' + round.questionCount) +
+    (rank ? stat('Plass', rank, ' data-result-rank') : '') + '</div><div class="actions">' +
+    (reveal ? button('review', 'Se fasiten', 'secondary') : '') +
+    (!reveal || boardAfterClose ? button('refresh', 'Oppdater resultat', 'ghost') : '') +
     '</div>' + (!reveal ? '<p class="help">Fasiten vises etter at runden er avsluttet.</p>' : '') +
+    (boardAfterClose ? '<p class="help">Topplisten vises etter at runden er avsluttet.</p>' : '') +
     '<p class="message" data-message role="status"></p></section>';
+}
+
+function resultRank() {
+  return resultBoard?.find(entry => entry.nickname === state.player.nickname)?.rank ?? state.player.rank;
+}
+
+function resultBoardContents() {
+  if (!resultBoard && !resultBoardError) return '<p class="help" role="status">Henter topplisten …</p>';
+  const entries = resultBoard ? table(resultBoard, state.player.nickname, shown) : '';
+  return entries + (resultBoardError
+    ? '<p class="message error" role="status">Kunne ikke hente topplisten. Prøv igjen.</p>' : '');
+}
+
+function resultBoardSection() {
+  return '<section class="panel result-leaderboard" aria-labelledby="result-leaderboard-heading">' +
+    '<div class="game-bar"><h2 id="result-leaderboard-heading">Toppliste</h2>' +
+    button('refresh-result-board', 'Oppdater', 'ghost small', 'aria-label="Oppdater topplisten"') +
+    '</div><div data-result-entries>' + resultBoardContents() + '</div></section>';
+}
+
+async function refreshResultBoard() {
+  if (resultBoardPending) return;
+  resultBoardPending = true;
+  resultBoardError = false;
+  try {
+    resultBoard = (await api(endpoint + '/board')).entries;
+  } catch {
+    resultBoardError = true;
+  } finally {
+    resultBoardPending = false;
+    const entries = root.querySelector('[data-result-entries]');
+    if (entries) entries.innerHTML = resultBoardContents();
+    const place = root.querySelector('[data-result-rank]');
+    if (place) place.textContent = resultRank();
+  }
 }
 
 function render(focus = false) {
@@ -165,7 +207,8 @@ function render(focus = false) {
     root.innerHTML = questionPanel(state.question);
     updateClock();
   } else if (state.player.completed) {
-    root.innerHTML = result();
+    root.innerHTML = result() + (state.round.boardVisible ? resultBoardSection() : '');
+    if (state.round.boardVisible && !resultBoard && !resultBoardError) void refreshResultBoard();
   } else if (state.last && state.round.status === 'open') {
     root.innerHTML = questionPanel(state.last, state.last);
   } else {
@@ -296,6 +339,7 @@ root.addEventListener('click', event => {
       privateCode();
     },
     refresh: load,
+    'refresh-result-board': refreshResultBoard,
     more: () => {
       const firstNewRow = shown;
       shown += 50;

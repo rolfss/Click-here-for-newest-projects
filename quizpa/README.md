@@ -8,13 +8,14 @@ Selvstyrte, tidsstyrte quizer på norsk. Arrangøren publiserer en runde og dele
 2. Velg **Ny quiz** eller **Bruk demoquizen**. Legg inn spørsmål, svaralternativer, riktig svar og tidsgrense.
 3. Velg **Lagre quiz** og deretter **Publiser runde**. Velg eventuelt åpningstid, frist og når fasit og toppliste vises. Datoer bruker Oslo-tid.
 4. Kopier spill-lenken eller velg **Kopier Teams-melding** og lim inn i en Teams-chat eller -kanal.
-5. Åpne runden på arrangørsiden for å følge resultatene, hente CSV eller avslutte den.
+5. Vis eller last ned QR-koden fra runden. Deltakere kan også velge **Bli med** og taste den åttesifrede koden. Koden byttes hvert andre minutt mens runden er åpen. Spill-lenken og QR-koden fungerer på tvers av kodebytter.
+6. Åpne runden på arrangørsiden for å følge resultatene, hente CSV eller avslutte den.
 
 Hver runde får sin egen invitasjonslenke og beholder spørsmålene slik de var ved publisering. En ny runde starter med tom toppliste. /spill/demo har en egen, fiktiv prøvequiz.
 
 ## Spill og poeng
 
-Kallenavn er unike per runde. Deltakerens økt kan fortsettes på samme enhet. Den personlige koden åpner det samme forsøket på en annen enhet. En spill-lenke kan videresendes. Bruk rundeinnstillingen **Kun for arrangør** for å begrense topplisten til arrangørsiden.
+Kallenavn er unike per runde. Deltakerens økt kan fortsettes på samme enhet. Den personlige koden åpner det samme forsøket på en annen enhet. En spill-lenke kan videresendes. Bruk rundeinnstillingen **Kun for arrangør** for å begrense topplisten til arrangørsiden. Når topplisten er åpen for deltakerne, vises den automatisk etter siste spørsmål.
 
 Et riktig svar gir 1 000 poeng. Maksimalt 500 bonuspoeng fordeles på spørsmålene. Hvert riktig svar får bonus etter hvor mye tid som gjenstår. Feil, hopp og utløpt tid gir null. Ved lik poengsum avgjør antall riktige svar og samlet svartid. Identiske resultater deler plasseringen.
 

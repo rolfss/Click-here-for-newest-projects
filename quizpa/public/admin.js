@@ -15,6 +15,7 @@ let busy = false;
 let previewIndex = 0;
 let previewAnswer = null;
 let shown = 50;
+let roundPin;
 
 function emptyQuestion() {
   return { text: '', options: ['', '', '', ''], correct: 0, seconds: 20, explanation: '' };
@@ -25,6 +26,7 @@ function newQuiz() {
 }
 
 function renderLogin() {
+  stopRoundPin();
   const initializing = !session.configured;
   if (!session.ready) {
     root.innerHTML = '<section class="panel full"><h1>Arrangør</h1><p>Arrangørsiden er ikke konfigurert.</p></section>';
@@ -129,15 +131,119 @@ function playUrl(round) {
   return new URL('/spill/' + round.code, location.origin).href;
 }
 
+function renderShare(round) {
+  const qr = endpoint + '/rounds/' + round.code + '/qr';
+  return '<div class="share-box"><label>Spill-lenke<input readonly data-link value="' + h(playUrl(round)) + '"></label>' +
+    '<div class="actions">' + button('copy-link', 'Kopier lenken', 'primary') + button('copy-teams', 'Kopier Teams-melding') +
+    '</div><div class="share-grid"><div class="qr-panel"><h3>QR-kode</h3>' +
+    '<img src="' + qr + '" width="152" height="152" alt="QR-kode for spill-lenken">' +
+    '<a class="btn secondary small" href="' + qr + '?download=1" download>Last ned QR-kode</a></div>' +
+    '<div class="pin-panel" data-pin-panel><label>Spillkode<input class="round-pin" data-pin readonly inputmode="numeric" ' +
+    'aria-describedby="pin-countdown"></label><p class="pin-countdown help" data-pin-message id="pin-countdown"></p>' +
+    '<div class="actions">' + button('copy-pin', 'Kopier koden', 'secondary small', 'disabled') +
+    '<a class="btn ghost small" href="/bli-med" target="_blank" rel="noopener">Åpne kodefelt</a></div></div></div></div>';
+}
+
+function stopRoundPin() {
+  clearTimeout(roundPin?.timer);
+  roundPin = undefined;
+}
+
+function pinTimeLeft(pin) {
+  return pin.expiresAt - performance.now();
+}
+
+function drawRoundPin(pin) {
+  if (pin !== roundPin) return;
+  const panel = root.querySelector('[data-pin-panel]');
+  if (!panel) return;
+  clearTimeout(pin.timer);
+  const now = performance.now();
+  const left = pinTimeLeft(pin);
+  const active = pin.code && left > 0;
+  const field = panel.querySelector('[data-pin]');
+  if (field.value !== (active ? pin.code : '')) field.value = active ? pin.code : '';
+  panel.querySelector('[data-do=copy-pin]').disabled = !active;
+  let message;
+  if (active) {
+    const seconds = Math.ceil(left / 1000);
+    const clock = Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
+    message = 'Byttes om ' + clock;
+    pin.timer = setTimeout(() => drawRoundPin(pin), Math.max(25, left - (seconds - 1) * 1000));
+  } else {
+    message = pin.error || (pin.status === 'scheduled' ? 'Koden vises når runden åpner.' :
+      pin.status === 'closed' ? 'Runden er avsluttet.' : 'Henter spillkode …');
+    if (!pin.loading && Number.isFinite(pin.refreshAt)) {
+      pin.timer = setTimeout(() => refreshRoundPin(pin), Math.max(0, pin.refreshAt - now));
+    }
+  }
+  const note = panel.querySelector('[data-pin-message]');
+  if (note.textContent !== message) note.textContent = message;
+  const badge = root.querySelector('[data-round-status]');
+  if (badge && Object.hasOwn(statuses, pin.status) && badge.textContent !== statuses[pin.status]) {
+    badge.className = 'status-tag ' + pin.status;
+    badge.textContent = statuses[pin.status];
+  }
+}
+
+async function refreshRoundPin(pin) {
+  if (pin !== roundPin || pin.loading) return;
+  pin.loading = true;
+  drawRoundPin(pin);
+  const startedAt = performance.now();
+  try {
+    const reply = await api(endpoint + '/rounds/' + pin.roundCode + '/join-code');
+    if (pin !== roundPin) return;
+    const now = performance.now();
+    const serverNow = reply.serverNow + (now - startedAt) / 2;
+    pin.error = '';
+    pin.status = reply.status;
+    pin.code = pin.status === 'open' && typeof reply.code === 'string' && /^\d{8}$/.test(reply.code) &&
+      Number.isFinite(reply.expiresAt) ? reply.code : '';
+    pin.expiresAt = pin.code ? now + reply.expiresAt - serverNow : 0;
+    if (pin.code) {
+      pin.refreshAt = Math.max(pin.expiresAt, now + 150);
+    } else if (pin.status === 'scheduled' && Number.isFinite(reply.opensAt)) {
+      pin.refreshAt = now + Math.min(60_000, Math.max(250, reply.opensAt - serverNow));
+    } else {
+      pin.refreshAt = pin.status === 'closed' ? Infinity : now + 5000;
+    }
+  } catch (error) {
+    if (pin !== roundPin) return;
+    if (error.status === 401) {
+      pin.error = 'Logg inn igjen for å vise koden.';
+      pin.refreshAt = Infinity;
+    } else {
+      pin.error = 'Spillkoden kunne ikke hentes. Prøver igjen …';
+      pin.refreshAt = performance.now() + 5000;
+    }
+  } finally {
+    pin.loading = false;
+    drawRoundPin(pin);
+  }
+}
+
+function syncRoundPin() {
+  if (view !== 'results') {
+    stopRoundPin();
+    return;
+  }
+  const round = currentRound.round;
+  if (roundPin?.roundCode !== round.code || (round.status === 'closed' && roundPin.status !== 'closed')) {
+    stopRoundPin();
+    roundPin = { roundCode: round.code, status: round.status, expiresAt: 0, code: '', refreshAt: Infinity };
+    if (round.status !== 'closed') void refreshRoundPin(roundPin);
+  }
+  drawRoundPin(roundPin);
+}
+
 function renderResults() {
   const { round, entries } = currentRound;
-  return '<div class="page-heading"><div><span class="status-tag ' + round.status + '">' + statuses[round.status] +
+  return '<div class="page-heading"><div><span data-round-status class="status-tag ' + round.status + '">' + statuses[round.status] +
     '</span><h2>' + h(round.title) + '</h2>' + (round.closesAt !== null ? '<p class="help">' +
       (round.status === 'closed' ? 'Avsluttet ' : 'Frist ') + dateLabel(round.closesAt) + '</p>' : '') +
     '</div>' + button('results', 'Oppdater', 'ghost small', 'data-id="' + round.code + '"') + '</div>' +
-    '<div class="share-box"><label>Spill-lenke<input readonly data-link value="' + h(playUrl(round)) + '"></label>' +
-    '<div class="actions">' + button('copy-link', 'Kopier lenken', 'primary') + button('copy-teams', 'Kopier Teams-melding') +
-    '</div></div><div class="page-heading results"><div><h2>Resultater</h2><p class="help">' + number.format(entries.length) +
+    renderShare(round) + '<div class="page-heading results"><div><h2>Resultater</h2><p class="help">' + number.format(entries.length) +
     ' fullført</p></div><a class="btn secondary small" href="' + endpoint + '/rounds/' + round.code + '/csv">Last ned CSV</a></div>' +
     table(entries, '', shown) + (round.status === 'closed' ? '' : '<div class="actions">' +
       button('close', 'Avslutt runden', 'danger', 'data-id="' + round.code + '"') + '</div>');
@@ -154,6 +260,7 @@ function render(focus = false) {
     button('logout', 'Logg ut', 'ghost small') + '</div></div><div class="admin-layout">' + sidebar() +
     '<section class="panel work-panel">' + panels[view]() +
     '<p class="message" data-message role="status"></p></section></div>';
+  syncRoundPin();
   if (focus) {
     const heading = root.querySelector('.work-panel h2');
     if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
@@ -254,6 +361,10 @@ window.addEventListener('beforeunload', event => {
   if (dirty) event.preventDefault();
 });
 
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && roundPin) drawRoundPin(roundPin);
+});
+
 root.addEventListener('click', event => {
   const control = event.target.closest('[data-do]');
   if (!control) return;
@@ -318,6 +429,14 @@ root.addEventListener('click', event => {
     'copy-link': async () => {
       const copied = await copyText(playUrl(currentRound.round), root.querySelector('[data-link]'));
       say(copied ? 'Lenken er kopiert.' : 'Marker og kopier lenken.');
+    },
+    'copy-pin': async () => {
+      if (!roundPin?.code || pinTimeLeft(roundPin) <= 0) {
+        say('Koden har utløpt. Vent på neste kode.', true);
+        return;
+      }
+      const copied = await copyText(roundPin.code, root.querySelector('[data-pin]'));
+      say(copied ? 'Spillkoden er kopiert.' : 'Marker og kopier spillkoden.');
     },
     'copy-teams': async () => {
       const round = currentRound.round;
