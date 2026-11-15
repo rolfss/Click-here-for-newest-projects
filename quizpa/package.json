@@ -1,0 +1,17 @@
+{
+  "name": "quizpa",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "build": "node scripts/build.mjs",
+    "deploy": "npm run build && npx --yes wrangler@4 deploy"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}
