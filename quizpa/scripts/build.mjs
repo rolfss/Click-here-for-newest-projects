@@ -25,7 +25,7 @@ if (hosted) {
   for (const [index, name] of migrations.entries()) {
     const tag = name.slice(0, -4);
     // The hosted migration runner uses Drizzle's statement breakpoints.
-    const source = await readFile('migrations/' + name, 'utf8');
+    const source = (await readFile('migrations/' + name, 'utf8')).replace(/\r\n/g, '\n');
     const split = source.trim().split(/;\n(?=\nCREATE )/).join(';\n--> statement-breakpoint\n');
     await writeFile('dist/.openai/drizzle/' + name, split + '\n');
     journal.entries.push({ idx: index, version: '6', when: 1794700800000 + index, tag, breakpoints: true });

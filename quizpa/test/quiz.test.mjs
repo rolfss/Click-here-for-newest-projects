@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import app from '../dist/server/index.js';
+import { passwordVerifier } from '../src/support.mjs';
 import { localDatabase } from '../scripts/sqlite.mjs';
 import { osloTime, scoreAnswer, validateQuiz } from '../src/rules.mjs';
 
@@ -255,7 +256,7 @@ test('QR invitations stay stable as eight-digit codes rotate and reject guesses'
   let now = Date.parse('2026-11-15T08:00:00Z');
   t.mock.method(Date, 'now', () => now);
 
-  assert.match(await visitor('/bli-med'), /Åttesifret|åttesifrede/);
+  assert.match(await visitor('/bli-med'), /Finn quizen/);
   await admin('/api/admin/session', { setup, password });
   const quiz = await admin('/api/admin/quizzes', { title: 'Invitasjoner', questions }, 201);
   const settings = { quizId: quiz.id, revision: quiz.revision, feedbackMode: 'immediate', boardMode: 'always' };
@@ -296,4 +297,19 @@ test('QR invitations stay stable as eight-digit codes rotate and reject guesses'
   await admin(roundPath + '/close', {});
   assert.equal((await admin(pinPath)).code, null);
   await visitor('/api/join', { code: latest.code }, 404);
+});
+
+test('uses the configured organizer password and revokes earlier organizer sessions', async t => {
+  const env = fixture(t);
+  const oldAdmin = client(env);
+  const newAdmin = client(env);
+  await oldAdmin('/api/admin/session', { setup, password });
+  const salt = 'b'.repeat(32);
+  const presetPassword = 'Kort testkode';
+  env.ADMIN_PASSWORD_VERIFIER = salt + '.' + await passwordVerifier(presetPassword, salt);
+  assert.deepEqual(await newAdmin('/api/admin/session'), { configured: true, authenticated: false, ready: true });
+  await oldAdmin('/api/admin/overview', undefined, 401);
+  await newAdmin('/api/admin/session', { password }, 401);
+  await newAdmin('/api/admin/session', { password: presetPassword });
+  await newAdmin('/api/admin/overview');
 });

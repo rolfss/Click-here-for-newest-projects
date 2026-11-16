@@ -160,7 +160,7 @@ summary { cursor: pointer; color: var(--accent); font-weight: 670; width: fit-co
 details .form { margin-top: 10px; }
 .help { margin: 0; color: var(--muted); font-size: 0.87rem; }
 .message { margin: 6px 0 0; }
-.message:empty { display: none; }
+.message:empty { margin: 0; }
 .message.error { color: var(--error); }
 .message.success { color: var(--good); }
 dialog { max-width: min(480px, calc(100% - 28px)); color: var(--text); }
@@ -252,7 +252,7 @@ input.round-pin {
   .art-card { width: min(43%, 185px); }
   .art-front { padding: 6%; }
   .admin-layout { grid-template-columns: 1fr; }
-  .admin-layout .work-panel { grid-row: 1; }
+
   .wrap { padding-top: 26px; }
   .mast nav { gap: 8px 14px; }
   .mast nav a { font-size: 0.86rem; }
@@ -281,3 +281,12 @@ input.round-pin {
 @media (prefers-reduced-motion: no-preference) {
   .btn, .choice, .side-item { transition: background-color 120ms ease, border-color 120ms ease; }
 }
+
+.start-guide { max-width: 720px; margin: 0 0 3rem; }
+.start-guide ol, .admin-steps { padding-inline-start: 1.5em; line-height: 1.65; }
+.start-guide li + li, .admin-steps li + li { margin-top: 0.45rem; }
+.start-guide p:last-child { margin-bottom: 0; }
+.help { font-size: 1rem; line-height: 1.55; }
+.btn.small { min-height: 44px; font-size: 0.95rem; }
+.option-editor label:first-child { display: flex; align-items: center; gap: 0.45em; min-height: 44px; }
+.option-editor label:first-child input[type="radio"] { inline-size: 20px; block-size: 20px; }

@@ -51,7 +51,7 @@ function gameBar(allowBoard = false) {
   return '<div class="game-bar"><div class="game-title">' + h(round.title) +
     (player ? '<span>' + h(player.nickname) + '</span>' : '') + '</div><div class="actions">' +
     (allowBoard && round.boardVisible ? button('board', 'Toppliste', 'ghost small') : '') +
-    (player ? button('code', 'Min kode', 'ghost small') : '') + '</div></div>';
+    (player ? button('code', 'Min personlige kode', 'ghost small') : '') + '</div></div>';
 }
 
 function intro() {
@@ -65,12 +65,14 @@ function intro() {
     (round.description ? '<p class="description">' + h(round.description) + '</p>' : '') +
     '<div class="meta"><span>' + round.questionCount + ' spørsmål</span>' +
     (status ? '<span>' + status + '</span>' : '') + '</div>' +
-    (open ? '<form class="form" data-form="join"><label>Kallenavn<input required name="nickname" maxlength="24" autocomplete="off" placeholder="For eksempel Fjordfalk"></label>' +
-      '<p class="help">Kallenavnet vises på topplisten når den er åpen.</p>' +
-      '<div class="actions"><button class="btn primary" type="submit">Bli med <span aria-hidden="true">→</span></button></div></form>' : '') +
-    '<details><summary>Fortsett med personlig kode</summary><form class="form" data-form="recover"><label>Personlig kode' +
-    '<input name="code" maxlength="55" required spellcheck="false" autocapitalize="characters" autocomplete="off"></label>' +
-    '<div class="actions"><button class="btn secondary" type="submit">Fortsett</button></div></form></details>' +
+    (open ? '<p>Du spiller på egen hånd når det passer deg.</p>' +
+      '<form class="form" data-form="join"><label>Kallenavn<input required name="nickname" maxlength="24" autocomplete="off" aria-describedby="nickname-help" placeholder="F.eks. Fjordfalk"></label>' +
+      '<p class="help" id="nickname-help">Bruk fornavnet ditt eller et kallenavn. Det kan bli synlig på topplisten.</p>' +
+      '<div class="actions"><button class="btn primary" type="submit">Bli med i quizen <span aria-hidden="true">→</span></button></div></form>' : '') +
+    '<details><summary>Fortsett et spill du har startet</summary><form class="form" data-form="recover"><label>Personlig kode' +
+    '<input name="code" maxlength="55" required spellcheck="false" autocapitalize="characters" autocomplete="off" aria-describedby="recover-help"></label>' +
+    '<p class="help" id="recover-help">Bruk den lange koden med bindestreker fra «Min personlige kode» i spillet. Arrangørens åttesifrede spillkode brukes for å åpne quizen.</p>' +
+    '<div class="actions"><button class="btn secondary" type="submit">Fortsett spillet</button></div></form></details>' +
     '<p class="message" data-message role="status"></p>' +
     '<div class="actions">' + (round.boardVisible ? button('board', 'Se toppliste', 'ghost') : '') +
     (!open ? button('refresh', 'Oppdater', 'ghost') : '') + '</div></section>';
@@ -110,8 +112,8 @@ function questionPanel(question, answer) {
       '" value="' + question.duration + '"></progress><strong data-clock aria-hidden="true"></strong></div>') +
     choices(question.options, answer) + (answer ? answerDetails(answer) : '') +
     '<div class="question-footer">' +
-    (answer ? button(isLast ? 'finish' : 'next', isLast ? 'Se resultat' : 'Neste spørsmål', 'primary')
-      : '<p>Svar med tastene 1–' + question.options.length + ' eller trykk på et svar.</p>' + button('skip', 'Hopp over', 'ghost')) +
+    (answer ? button(isLast ? 'finish' : 'next', isLast ? 'Se resultatet ditt' : 'Neste spørsmål', 'primary')
+      : '<p>Velg ett svar før tiden går ut. Svaret sendes med én gang. På PC kan du bruke tastene 1–' + question.options.length + '.</p>' + button('skip', 'Hopp over', 'ghost')) +
     '</div><p class="message" data-message role="status"></p></section>';
 }
 
@@ -124,11 +126,12 @@ function ready() {
       (round.boardVisible ? button('board', 'Se toppliste', 'primary') : '') + '</div><p class="message" data-message role="status"></p></div>';
   }
   return gameBar(true) + '<section class="panel full"><h1>Klar, ' + h(player.nickname) + '?</h1>' +
-    '<p>Klokken starter når du åpner et spørsmål.</p><div class="meta"><span>' + round.questionCount +
-    ' spørsmål</span><span>1 000 poeng per riktig svar</span><span>Opptil 500 bonuspoeng</span></div>' +
-    '<div class="actions">' + button('next', player.position ? 'Fortsett' : 'Start quizen', 'primary') + '</div>' +
-    (recoveryCode ? '<details><summary>Ta vare på din personlige kode</summary><p class="help">Bruk koden hvis du bytter enhet.</p>' +
-      '<code class="recovery-code">' + h(recoveryCode) + '</code>' + button('code', 'Kopier eller vis kode', 'ghost small') + '</details>' : '') +
+    '<p>Nedtellingen starter når et spørsmål vises. Når du har svart, velger du selv når du vil gå videre.</p>' +
+    '<div class="meta"><span>' + round.questionCount +
+    ' spørsmål</span><span>1 000 poeng per riktig svar</span><span>Opptil 500 bonuspoeng totalt for raske, riktige svar</span></div>' +
+    '<div class="actions">' + button('next', player.position ? 'Fortsett spillet' : 'Start quizen', 'primary') + '</div>' +
+    (recoveryCode ? '<details><summary>Ta vare på din personlige kode</summary><p class="help">Bruk den hvis du vil fortsette samme spill på en annen mobil eller PC.</p>' +
+      '<code class="recovery-code">' + h(recoveryCode) + '</code>' + button('code', 'Vis eller kopier koden', 'ghost small') + '</details>' : '') +
     '<p class="message" data-message role="status"></p></section>';
 }
 
@@ -136,15 +139,15 @@ function result() {
   const { round, player } = state;
   const reveal = round.feedbackMode === 'immediate' || round.status === 'closed';
   const boardAfterClose = round.boardMode === 'after_close' && !round.boardVisible;
+  const delayed = [!reveal && 'fasiten', boardAfterClose && 'topplisten'].filter(Boolean).join(' og ');
   const rank = resultRank();
-  return gameBar() + '<section class="panel"><div class="eyebrow">Runde fullført</div><h1>Bra spilt, ' + h(player.nickname) +
-    '!</h1><div class="result-stats">' + stat('Poeng', number.format(player.points)) +
+  return gameBar() + '<section class="panel"><h1>Quizen er fullført</h1><p>Resultatet ditt er lagret som «' + h(player.nickname) +
+    '».</p><div class="result-stats">' + stat('Poeng', number.format(player.points)) +
     stat('Riktige svar', player.correct + ' av ' + round.questionCount) +
-    (rank ? stat('Plass', rank, ' data-result-rank') : '') + '</div><div class="actions">' +
+    (rank ? stat('Din plass', rank, ' data-result-rank') : '') + '</div><div class="actions">' +
     (reveal ? button('review', 'Se fasiten', 'secondary') : '') +
     (!reveal || boardAfterClose ? button('refresh', 'Oppdater resultat', 'ghost') : '') +
-    '</div>' + (!reveal ? '<p class="help">Fasiten vises etter at runden er avsluttet.</p>' : '') +
-    (boardAfterClose ? '<p class="help">Topplisten vises etter at runden er avsluttet.</p>' : '') +
+    '</div>' + (delayed ? '<p class="help">Du får se ' + delayed + ' når quizen stenger for alle.</p>' : '') +
     '<p class="message" data-message role="status"></p></section>';
 }
 
@@ -162,7 +165,7 @@ function resultBoardContents() {
 function resultBoardSection() {
   return '<section class="panel result-leaderboard" aria-labelledby="result-leaderboard-heading">' +
     '<div class="game-bar"><h2 id="result-leaderboard-heading">Toppliste</h2>' +
-    button('refresh-result-board', 'Oppdater', 'ghost small', 'aria-label="Oppdater topplisten"') +
+    button('refresh-result-board', 'Oppdater topplisten', 'ghost small') +
     '</div><div data-result-entries>' + resultBoardContents() + '</div></section>';
 }
 
@@ -288,7 +291,7 @@ async function run(action) {
 function privateCode() {
   const dialog = document.createElement('dialog');
   dialog.className = 'panel';
-  dialog.innerHTML = '<h2>Din personlige kode</h2><p>Med denne koden kan du åpne forsøket på en annen enhet. Hold den for deg selv.</p>' +
+  dialog.innerHTML = '<h2>Din personlige kode</h2><p>Denne koden lar deg fortsette samme spill på en annen mobil eller PC. Hold den for deg selv.</p>' +
     '<label>Personlig kode<input class="recovery-code" readonly value="' + h(recoveryCode) + '"></label>' +
     '<div class="actions"><button class="btn secondary" type="button">Kopier</button>' +
     '<form method="dialog"><button class="btn primary">Lukk</button></form></div><p class="message" data-message role="status"></p>';

@@ -8,18 +8,25 @@ const sessionName = 'quizpa_admin';
 const sessionPath = '/api/admin';
 const sessionLife = 8 * 60 * 60;
 
-async function hasSession(request, env, now) {
-  if (!env.ADMIN_SESSION_SECRET) return false;
+function deployedAccount(env) {
+  if (!env.ADMIN_PASSWORD_VERIFIER) return null;
+  const parts = /^([a-f0-9]{32})\.([a-f0-9]{64})$/.exec(env.ADMIN_PASSWORD_VERIFIER);
+  if (!parts) fail(503, 'admin_unavailable', 'Arrangørpassordet er ikke konfigurert riktig.');
+  return { salt: parts[1], verifier: parts[2] };
+}
+
+async function hasSession(request, signingKey, now) {
+  if (!signingKey) return false;
   const session = cookieValue(request, sessionName);
   if (!/^\d{10}\.[a-f0-9]{24}\.[a-f0-9]{64}$/.test(session)) return false;
   const [expires, nonce, mac] = session.split('.');
   return Number(expires) * 1000 > now &&
-    secureEqual(mac, await signature(env.ADMIN_SESSION_SECRET, expires + '.' + nonce));
+    secureEqual(mac, await signature(signingKey, expires + '.' + nonce));
 }
 
-async function sessionResponse(request, env, now) {
+async function sessionResponse(request, signingKey, now) {
   const claim = Math.floor(now / 1000 + sessionLife) + '.' + randomHex(12);
-  const value = claim + '.' + await signature(env.ADMIN_SESSION_SECRET, claim);
+  const value = claim + '.' + await signature(signingKey, claim);
   return json({ authenticated: true }, 200, {
     'Set-Cookie': cookie(request, sessionName, value, sessionPath, sessionLife),
   });
@@ -92,9 +99,13 @@ function exportRound(code, entries) {
 export async function organizer(request, env, parts, now) {
   const method = request.method;
   const [area, id, action] = parts;
-  const authenticated = await hasSession(request, env, now);
+  const preset = deployedAccount(env);
+  const signingKey = preset && env.ADMIN_SESSION_SECRET
+    ? env.ADMIN_SESSION_SECRET + ':' + preset.verifier
+    : env.ADMIN_SESSION_SECRET;
+  const authenticated = await hasSession(request, signingKey, now);
   if (area === 'session' && parts.length === 1 && method === 'GET') {
-    const configured = Boolean(await sql(env, 'SELECT id FROM organizer WHERE id = 1').first());
+    const configured = Boolean(preset ?? await sql(env, 'SELECT id FROM organizer WHERE id = 1').first());
     return json({ configured, authenticated,
       ready: Boolean(env.ADMIN_SESSION_SECRET && (configured || env.ADMIN_SETUP_HASH)) });
   }
@@ -105,7 +116,7 @@ export async function organizer(request, env, parts, now) {
     if (typeof value.password !== 'string' || value.password.length > 256) {
       fail(400, 'invalid_password', 'Skriv inn passordet.');
     }
-    const account = await sql(env, 'SELECT * FROM organizer WHERE id = 1').first();
+    const account = preset ?? await sql(env, 'SELECT * FROM organizer WHERE id = 1').first();
     if (!account) {
       if (!env.ADMIN_SETUP_HASH || typeof value.setup !== 'string' || !/^[a-f0-9]{48}$/i.test(value.setup) ||
           !secureEqual(await sha(value.setup.toLowerCase()), env.ADMIN_SETUP_HASH)) {
@@ -124,7 +135,7 @@ export async function organizer(request, env, parts, now) {
         fail(401, 'invalid_password', 'Passordet stemmer ikke.');
       }
     }
-    return sessionResponse(request, env, now);
+    return sessionResponse(request, signingKey, now);
   }
   if (area === 'session' && parts.length === 1 && method === 'DELETE') {
     return json({ authenticated: false }, 200, {

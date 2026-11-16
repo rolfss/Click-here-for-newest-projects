@@ -1,4 +1,4 @@
-import { api, button, copyText, dateLabel, escapeHtml as h, focusHeading, number, root, say, table } from './shared.js';
+import { api, button, copyText, dateLabel, escapeHtml as h, focusHeading, number, root, table } from './shared.js';
 
 const endpoint = '/api/admin';
 const request = (path, data, method = 'POST') => api(endpoint + path, { method, data });
@@ -18,11 +18,29 @@ let shown = 50;
 let roundPin;
 
 function emptyQuestion() {
-  return { text: '', options: ['', '', '', ''], correct: 0, seconds: 20, explanation: '' };
+  return { text: '', options: ['', ''], correct: null, seconds: 20, explanation: '' };
 }
 
 function newQuiz() {
   return { title: '', description: '', questions: [emptyQuestion()] };
+}
+
+function messageArea(area = 'view') {
+  return '<div><span data-admin-status="' + area + '" role="status" aria-atomic="true"></span>' +
+    '<span data-admin-error="' + area + '" role="alert" aria-atomic="true"></span></div>';
+}
+
+function showMessage(message, error = false, area = 'view') {
+  const status = root.querySelector('[data-admin-status="' + area + '"]');
+  const alert = root.querySelector('[data-admin-error="' + area + '"]');
+  if (!status || !alert) {
+    if (area !== 'view') showMessage(message, error);
+    return;
+  }
+  (error ? status : alert).textContent = '';
+  const target = error ? alert : status;
+  target.parentElement.className = error ? 'message error' : 'message success';
+  target.textContent = message;
 }
 
 function renderLogin() {
@@ -33,15 +51,16 @@ function renderLogin() {
     return;
   }
   root.innerHTML = '<section class="panel full"><span class="eyebrow">Quizpå</span><h1>' +
-    (initializing ? 'Sett opp arrangør' : 'Logg inn som arrangør') + '</h1>' +
-    (initializing ? '<p>Velg et passord med minst 16 tegn.</p>' : '<p>Administrer quizer, runder og resultater.</p>') +
+    (initializing ? 'Velg passord for arrangøren' : 'Logg inn som arrangør') + '</h1>' +
+    (initializing ? '<p>Velg et passord med minst 16 tegn. Du bruker det neste gang du logger inn.</p>' :
+      '<p>Her kan du lage quizer, dele dem med deltakerne og se resultatene.</p>') +
     '<form class="form" data-form="login">' +
     (initializing && !urlSetup ? '<label>Oppsettkode<input name="setup" required maxlength="48" autocomplete="off" spellcheck="false"></label>' : '') +
     '<label>Passord<input type="password" name="password" required maxlength="256" ' +
     (initializing ? 'minlength="16" autocomplete="new-password"' : 'autocomplete="current-password"') +
     '></label><div class="actions"><button class="btn primary" type="submit">' +
     (initializing ? 'Lagre passord' : 'Logg inn') + '</button></div></form>' +
-    '<p class="message" data-message role="status"></p></section>';
+    messageArea() + '</section>';
 }
 
 const statuses = { open: 'Åpen', closed: 'Avsluttet', scheduled: 'Planlagt' };
@@ -53,95 +72,120 @@ function sidebarItem(label, detail, action, id, selected) {
 }
 
 function sidebar() {
-  return '<aside class="panel side" aria-label="Quizzer og runder"><h2>Quizzer</h2>' +
+  return '<aside class="panel side" aria-label="Quizer og runder"><h2>Lagrede quizer</h2>' +
     '<div class="side-items">' + (home.quizzes.length ? home.quizzes.map(quiz =>
       sidebarItem(quiz.title, quiz.questionCount + ' spørsmål', 'edit', quiz.id, draft?.id === quiz.id &&
-        ['edit', 'publish', 'preview'].includes(view))).join('') : '<p class="help">Ingen lagrede quizzer.</p>') +
-    '</div><h2>Runder</h2><div class="side-items">' + (home.rounds.length ? home.rounds.map(round =>
+        ['edit', 'publish', 'preview'].includes(view))).join('') : '<p class="help">Ingen lagrede quizer ennå.</p>') +
+    '</div><h2>Publiserte runder</h2><div class="side-items">' + (home.rounds.length ? home.rounds.map(round =>
       sidebarItem(round.title, statuses[round.status] + ' · ' + number.format(round.completed) + ' fullført' +
-        (round.status === 'scheduled' ? ' · ' + dateLabel(round.opensAt) : ''),
+        ' · ' + dateLabel(round.opensAt),
       'results', round.code, view === 'results' && currentRound?.round.code === round.code)).join('')
-      : '<p class="help">Ingen publiserte runder.</p>') + '</div></aside>';
+      : '<p class="help">Ingen publiserte runder ennå.</p>') + '</div></aside>';
 }
 
 function questionEditor(question, index) {
   const allowRemove = question.options.length > 2;
-  const rows = question.options.map((answer, option) => '<div class="option-editor"><input type="radio" name="right-' +
-    index + '" value="' + option + '" aria-label="Marker alternativ ' + (option + 1) + ' som riktig" ' +
-    (option === question.correct ? 'checked' : '') + '><input name="option-' + index + '-' + option +
-    '" aria-label="Svaralternativ ' + (option + 1) + ' i spørsmål ' + (index + 1) +
-    '" placeholder="Svaralternativ ' + (option + 1) + '" required maxlength="140" value="' + h(answer) + '">' +
+  const rows = question.options.map((answer, option) => '<div class="option-editor"><label>Riktig<input type="radio" name="right-' +
+    index + '" value="' + option + '" aria-label="Merk svar ' + (option + 1) + ' som riktig" required ' +
+    (option === question.correct ? 'checked' : '') + '></label><label>Svar ' + (option + 1) + '<input name="option-' + index +
+    '-' + option + '" required maxlength="140" value="' + h(answer) + '"></label>' +
     (allowRemove ? button('remove-option', 'Fjern', 'ghost small', 'data-index="' + index + '" data-option="' + option +
-      '" aria-label="Fjern alternativ ' + (option + 1) + '"') : '') + '</div>').join('');
+      '" aria-label="Fjern svar ' + (option + 1) + '"') : '') + '</div>').join('');
   return '<fieldset class="fieldset"><legend>Spørsmål ' + (index + 1) + '</legend><div class="question-editor">' +
-    '<label>Spørsmål<input name="text-' + index + '" required maxlength="240" value="' + h(question.text) + '"></label>' +
-    '<div><p class="help">Marker riktig svar til venstre.</p>' + rows + '</div>' +
-    (question.options.length < 4 ? '<div class="actions">' + button('add-option', 'Legg til svaralternativ', 'ghost small',
+    '<label>Spørsmålstekst<input name="text-' + index + '" required maxlength="240" value="' + h(question.text) + '"></label>' +
+    '<div><p class="help">Skriv inn 2–4 svar. Merk ett av dem som riktig.</p>' + rows + '</div>' +
+    (question.options.length < 4 ? '<div class="actions">' + button('add-option', 'Legg til svaralternativ', 'secondary',
       'data-index="' + index + '"') + '</div>' : '') +
-    '<div class="grid-form"><label>Tid i sekunder<input type="number" name="seconds-' + index + '" required min="5" max="120" value="' +
-    question.seconds + '"></label><label>Forklaring (valgfri)<input name="explanation-' + index +
-    '" maxlength="500" value="' + h(question.explanation) + '"></label></div>' +
+    '<div class="grid-form"><label>Svartid (sekunder)<input type="number" name="seconds-' + index +
+    '" required min="5" max="120" value="' + question.seconds + '"><span class="help">Velg mellom 5 og 120 sekunder.</span></label>' +
+    '<label>Forklaring til fasiten (valgfritt)<input name="explanation-' + index +
+    '" maxlength="500" value="' + h(question.explanation) + '"><span class="help">Vises sammen med riktig svar.</span></label></div>' +
     (draft.questions.length > 1 ? '<div class="actions">' + button('remove-question', 'Fjern spørsmålet', 'ghost small',
       'data-index="' + index + '"') + '</div>' : '') + '</div></fieldset>';
 }
 
 function renderEdit() {
-  return '<h2>' + (draft.id ? 'Rediger quiz' : 'Ny quiz') + '</h2><form class="form" data-form="quiz">' +
+  return '<h2>' + (draft.id ? 'Rediger quiz' : 'Lag en quiz') + '</h2>' +
+    '<p>Legg inn spørsmål og velg riktig svar på hvert av dem. Velg <strong>Lagre quiz</strong> nederst når du er klar.</p>' +
+    '<form class="form" data-form="quiz">' +
     '<label>Quiznavn<input name="title" required maxlength="90" value="' + h(draft.title) + '"></label>' +
-    '<label>Beskrivelse (valgfri)<textarea name="description" maxlength="260">' + h(draft.description) + '</textarea></label>' +
+    '<label>Beskrivelse (valgfritt)<textarea name="description" maxlength="260">' + h(draft.description) +
+    '</textarea><span class="help">Deltakerne ser denne teksten før de starter.</span></label>' +
     draft.questions.map(questionEditor).join('') + '<div class="actions">' +
-    (draft.questions.length < 40 ? button('add-question', '+ Legg til spørsmål', 'secondary') : '') +
-    '</div><div class="actions"><button class="btn primary" type="submit">Lagre quiz</button>' +
-    button('preview', 'Forhåndsvis', 'secondary') + (draft.id ? button('publish', 'Publiser runde', 'secondary') : '') +
-    '</div></form>';
+    (draft.questions.length < 40 ? button('add-question', 'Legg til spørsmål', 'secondary') : '') +
+    '</div><p class="help">Når du har lagret quizen, kan du gjøre klar en runde og få en lenke til deltakerne.</p>' +
+    '<div class="actions"><button class="btn primary" type="submit">Lagre quiz</button>' +
+    button('preview', 'Forhåndsvis som deltaker', 'secondary') + (draft.id ? button('publish', 'Gjør klar en runde', 'secondary') : '') +
+    '</div>' + messageArea() + '</form>';
 }
 
 function renderPublish() {
-  return '<h2>Publiser runde</h2><p>' + h(draft.title) + ' · ' + draft.questions.length + ' spørsmål</p>' +
+  return '<h2>Gjør klar en runde</h2><p>' + h(draft.title) + ' · ' + draft.questions.length + ' spørsmål</p>' +
+    '<p>Hver runde får sin egen deltakerlenke og toppliste. Runden bruker spørsmålene slik de er når du publiserer.</p>' +
     '<form class="form" data-form="publish"><div class="grid-form">' +
-    '<label>Åpner (Oslo-tid)<input name="opensAt" type="datetime-local"></label>' +
-    '<label>Frist (Oslo-tid)<input name="closesAt" type="datetime-local"></label></div>' +
-    '<p class="help">La feltene stå tomme hvis runden skal åpne nå og være åpen til du avslutter den.</p>' +
-    '<div class="grid-form"><label>Vis fasit<select name="feedbackMode"><option value="immediate">Etter hvert svar</option>' +
+    '<label>Åpningstid (valgfritt)<input name="opensAt" type="datetime-local">' +
+    '<span class="help">Tomt felt betyr at runden åpner med én gang.</span></label>' +
+    '<label>Svarfrist (valgfritt)<input name="closesAt" type="datetime-local">' +
+    '<span class="help">Tomt felt betyr at runden er åpen til du avslutter den.</span></label></div>' +
+    '<p class="help">Alle klokkeslett er i Oslo-tid.</p>' +
+    '<div class="grid-form"><label>Når får deltakerne se fasiten?<select name="feedbackMode"><option value="immediate">Etter hvert svar</option>' +
     '<option value="after_close">Etter at runden er avsluttet</option></select></label>' +
-    '<label>Vis toppliste<select name="boardMode"><option value="always">Mens runden pågår</option>' +
-    '<option value="after_close">Etter at runden er avsluttet</option><option value="hidden">Kun for arrangør</option></select></label></div>' +
-    '<div class="actions"><button class="btn primary" type="submit">Publiser runden</button>' +
-    button('back-edit', 'Tilbake', 'ghost') + '</div></form>';
+    '<label>Når får deltakerne se topplisten?<select name="boardMode"><option value="always">Med én gang</option>' +
+    '<option value="after_close">Etter at runden er avsluttet</option><option value="hidden">Bare arrangøren ser topplisten</option></select></label></div>' +
+    '<div class="actions"><button class="btn primary" type="submit">Publiser runde</button>' +
+    button('back-edit', 'Tilbake til quizen', 'secondary') + '</div>' + messageArea() + '</form>';
 }
 
 function renderPreview() {
   const question = draft.questions[previewIndex];
+  const showAnswer = previewAnswer !== null && question.correct !== null;
   return '<div class="game-bar"><span class="eyebrow">Forhåndsvisning · ' + question.seconds +
-    ' sek</span>' + button('back-edit', 'Tilbake til redigering', 'ghost small') + '</div><div class="question-card">' +
+    ' sekunder</span>' + button('back-edit', 'Tilbake til quizen', 'secondary') + '</div>' +
+    '<p class="help">Prøv et svar for å se hvordan spørsmålet ser ut for deltakerne.</p><div class="question-card">' +
     '<span class="eyebrow">Spørsmål ' + (previewIndex + 1) + ' av ' + draft.questions.length + '</span>' +
     '<h2>' + h(question.text || 'Spørsmålstekst') + '</h2><div class="choices">' +
     question.options.map((option, index) => '<button type="button" class="choice' +
-      (previewAnswer !== null && index === question.correct ? ' correct' : '') +
-      (previewAnswer === index && index !== question.correct ? ' incorrect' : '') +
+      (showAnswer && index === question.correct ? ' correct' : '') +
+      (showAnswer && previewAnswer === index && index !== question.correct ? ' incorrect' : '') +
       '" data-do="preview-answer" data-option="' + index + '"><b aria-hidden="true">' + (index + 1) +
       '</b><span>' + h(option || 'Svaralternativ ' + (index + 1)) + '</span>' +
-      (previewAnswer !== null && index === question.correct ? '<span class="mark">✓ Riktig</span>' : '') + '</button>').join('') +
-    '</div>' + (previewAnswer !== null && question.explanation ? '<div class="feedback">' + h(question.explanation) + '</div>' : '') +
-    '<div class="question-footer">' + button('preview-previous', 'Forrige', 'secondary', previewIndex === 0 ? 'disabled' : '') +
-    button('preview-next', 'Neste', 'primary', previewIndex + 1 === draft.questions.length ? 'disabled' : '') + '</div></div>';
+      (showAnswer && index === question.correct ? '<span class="mark">✓ Riktig</span>' : '') + '</button>').join('') +
+    '</div>' + (showAnswer && question.explanation ? '<div class="feedback">' + h(question.explanation) + '</div>' : '') +
+    (previewAnswer !== null && !showAnswer ? '<p class="help">Merk riktig svar i quizen for å prøve fasiten.</p>' : '') +
+    '<div class="question-footer">' + button('preview-previous', 'Forrige spørsmål', 'secondary', previewIndex === 0 ? 'disabled' : '') +
+    button('preview-next', 'Neste spørsmål', 'primary', previewIndex + 1 === draft.questions.length ? 'disabled' : '') + '</div></div>' + messageArea();
 }
 
 function playUrl(round) {
   return new URL('/spill/' + round.code, location.origin).href;
 }
 
+function teamsMessage(round) {
+  return 'Bli med på ' + round.title + '! Åpne lenken og velg et kallenavn.' +
+    (round.status === 'scheduled' ? ' Runden åpner ' + dateLabel(round.opensAt) + '.' : '') +
+    (round.closesAt !== null ? ' Svarfrist ' + dateLabel(round.closesAt) + '.' : '') + '\n\n' + playUrl(round);
+}
+
 function renderShare(round) {
   const qr = endpoint + '/rounds/' + round.code + '/qr';
-  return '<div class="share-box"><label>Spill-lenke<input readonly data-link value="' + h(playUrl(round)) + '"></label>' +
-    '<div class="actions">' + button('copy-link', 'Kopier lenken', 'primary') + button('copy-teams', 'Kopier Teams-melding') +
-    '</div><div class="share-grid"><div class="qr-panel"><h3>QR-kode</h3>' +
+  return '<section class="share-box"><h3>Del runden med deltakerne</h3>' +
+    '<p>Kopier Teams-meldingen og lim den inn i en chat eller kanal. Du kan også dele bare lenken.</p>' +
+    '<label>Deltakerlenke<input readonly data-link value="' + h(playUrl(round)) + '"></label>' +
+    '<div class="actions">' + button('copy-teams', 'Kopier Teams-melding', 'primary') +
+    button('copy-link', 'Kopier deltakerlenke') + '</div>' + messageArea('share') +
+    '<details data-teams-details><summary>Se Teams-meldingen</summary>' +
+    '<label>Melding til deltakerne<textarea rows="5" readonly data-teams-message>' + h(teamsMessage(round)) +
+    '</textarea></label></details><div class="share-grid"><div class="qr-panel"><h3>QR-kode</h3>' +
+    '<p class="help">Deltakerne kan skanne koden med mobilkameraet.</p>' +
     '<img src="' + qr + '" width="152" height="152" alt="QR-kode for spill-lenken">' +
-    '<a class="btn secondary small" href="' + qr + '?download=1" download>Last ned QR-kode</a></div>' +
-    '<div class="pin-panel" data-pin-panel><label>Spillkode<input class="round-pin" data-pin readonly inputmode="numeric" ' +
-    'aria-describedby="pin-countdown"></label><p class="pin-countdown help" data-pin-message id="pin-countdown"></p>' +
-    '<div class="actions">' + button('copy-pin', 'Kopier koden', 'secondary small', 'disabled') +
-    '<a class="btn ghost small" href="/bli-med" target="_blank" rel="noopener">Åpne kodefelt</a></div></div></div></div>';
+    '<a class="btn secondary" href="' + qr + '?download=1" download>Last ned QR-kode</a></div>' +
+    '<div class="pin-panel" data-pin-panel><h3>Spillkode</h3>' +
+    '<p class="help" id="pin-help">Deltakerne velger Bli med og skriver inn den åttesifrede koden. Koden byttes hvert andre minutt.</p>' +
+    '<label>Gjeldende kode<input class="round-pin" data-pin readonly inputmode="numeric" ' +
+    'aria-describedby="pin-help pin-countdown"></label><p class="pin-countdown help" data-pin-message id="pin-countdown"></p>' +
+    '<div class="actions">' + button('copy-pin', 'Kopier spillkoden', 'secondary', 'disabled') +
+    '<a class="btn ghost" href="/bli-med" target="_blank" rel="noopener">Åpne Bli med i ny fane</a></div>' +
+    messageArea('pin') + '</div></div></section>';
 }
 
 function stopRoundPin() {
@@ -240,30 +284,34 @@ function syncRoundPin() {
 function renderResults() {
   const { round, entries } = currentRound;
   return '<div class="page-heading"><div><span data-round-status class="status-tag ' + round.status + '">' + statuses[round.status] +
-    '</span><h2>' + h(round.title) + '</h2>' + (round.closesAt !== null ? '<p class="help">' +
-      (round.status === 'closed' ? 'Avsluttet ' : 'Frist ') + dateLabel(round.closesAt) + '</p>' : '') +
-    '</div>' + button('results', 'Oppdater', 'ghost small', 'data-id="' + round.code + '"') + '</div>' +
+    '</span><h2>' + h(round.title) + '</h2>' +
+    (round.status === 'scheduled' ? '<p class="help">Åpner ' + dateLabel(round.opensAt) + '</p>' : '') +
+    (round.closesAt !== null ? '<p class="help">' + (round.status === 'closed' ? 'Avsluttet ' : 'Svarfrist ') +
+      dateLabel(round.closesAt) + '</p>' : '') + '</div></div>' + messageArea() +
     renderShare(round) + '<div class="page-heading results"><div><h2>Resultater</h2><p class="help">' + number.format(entries.length) +
-    ' fullført</p></div><a class="btn secondary small" href="' + endpoint + '/rounds/' + round.code + '/csv">Last ned CSV</a></div>' +
-    table(entries, '', shown) + (round.status === 'closed' ? '' : '<div class="actions">' +
-      button('close', 'Avslutt runden', 'danger', 'data-id="' + round.code + '"') + '</div>');
+    ' har fullført</p></div><div class="actions">' + button('refresh-results', 'Oppdater resultater', 'secondary', 'data-id="' + round.code + '"') +
+    '<a class="btn secondary" href="' + endpoint + '/rounds/' + round.code + '/csv">Last ned resultater (CSV)</a></div></div>' +
+    messageArea('results') + table(entries, '', shown) + (round.status === 'closed' ? '' : '<div class="actions">' +
+      button('close', 'Avslutt runden', 'danger', 'data-id="' + round.code + '"') + '</div>' + messageArea('close'));
 }
 
 function render(focus = false) {
   const panels = {
-    home: () => '<h2>Kom i gang</h2><p>Lag en quiz, publiser en runde og kopier lenken til Teams.</p>' +
-      '<div class="actions">' + button('new', 'Ny quiz', 'primary') + button('demo', 'Bruk demoquizen') + '</div>',
+    home: () => '<h2>Kom i gang</h2><ol><li><strong>Lag en quiz.</strong> Skriv spørsmål og merk riktig svar.</li>' +
+      '<li><strong>Publiser en runde.</strong> Velg når deltakerne kan spille, og få en lenke.</li>' +
+      '<li><strong>Del runden.</strong> Send lenken til deltakerne, for eksempel i Teams.</li></ol>' +
+      '<div class="actions">' + button('new', 'Lag ny quiz', 'primary') + button('demo', 'Bruk en eksempelquiz') +
+      '</div><p class="help">Åpne en lagret quiz for å redigere den, eller velg en publisert runde for å se resultatene.</p>' + messageArea(),
     edit: renderEdit, publish: renderPublish, preview: renderPreview, results: renderResults,
   };
   root.innerHTML = '<div class="page-heading"><div><h1>Arrangør</h1></div><div class="actions">' +
-    (view === 'home' ? '' : button('new', '+ Ny quiz', 'primary small')) +
+    (view === 'home' ? '' : button('home', 'Til oversikten') + button('new', 'Lag ny quiz', 'primary')) +
     button('logout', 'Logg ut', 'ghost small') + '</div></div><div class="admin-layout">' + sidebar() +
-    '<section class="panel work-panel">' + panels[view]() +
-    '<p class="message" data-message role="status"></p></section></div>';
+    '<section class="panel work-panel">' + panels[view]() + '</section></div>';
   syncRoundPin();
   if (focus) {
     const heading = root.querySelector('.work-panel h2');
-    if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
+    if (heading) { heading.tabIndex = -1; heading.focus(); }
     else focusHeading();
   }
 }
@@ -273,11 +321,14 @@ function syncDraft(form = root.querySelector('[data-form=quiz]')) {
   const data = new FormData(form);
   draft.title = data.get('title');
   draft.description = data.get('description');
-  draft.questions = draft.questions.map((question, index) => ({
-    text: data.get('text-' + index), explanation: data.get('explanation-' + index),
-    seconds: Number(data.get('seconds-' + index)), correct: Number(data.get('right-' + index)),
-    options: question.options.map((_, option) => data.get('option-' + index + '-' + option)),
-  }));
+  draft.questions = draft.questions.map((question, index) => {
+    const correct = data.get('right-' + index);
+    return {
+      text: data.get('text-' + index), explanation: data.get('explanation-' + index),
+      seconds: Number(data.get('seconds-' + index)), correct: correct === null ? null : Number(correct),
+      options: question.options.map((_, option) => data.get('option-' + index + '-' + option)),
+    };
+  });
 }
 
 async function overview() {
@@ -301,15 +352,15 @@ async function editQuiz(id) {
   render(true);
 }
 
-async function showResults(id) {
+async function showResults(id, focus = true) {
   if (currentRound?.round.code !== id) shown = 50;
   currentRound = await api(endpoint + '/rounds/' + id);
   view = 'results';
   dirty = false;
-  render(true);
+  render(focus);
 }
 
-async function run(action) {
+async function run(action, area = 'view') {
   if (busy) return;
   busy = true;
   try {
@@ -318,7 +369,7 @@ async function run(action) {
     if (error.code === 'admin_required' || error.code === 'already_configured') {
       await load();
     }
-    say(error.message === 'Failed to fetch' ? 'Mistet forbindelsen. Prøv igjen.' : error.message, true);
+    showMessage(error.message === 'Failed to fetch' ? 'Mistet forbindelsen. Prøv igjen.' : error.message, true, area);
   } finally {
     busy = false;
   }
@@ -346,13 +397,14 @@ root.addEventListener('submit', event => {
       dirty = false;
       await overview();
       render();
-      say('Quizen er lagret.');
+      root.querySelector('[data-form=quiz] button[type=submit]').focus();
+      showMessage('Quizen er lagret. Velg Gjør klar en runde når du vil dele den.');
     } else if (type === 'publish') {
       const data = Object.fromEntries(new FormData(form));
       const round = await request('/rounds', { ...data, quizId: draft.id, revision: draft.revision });
       await overview();
       await showResults(round.code);
-      say('Runden er publisert. Spill-lenken er klar.');
+      showMessage('Runden er publisert. Du kan nå dele deltakerlenken.');
     }
   });
 });
@@ -371,19 +423,32 @@ root.addEventListener('click', event => {
   const { do: action, id, index: indexValue, option: optionValue } = control.dataset;
   const index = Number(indexValue);
   const option = Number(optionValue);
-  if (dirty && ['new', 'edit', 'results', 'logout'].includes(action) && !window.confirm('Vil du gå videre uten å lagre endringene?')) return;
+  if (dirty && ['home', 'new', 'edit', 'results', 'logout'].includes(action) && !window.confirm('Vil du gå videre uten å lagre endringene?')) return;
   const actions = {
-    new: () => { draft = newQuiz(); view = 'edit'; dirty = false; render(true); root.querySelector('[name=title]').focus(); },
+    home: () => { view = 'home'; dirty = false; render(true); },
+    new: () => { draft = newQuiz(); view = 'edit'; dirty = false; render(); root.querySelector('[name=title]').focus(); },
     demo: async () => {
       draft = await request('/quizzes/demo', {});
       await overview();
       view = 'edit';
-      render(true);
-      say('Demoquizen er lagret og klar til publisering.');
+      render();
+      root.querySelector('[data-do=publish]').focus();
+      showMessage('Eksempelquizen er lagret. Du kan redigere den eller gjøre klar en runde.');
     },
     edit: () => editQuiz(id),
     results: () => showResults(id),
-    logout: async () => { await request('/session', undefined, 'DELETE'); dirty = false; draft = null; await load(); },
+    'refresh-results': async () => {
+      await showResults(id, false);
+      root.querySelector('[data-do=refresh-results]').focus();
+      showMessage('Resultatene er oppdatert.', false, 'results');
+    },
+    logout: async () => {
+      await request('/session', undefined, 'DELETE');
+      dirty = false;
+      draft = null;
+      await load();
+      root.querySelector('[name=password]')?.focus();
+    },
     'add-question': () => {
       syncDraft();
       draft.questions.push(emptyQuestion());
@@ -410,47 +475,55 @@ root.addEventListener('click', event => {
       syncDraft();
       const item = draft.questions[index];
       item.options.splice(option, 1);
-      if (item.correct === option) item.correct = 0;
-      else if (item.correct > option) item.correct--;
+      if (item.correct === option) item.correct = null;
+      else if (item.correct !== null && item.correct > option) item.correct--;
       dirty = true;
       render();
       root.querySelector('[name=option-' + index + '-' + Math.min(option, item.options.length - 1) + ']').focus();
     },
     preview: () => { syncDraft(); view = 'preview'; previewIndex = 0; previewAnswer = null; render(true); },
-    'back-edit': () => { view = 'edit'; render(true); },
+    'back-edit': () => {
+      const previousAction = view === 'preview' ? 'preview' : 'publish';
+      view = 'edit';
+      render();
+      root.querySelector('[data-do=' + previousAction + ']').focus();
+    },
     'preview-answer': () => { previewAnswer = option; render(); root.querySelector('[data-option="' + option + '"]').focus(); },
     'preview-previous': () => { previewIndex--; previewAnswer = null; render(true); },
     'preview-next': () => { previewIndex++; previewAnswer = null; render(true); },
     publish: () => {
-      if (dirty) { say('Lagre endringene før du publiserer.', true); return; }
+      if (dirty) { showMessage('Velg Lagre quiz før du gjør klar en runde.', true); return; }
       view = 'publish';
       render(true);
     },
     'copy-link': async () => {
       const copied = await copyText(playUrl(currentRound.round), root.querySelector('[data-link]'));
-      say(copied ? 'Lenken er kopiert.' : 'Marker og kopier lenken.');
+      showMessage(copied ? 'Deltakerlenken er kopiert.' : 'Kopier den markerte deltakerlenken.', !copied, 'share');
     },
     'copy-pin': async () => {
       if (!roundPin?.code || pinTimeLeft(roundPin) <= 0) {
-        say('Koden har utløpt. Vent på neste kode.', true);
+        showMessage('Koden har utløpt. Vent på neste kode.', true, 'pin');
         return;
       }
       const copied = await copyText(roundPin.code, root.querySelector('[data-pin]'));
-      say(copied ? 'Spillkoden er kopiert.' : 'Marker og kopier spillkoden.');
+      showMessage(copied ? 'Spillkoden er kopiert.' : 'Kopier den markerte spillkoden.', !copied, 'pin');
     },
     'copy-teams': async () => {
-      const round = currentRound.round;
-      const message = 'Bli med på ' + round.title + '! Velg et kallenavn og spill når det passer.' +
-        (round.closesAt !== null ? ' Frist ' + dateLabel(round.closesAt) + '.' : '') + '\n\n' + playUrl(round);
-      const copied = await copyText(message, root.querySelector('[data-link]'));
-      say(copied ? 'Lim meldingen inn i Teams.' : 'Marker og kopier spill-lenken.');
+      const message = root.querySelector('[data-teams-message]');
+      const copied = await copyText(message.value);
+      if (!copied) {
+        root.querySelector('[data-teams-details]').open = true;
+        message.focus();
+        message.select();
+      }
+      showMessage(copied ? 'Meldingen er kopiert. Lim den inn i Teams.' : 'Kopier den markerte meldingen.', !copied, 'share');
     },
     close: async () => {
       if (!window.confirm('Avslutte runden nå? Etterpå kan ingen sende inn flere svar.')) return;
       await request('/rounds/' + id + '/close', {});
       await overview();
       await showResults(id);
-      say('Runden er avsluttet.');
+      showMessage('Runden er avsluttet.');
     },
     more: () => {
       const firstNewRow = shown;
@@ -460,7 +533,8 @@ root.addEventListener('click', event => {
       if (row) { row.tabIndex = -1; row.focus(); }
     },
   };
-  if (Object.hasOwn(actions, action)) run(actions[action]);
+  const messageAreas = { 'copy-link': 'share', 'copy-teams': 'share', 'copy-pin': 'pin', 'refresh-results': 'results', close: 'close' };
+  if (Object.hasOwn(actions, action)) run(actions[action], messageAreas[action]);
 });
 
 load().catch(error => {

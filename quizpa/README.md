@@ -4,7 +4,7 @@ Selvstyrte, tidsstyrte quizer på norsk. Arrangøren publiserer en runde og dele
 
 ## Arrangør
 
-1. Åpne arrangørsiden på /arrangor og sett opp passordet med den personlige oppsettkoden.
+1. Åpne arrangørsiden på /arrangor og logg inn med arrangørpassordet. En ny installasjon med oppsettkode ber deg velge passord første gang.
 2. Velg **Ny quiz** eller **Bruk demoquizen**. Legg inn spørsmål, svaralternativer, riktig svar og tidsgrense.
 3. Velg **Lagre quiz** og deretter **Publiser runde**. Velg eventuelt åpningstid, frist og når fasit og toppliste vises. Datoer bruker Oslo-tid.
 4. Kopier spill-lenken eller velg **Kopier Teams-melding** og lim inn i en Teams-chat eller -kanal.
@@ -41,3 +41,5 @@ Ved egen Cloudflare-utrulling, opprett D1-databasen quizpa og fyll inn database_
     npx wrangler@4 secret put ADMIN_SETUP_HASH
 
 ADMIN_SESSION_SECRET er en tilfeldig nøkkel på minst 32 byte. Generer en egen oppsettkode med 24 tilfeldige byte som 48 heksadesimale tegn. ADMIN_SETUP_HASH er SHA-256 av oppsettkoden, med små heksadesimale tegn. Oppsettkoden formidles privat til arrangøren og brukes én gang. Den publiserte appen tar imot passordet på arrangørsiden og lagrer en saltet PBKDF2-verifikator.
+
+Driftsansvarlig kan forhåndsinnstille arrangørpassord med den hemmelige variabelen ADMIN_PASSWORD_VERIFIER. Verdien er et 16-byte heksadesimalt salt, et punktum og en 32-byte heksadesimal PBKDF2-SHA-256-verifikator, avledet med 100 000 runder fra passordet og saltet som UTF-8-tekst. Et bytte av verifikator avslutter tidligere administratorøkter.
