@@ -27,7 +27,7 @@ const pageHeaders = {
 
 const landing = '<section class="hero">' +
   '<div class="hero-copy"><h1>Quiz på<br>din tid<span>.</span></h1>' +
-  '<p>Quizpå fungerer omtrent som Kahoot. Spill sammen med en arrangør, eller ta en quiz på egen hånd når det passer.</p>' +
+  '<p>Du svarer på ett spørsmål om gangen, som i kjente quiz-apper. Spill sammen med en arrangør, eller ta en quiz på egen hånd når det passer.</p>' +
   '<div class="hero-actions"><a class="btn primary" href="/bli-med">Bli med med spillkode <span aria-hidden="true">→</span></a>' +
   '<a class="btn secondary" href="/spill/demo">Prøv demoen</a></div></div>' +
   '<div class="hero-art" aria-hidden="true"><div class="quiz-orbit orbit-one"></div><div class="quiz-orbit orbit-two"></div>' +
