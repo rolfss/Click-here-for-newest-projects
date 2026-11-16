@@ -6,6 +6,8 @@ const urlSetup = new URLSearchParams(location.hash.slice(1)).get('oppsett');
 if (location.hash) history.replaceState(null, '', location.pathname + location.search);
 
 let home = { quizzes: [], rounds: [] };
+let liveGames = [];
+let liveGamesUnavailable = false;
 let session;
 let draft;
 let currentRound;
@@ -105,7 +107,9 @@ function questionEditor(question, index) {
 }
 
 function renderEdit() {
-  return '<h2>' + (draft.id ? 'Rediger quiz' : 'Lag en quiz') + '</h2>' +
+  const heading = '<h2>' + (draft.id ? 'Rediger quiz' : 'Lag en quiz') + '</h2>';
+  return (draft.id ? '<div class="page-heading">' + heading +
+    button('create-live', 'Gjør klar livequiz', 'secondary') + '</div>' + messageArea('live') : heading) +
     '<p>Legg inn spørsmål og velg riktig svar på hvert av dem. Velg <strong>Lagre quiz</strong> nederst når du er klar.</p>' +
     '<form class="form" data-form="quiz">' +
     '<label>Quiznavn<input name="title" required maxlength="90" value="' + h(draft.title) + '"></label>' +
@@ -113,7 +117,7 @@ function renderEdit() {
     '</textarea><span class="help">Deltakerne ser denne teksten før de starter.</span></label>' +
     draft.questions.map(questionEditor).join('') + '<div class="actions">' +
     (draft.questions.length < 40 ? button('add-question', 'Legg til spørsmål', 'secondary') : '') +
-    '</div><p class="help">Når du har lagret quizen, kan du gjøre klar en runde og få en lenke til deltakerne.</p>' +
+    '</div><p class="help">Når du har lagret quizen, kan du publisere en runde eller spille den som livequiz.</p>' +
     '<div class="actions"><button class="btn primary" type="submit">Lagre quiz</button>' +
     button('preview', 'Forhåndsvis som deltaker', 'secondary') + (draft.id ? button('publish', 'Gjør klar en runde', 'secondary') : '') +
     '</div>' + messageArea() + '</form>';
@@ -295,13 +299,28 @@ function renderResults() {
       button('close', 'Avslutt runden', 'danger', 'data-id="' + round.code + '"') + '</div>' + messageArea('close'));
 }
 
+function renderLiveGames() {
+  const labels = { lobby: 'Venterom', question: 'Pågår', reveal: 'Pågår', finished: 'Resultater' };
+  const games = liveGames.filter(game => Object.hasOwn(labels, game.phase));
+  return '<section class="live-admin-list"><h2>Livequiz</h2>' +
+    '<p>Spill sammen med 2–50 deltakere. Velg en lagret quiz og trykk <strong>Gjør klar livequiz</strong>. ' +
+    'Vi anbefaler 10–20 spørsmål.</p>' +
+    (liveGamesUnavailable ? '<p class="help">Livequizene kunne ikke hentes.</p><div class="actions">' +
+      button('refresh-live', 'Prøv igjen', 'secondary') + '</div>' : '') +
+    (games.length ? '<div class="side-items">' + games.map(game =>
+      '<a class="side-item" href="/arrangor/live/' + encodeURIComponent(game.id) + '"><strong>' +
+      h(game.title) + '</strong><small>' + labels[game.phase] + '</small></a>').join('') + '</div>' : '') +
+    '</section>';
+}
+
 function render(focus = false) {
   const panels = {
     home: () => '<h2>Kom i gang</h2><ol><li><strong>Lag en quiz.</strong> Skriv spørsmål og merk riktig svar.</li>' +
       '<li><strong>Publiser en runde.</strong> Velg når deltakerne kan spille, og få en lenke.</li>' +
       '<li><strong>Del runden.</strong> Send lenken til deltakerne, for eksempel i Teams.</li></ol>' +
       '<div class="actions">' + button('new', 'Lag ny quiz', 'primary') + button('demo', 'Bruk en eksempelquiz') +
-      '</div><p class="help">Åpne en lagret quiz for å redigere den, eller velg en publisert runde for å se resultatene.</p>' + messageArea(),
+      '</div><p class="help">Åpne en lagret quiz for å redigere den, eller velg en publisert runde for å se resultatene.</p>' +
+      renderLiveGames() + messageArea(),
     edit: renderEdit, publish: renderPublish, preview: renderPreview, results: renderResults,
   };
   root.innerHTML = '<div class="page-heading"><div><h1>Arrangør</h1></div><div class="actions">' +
@@ -331,8 +350,18 @@ function syncDraft(form = root.querySelector('[data-form=quiz]')) {
   });
 }
 
+async function loadLiveGames() {
+  try {
+    const response = await api(endpoint + '/live');
+    liveGames = response.games;
+    liveGamesUnavailable = false;
+  } catch {
+    liveGamesUnavailable = true;
+  }
+}
+
 async function overview() {
-  home = await api(endpoint + '/overview');
+  [home] = await Promise.all([api(endpoint + '/overview'), loadLiveGames()]);
 }
 
 async function load() {
@@ -398,7 +427,7 @@ root.addEventListener('submit', event => {
       await overview();
       render();
       root.querySelector('[data-form=quiz] button[type=submit]').focus();
-      showMessage('Quizen er lagret. Velg Gjør klar en runde når du vil dele den.');
+      showMessage('Quizen er lagret. Du kan gjøre klar en runde eller en livequiz.');
     } else if (type === 'publish') {
       const data = Object.fromEntries(new FormData(form));
       const round = await request('/rounds', { ...data, quizId: draft.id, revision: draft.revision });
@@ -426,6 +455,7 @@ root.addEventListener('click', event => {
   if (dirty && ['home', 'new', 'edit', 'results', 'logout'].includes(action) && !window.confirm('Vil du gå videre uten å lagre endringene?')) return;
   const actions = {
     home: () => { view = 'home'; dirty = false; render(true); },
+    'refresh-live': async () => { await loadLiveGames(); render(true); },
     new: () => { draft = newQuiz(); view = 'edit'; dirty = false; render(); root.querySelector('[name=title]').focus(); },
     demo: async () => {
       draft = await request('/quizzes/demo', {});
@@ -496,6 +526,18 @@ root.addEventListener('click', event => {
       view = 'publish';
       render(true);
     },
+    'create-live': async () => {
+      if (dirty) { showMessage('Velg Lagre quiz før du gjør klar en livequiz.', true, 'live'); return; }
+      control.disabled = true;
+      try {
+        const game = await request('/live', { quizId: draft.id, revision: draft.revision });
+        location.assign('/arrangor/live/' + encodeURIComponent(game.id));
+      } catch (error) {
+        control.disabled = false;
+        control.focus();
+        throw error;
+      }
+    },
     'copy-link': async () => {
       const copied = await copyText(playUrl(currentRound.round), root.querySelector('[data-link]'));
       showMessage(copied ? 'Deltakerlenken er kopiert.' : 'Kopier den markerte deltakerlenken.', !copied, 'share');
@@ -533,7 +575,9 @@ root.addEventListener('click', event => {
       if (row) { row.tabIndex = -1; row.focus(); }
     },
   };
-  const messageAreas = { 'copy-link': 'share', 'copy-teams': 'share', 'copy-pin': 'pin', 'refresh-results': 'results', close: 'close' };
+  const messageAreas = {
+    'create-live': 'live', 'copy-link': 'share', 'copy-teams': 'share', 'copy-pin': 'pin', 'refresh-results': 'results', close: 'close',
+  };
   if (Object.hasOwn(actions, action)) run(actions[action], messageAreas[action]);
 });
 

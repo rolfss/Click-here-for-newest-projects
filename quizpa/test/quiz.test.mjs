@@ -46,7 +46,8 @@ function client(env) {
       else cookies.set(scope, setCookie.split(';')[0]);
     }
     const raw = await response.text();
-    assert.equal(response.status, expected, method + ' ' + path + ' returned ' + raw);
+    const acceptable = Array.isArray(expected) ? expected : [expected];
+    assert.ok(acceptable.includes(response.status), method + ' ' + path + ' returned ' + response.status + ' ' + raw);
     return response.headers.get('Content-Type')?.includes('application/json') ? JSON.parse(raw) : raw;
   };
 }
@@ -312,4 +313,102 @@ test('uses the configured organizer password and revokes earlier organizer sessi
   await newAdmin('/api/admin/session', { password }, 401);
   await newAdmin('/api/admin/session', { password: presetPassword });
   await newAdmin('/api/admin/overview');
+});
+
+test('runs a synchronized ten-question live quiz and announces the winner', async t => {
+  const env = fixture(t);
+  const admin = client(env);
+  const first = client(env);
+  const second = client(env);
+  const visitor = client(env);
+  let time = Date.parse('2026-11-16T08:00:00Z');
+  t.mock.method(Date, 'now', () => time);
+
+  await admin('/api/admin/session', { setup, password });
+  const quiz = await admin('/api/admin/quizzes', {
+    title: 'FellesQuiz',
+    questions: Array.from({ length: 10 }, (_, index) => ({ ...questions[0], text: 'Spørsmål ' + (index + 1) })),
+  }, 201);
+  const options = { quizId: quiz.id, revision: quiz.revision };
+  await visitor('/api/admin/live', options, 401);
+  const game = await admin('/api/admin/live', options, 201);
+  const host = '/api/admin/live/' + game.id;
+  const path = '/api/live/' + game.id;
+
+  assert.equal(game.phase, 'lobby');
+  assert.match(game.pin, /^\d{6}$/);
+  assert.equal(game.questionCount, 10);
+  assert.match(await visitor('/bli-med'), /Seks sifre/);
+  assert.match(await visitor('/live/' + game.id), /assets\/live\.js/);
+  assert.match(await visitor('/arrangor/live/' + game.id), /assets\/live-host\.js/);
+  assert.equal((await visitor(path)).pin ?? null, null);
+  assert.equal((await visitor('/api/live/lookup', { code: game.pin })).path, '/live/' + game.id);
+
+  await first(path + '/join', { nickname: 'Rask Rev' }, 201);
+  await admin(host + '/advance', {}, 409);
+  await second(path + '/join', { nickname: 'rask rev' }, 409);
+  await second(path + '/join', { nickname: 'Rolig Ørn' }, 201);
+  assert.equal((await admin(host)).playerCount, 2);
+
+  let state = await admin(host + '/advance', {});
+  assert.equal(state.phase, 'question');
+  await visitor('/api/live/lookup', { code: game.pin }, [404, 410]);
+  await visitor(path + '/join', { nickname: 'Sen spiller' }, 409);
+  assert.equal((await visitor(path)).question ?? null, null);
+
+  for (let index = 0; index < 10; index++) {
+    const start = state.deadline - 5000;
+    const a = await first(path);
+    const b = await second(path);
+    assert.equal(a.position, index);
+    assert.equal(a.deadline, b.deadline);
+    assert.equal(a.deadline, state.deadline);
+    assert.deepEqual(a.question.options, b.question.options);
+    assert.equal(a.question.correctIndex, undefined);
+    assert.equal(a.question.explanation, undefined);
+    assert.equal(state.question.correctIndex, undefined);
+    time = start + 200;
+    const submitted = { position: index, choice: 1 };
+    await first(path + '/answer', submitted);
+    await first(path + '/answer', submitted);
+    assert.equal((await admin(host)).answeredCount, 1);
+    if (index !== 0) {
+      time = start + 900;
+      await second(path + '/answer', { position: index, choice: 0 });
+    }
+    time = state.deadline;
+    const ended = await admin(host);
+    assert.equal(ended.phase, 'reveal');
+    assert.equal(ended.question.correctIndex, 1);
+    if (index === 0) {
+      await second(path + '/answer', { position: index, choice: 1 }, 409);
+    }
+    state = await admin(host + '/advance', {});
+  }
+  assert.equal(state.phase, 'finished');
+  assert.equal(state.leaderboard[0].nickname, 'Rask Rev');
+  assert.equal(state.leaderboard[0].rank, 1);
+  assert.equal(state.leaderboard[0].correct, 10);
+  assert.equal(state.leaderboard[1].nickname, 'Rolig Ørn');
+  assert.deepEqual((await first(path)).leaderboard, state.leaderboard);
+  assert.equal((await admin('/api/admin/live')).games.some(item => item.id === game.id), true);
+});
+
+test('caps an open live lobby at 50 players even for simultaneous joins', async t => {
+  const env = fixture(t);
+  const admin = client(env);
+  await admin('/api/admin/session', { setup, password });
+  const quiz = await admin('/api/admin/quizzes', { title: 'Femti deltakere', questions }, 201);
+  const game = await admin('/api/admin/live', { quizId: quiz.id, revision: quiz.revision }, 201);
+  const path = '/api/live/' + game.id;
+  const host = '/api/admin/live/' + game.id;
+  for (let index = 1; index <= 49; index++) {
+    await client(env)(path + '/join', { nickname: 'Spiller ' + index }, 201);
+  }
+  const joins = await Promise.all([50, 51].map(index =>
+    client(env)(path + '/join', { nickname: 'Spiller ' + index }, [201, 409])));
+  assert.equal(joins.filter(state => state.player).length, 1);
+  assert.equal((await admin(host)).playerCount, 50);
+  await admin(host + '/cancel', {});
+  await client(env)('/api/live/lookup', { code: game.pin }, [404, 410]);
 });

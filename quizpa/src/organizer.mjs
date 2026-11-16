@@ -2,6 +2,7 @@ import { demo } from './demo.mjs';
 import { invitationQr, issueJoinCode } from './invitations.mjs';
 import { fail, validateQuiz, validateRound, visibleRound } from './rules.mjs';
 import { cookie, cookieValue, input, json, noStore, passwordVerifier, randomHex, rows, secureEqual, sha, signature, sql } from './support.mjs';
+import { liveAdmin } from './live.mjs';
 import { ranking } from './player.mjs';
 
 const sessionName = 'quizpa_admin';
@@ -143,6 +144,8 @@ export async function organizer(request, env, parts, now) {
     });
   }
   if (!authenticated) fail(401, 'admin_required', 'Logg inn som arrangør.');
+
+  if (area === 'live') return liveAdmin(request, env, parts.slice(1), now);
 
   if (area === 'overview' && parts.length === 1 && method === 'GET') {
     const [quizzes, rounds] = await Promise.all([

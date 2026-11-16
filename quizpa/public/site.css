@@ -290,3 +290,12 @@ input.round-pin {
 .btn.small { min-height: 44px; font-size: 0.95rem; }
 .option-editor label:first-child { display: flex; align-items: center; gap: 0.45em; min-height: 44px; }
 .option-editor label:first-child input[type="radio"] { inline-size: 20px; block-size: 20px; }
+
+.live-lobby { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 1rem; margin-block: 1rem; }
+.live-code { font-size: clamp(2.3rem, 7vw, 4.4rem); letter-spacing: .09em; line-height: 1.1; font-weight: 700; font-variant-numeric: tabular-nums; user-select: all; overflow-wrap: anywhere; margin-block: .5rem; }
+.live-player-list { padding-inline-start: 1.4em; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 125px), 1fr)); gap: .45rem 1.5rem; }
+.live-player-list li, .live-winners { overflow-wrap: anywhere; }
+.live-admin-list, .live-board { margin-block-start: 1rem; }
+@media (max-width: 720px) {
+  .live-lobby { grid-template-columns: minmax(0, 1fr); }
+}

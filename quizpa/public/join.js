@@ -13,8 +13,10 @@ codeInput.addEventListener('input', () => {
 form.addEventListener('submit', async event => {
   event.preventDefault();
   submit.disabled = true;
+  const code = codeInput.value;
+  const endpoint = code.length === 6 ? '/api/live/lookup' : '/api/join';
   try {
-    const result = await api('/api/join', { method: 'POST', data: { code: codeInput.value } });
+    const result = await api(endpoint, { method: 'POST', data: { code } });
     location.assign(result.path);
   } catch (error) {
     say(error.status ? error.message : 'Fikk ikke kontakt. Prøv igjen.', true);

@@ -13,6 +13,12 @@ Selvstyrte, tidsstyrte quizer på norsk. Arrangøren publiserer en runde og dele
 
 Hver runde får sin egen invitasjonslenke og beholder spørsmålene slik de var ved publisering. En ny runde starter med tom toppliste. /spill/demo har en egen, fiktiv prøvequiz.
 
+## Livequiz med arrangør
+
+Åpne en lagret quiz på arrangørsiden og velg **Gjør klar livequiz**. 10–20 spørsmål passer godt til en kunnskapsquiz i gruppe. Vis eller del den sekssifrede koden mens lobbyen er åpen. Deltakerne velger **Bli med**, taster koden og velger kallenavn.
+
+Når 2–50 deltakere er klare, starter arrangøren quizen. Alle får samme spørsmål og tidsfrist. Når tiden er ute, vises fasiten. Arrangøren går videre til neste spørsmål og viser vinneren og topplisten til slutt. Livekoden tar bare inn deltakere før start.
+
 ## Spill og poeng
 
 Kallenavn er unike per runde. Deltakerens økt kan fortsettes på samme enhet. Den personlige koden åpner det samme forsøket på en annen enhet. En spill-lenke kan videresendes. Bruk rundeinnstillingen **Kun for arrangør** for å begrense topplisten til arrangørsiden. Når topplisten er åpen for deltakerne, vises den automatisk etter siste spørsmål.

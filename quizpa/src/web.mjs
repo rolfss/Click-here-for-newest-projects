@@ -4,6 +4,8 @@ import shared from '../public/shared.js';
 import join from '../public/join.js';
 import play from '../public/play.js';
 import admin from '../public/admin.js';
+import liveHost from '../public/live-host.js';
+import live from '../public/live.js';
 import { noStore } from './support.mjs';
 
 const assets = {
@@ -12,6 +14,8 @@ const assets = {
   '/assets/join.js': [join, 'text/javascript; charset=utf-8'],
   '/assets/play.js': [play, 'text/javascript; charset=utf-8'],
   '/assets/admin.js': [admin, 'text/javascript; charset=utf-8'],
+  '/assets/live-host.js': [liveHost, 'text/javascript; charset=utf-8'],
+  '/assets/live.js': [live, 'text/javascript; charset=utf-8'],
 };
 
 const pageHeaders = {
@@ -23,7 +27,7 @@ const pageHeaders = {
 
 const landing = '<section class="hero">' +
   '<div class="hero-copy"><h1>Quiz på<br>din tid<span>.</span></h1>' +
-  '<p>Quizpå fungerer omtrent som Kahoot. Du får ett spørsmål om gangen og spiller når det passer for deg.</p>' +
+  '<p>Quizpå fungerer omtrent som Kahoot. Spill sammen med en arrangør, eller ta en quiz på egen hånd når det passer.</p>' +
   '<div class="hero-actions"><a class="btn primary" href="/bli-med">Bli med med spillkode <span aria-hidden="true">→</span></a>' +
   '<a class="btn secondary" href="/spill/demo">Prøv demoen</a></div></div>' +
   '<div class="hero-art" aria-hidden="true"><div class="quiz-orbit orbit-one"></div><div class="quiz-orbit orbit-two"></div>' +
@@ -38,12 +42,12 @@ const landing = '<section class="hero">' +
   '<p>Skal du lage en quiz? <a href="/arrangor">Gå til arrangørsiden</a>.</p></section>';
 
 const joinPage = '<section class="panel full intro"><h1>Bli med på quiz</h1>' +
-  '<p>Skriv inn de åtte sifrene du har fått av arrangøren, og trykk <strong>Finn quizen</strong>. Deretter velger du et kallenavn.</p>' +
+  '<p>Skriv inn spillkoden du fikk av arrangøren, og trykk <strong>Finn quizen</strong>. Deretter velger du et kallenavn.</p>' +
   '<form class="form" data-join><label>Spillkode<input class="join-pin" name="code" type="text" ' +
-  'inputmode="numeric" autocomplete="off" pattern="[0-9]{8}" maxlength="11" required aria-describedby="join-code-help"></label>' +
+  'inputmode="numeric" autocomplete="off" pattern="(?:[0-9]{6}|[0-9]{8})" maxlength="11" required aria-describedby="join-code-help"></label>' +
   '<div class="actions"><button class="btn primary" type="submit">Finn quizen <span aria-hidden="true">→</span></button></div>' +
   '</form><p class="message" data-message role="status"></p>' +
-  '<p class="help" id="join-code-help">Spillkoden byttes hvert andre minutt. Be arrangøren om den nyeste koden hvis din har utløpt. Har du en quizlenke eller QR-kode, kan du åpne den direkte.</p></section>';
+  '<p class="help" id="join-code-help"><strong>Seks sifre</strong> brukes når dere skal spille samtidig. Bli med før arrangøren starter.<br><strong>Åtte sifre</strong> brukes når du skal spille på egen hånd. Be om en ny kode hvis din har utløpt.</p></section>';
 
 export function web(request, url) {
   if (request.method !== 'GET' && request.method !== 'HEAD') return new Response(null, { status: 405 });
@@ -63,17 +67,23 @@ export function web(request, url) {
   let script = '';
   let content = landing;
   let status = 200;
-  if (/^\/spill\/(?:[a-f0-9]{32}|demo)\/?$/.test(url.pathname) || /^\/arrangor\/?$/.test(url.pathname)) {
+  if (/^\/arrangor\/live\/[a-f0-9]{32}\/?$/.test(url.pathname) || /^\/live\/[a-f0-9]{32}\/?$/.test(url.pathname)) {
+    const host = url.pathname.startsWith('/arrangor/');
+    title = host ? 'Arrangør for livequiz – Quizpå' : 'Livequiz – Quizpå';
+    cssClass = host ? 'admin-page wrap live-host' : 'game-page wrap live-player';
+    script = '<script type="module" src="/assets/' + (host ? 'live-host' : 'live') + '.js?v=4"></script>';
+    content = '<div class="panel full"><p role="status">Åpner livequizen …</p></div>';
+  } else if (/^\/spill\/(?:[a-f0-9]{32}|demo)\/?$/.test(url.pathname) || /^\/arrangor\/?$/.test(url.pathname)) {
     const adminPage = url.pathname.startsWith('/arrangor');
     title = adminPage ? 'Arrangør – Quizpå' : 'Spill quiz – Quizpå';
     cssClass = adminPage ? 'admin-page wrap' : 'game-page wrap';
-    script = '<script type="module" src="/assets/' + (adminPage ? 'admin' : 'play') + '.js?v=3"></script>';
+    script = '<script type="module" src="/assets/' + (adminPage ? 'admin' : 'play') + '.js?v=4"></script>';
     content = '<div class="panel full"><p role="status">Laster …</p></div>';
   } else if (/^\/bli-med\/?$/.test(url.pathname)) {
     title = 'Bli med – Quizpå';
     cssClass = 'join-page wrap';
     content = joinPage;
-    script = '<script type="module" src="/assets/join.js?v=3"></script>';
+    script = '<script type="module" src="/assets/join.js?v=4"></script>';
   } else if (url.pathname !== '/') {
     title = 'Siden finnes ikke – Quizpå';
     cssClass = 'game-page wrap';
