@@ -6,6 +6,28 @@ const verifiedAt = '2026-09-22';
 
 export const ARCHIVAL_MAINTENANCE_RECORDS = Object.freeze([
   record({
+    id: 'rules-journal-metadata',
+    source: 'archive-regulation',
+    title: 'Metadata som skal registreres løpende i journalen',
+    section: '§ 15 første ledd bokstav a–f',
+    topic: 'Journalføring', verifiedAt: '2026-11-19',
+    scope: 'Organer som skal føre journal etter arkivforskrifta § 14 første ledd første punktum; journalføringspliktige saksdokumenter',
+    tags: ['journal', 'journalføring', 'metadata', 'obligatoriske opplysninger', 'minimumskrav', 'løpende', 'identifikator', 'kontekst', 'tittel', 'avsender', 'mottaker', 'dokumentdato', 'registreringstidspunkt', '§ 15'],
+    summary: 'Journalføringspliktige saksdokumenter skal registreres løpende med seks typer metadata: en unik identifikator som kan leses av mennesker; kontekst og hvilke andre dokumenter dokumentet hører sammen med; tittel eller andre metadata om hva dokumentet gjelder; navn på sender eller mottaker; dokumentdato eller dato for sending eller mottak; og tidspunktet for registreringen.',
+    detail: 'Kravene følger av arkivforskrifta § 15 første ledd bokstav a–f. Vurder først journalføringsplikten etter § 14. Kravet om løpende registrering er ikke en konkret frist angitt i antall dager, og listen forutsetter ikke at et bestemt Noark-system brukes.',
+  }),
+  record({
+    id: 'rules-journal-access-limits',
+    source: 'archive-regulation',
+    title: 'Offentlig innsyn i journalen og unntak for hele registreringer',
+    section: '§ 15 andre ledd',
+    topic: 'Journalføring', verifiedAt: '2026-11-19',
+    scope: 'Organer som skal føre journal etter arkivforskrifta § 14 første ledd første punktum; innsyn i journalopplysninger',
+    tags: ['offentlig journal', 'innsyn', 'skjerming', 'unnta', 'hel journalregistrering', 'hele journalposten', 'taushetsplikt', 'taushetsbelagt', 'offentleglova', 'offentlighetsloven', '§ 15'],
+    summary: 'Journalen skal gjøres tilgjengelig for offentlig innsyn etter offentleglova. Journalopplysninger kan unntas når dokumentet ikke kan registreres uten at det kommer fram lovbestemt taushetsbelagte opplysninger eller opplysninger allmennheten ellers ikke kan kreve innsyn i. En hel journalregistrering kan bare unntas når det er nødvendig for ikke å røpe lovbestemt taushetsbelagte opplysninger.',
+    detail: 'Vurder unntak for opplysninger særskilt fra unntak for hele registreringen. Andre innsynsunntak gir ikke i seg selv adgang til å unnta hele journalregistreringen. Bestemmelsen her angir ikke en generell plikt til å publisere journalen på eInnsyn.',
+  }),
+  record({
     id: 'guide-conversion-technical-requirements',
     source: 'na-conversion-exemption',
     title: 'Tekniske krav ved konvertering av papirarkiv',
