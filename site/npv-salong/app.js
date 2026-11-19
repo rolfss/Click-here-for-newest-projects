@@ -296,7 +296,12 @@ function validResults(data) {
 }
 function drawResults() {
   const wrapper = page("Quizsvarene", "Svarene er åpne for alle med lenken fram til " + deadlineLabel + ".", "Minner og mening");
-  if (quiz.saved) wrapper.append(el("p", "notice", "Takk! Quizsvarene dine er lagret."));
+  if (quiz.saved) {
+    wrapper.append(el("p", "notice", "Takk! Quizsvarene dine er lagret."));
+    const membership = el("div", "actions");
+    membership.append(link("Bli medlem i Norsk Psykedelisk Vitenskap", "https://www.psykedeliskvitenskap.no/pricing-plans/list", "btn"));
+    wrapper.append(membership);
+  }
   const container = el("section", "surface");
   const status = el("p", "summary-meta", "Henter svar …");
   status.setAttribute("role", "status");
