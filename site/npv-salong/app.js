@@ -11,7 +11,9 @@ const questions = [
   "Hva har du blitt mest usikker på eller endret mening om i kveld? Hva kunne få deg til å tenke annerledes videre?"
 ];
 const ids = questions.map((_, i) => "q" + (i + 1));
-const quizPrivacy = "Quizsvarene kan leses av alle som har lenken. Ikke skriv navn, deltakernummer eller opplysninger om andre.";
+const wallDeadline = Date.parse("2026-11-22T18:00:00Z");
+const deadlineLabel = "22. november 2026 kl. 19.00 (norsk tid)";
+const quizPrivacy = "Fram til " + deadlineLabel + " kan alle med lenken lese svarene dine straks du sender dem. Arrangøren beholder svarene etter fristen. Ikke skriv navn, deltakernummer eller opplysninger om andre.";
 const storageKey = "npv-salong-minner-mening.quiz.v1";
 const main = document.querySelector("main");
 const emptyAnswers = () => Object.fromEntries(ids.map(id => [id, ""]));
@@ -34,6 +36,7 @@ let quiz = readQuiz();
 let quizBusy = false;
 let quizTrap = "";
 let editingReview = false;
+let stopWall;
 const feedback = { name: "", improve: "", keep: "", topic: "", website: "", submissionId: "" };
 let feedbackSaved = false;
 let feedbackBusy = false;
@@ -94,8 +97,7 @@ function errorBox() {
   box.setAttribute("role", "alert");
   return box;
 }
-async function request(path, payload) {
-  const controller = new AbortController();
+async function request(path, payload, controller = new AbortController()) {
   const timer = setTimeout(() => controller.abort(), 20000);
   let response, result;
   try {
@@ -115,11 +117,10 @@ async function request(path, payload) {
   }
   return result;
 }
-function success(kind) {
-  const isQuiz = kind === "quiz";
-  const wrapper = page(isQuiz ? "Takk for svarene!" : "Takk for innspillet!", isQuiz ? "Quizsvarene dine er lagret og vises under hvert spørsmål." : "Tilbakemeldingen din er sendt til arrangøren.", "Minner og mening");
+function feedbackSuccess() {
+  const wrapper = page("Takk for innspillet!", "Tilbakemeldingen din er sendt til arrangøren.", "Minner og mening");
   const actions = el("div", "actions");
-  actions.append(link("Se quizsvarene", "#svar", "btn"), isQuiz ? link("Gi tilbakemelding", "#tilbakemelding", "btn secondary") : link("Gå til quizen", "#quiz", "btn secondary"));
+  actions.append(link("Se quizsvarene", "#svar", "btn"), link("Gå til quizen", "#quiz", "btn secondary"));
   wrapper.append(actions);
 }
 function formField(key, labelText, hint, max, isText = false) {
@@ -139,7 +140,7 @@ function formField(key, labelText, hint, max, isText = false) {
   return group;
 }
 function drawFeedback() {
-  if (feedbackSaved) { success("tilbakemelding"); return; }
+  if (feedbackSaved) { feedbackSuccess(); return; }
   const wrapper = page("Gi tilbakemelding", "Hva kan vi gjøre bedre neste gang?", "Minner og mening");
   wrapper.append(el("p", "notice", "Bare arrangøren kan lese tilbakemeldingen. Lar du navnefeltet stå tomt, sendes den anonymt."));
   const form = el("form", "surface");
@@ -209,7 +210,7 @@ function progress(step) {
   return node;
 }
 function drawQuiz() {
-  if (quiz.saved) { success("quiz"); return; }
+  if (quiz.saved) { drawResults(); return; }
   if (quiz.step === questions.length) { drawReview(); return; }
   const i = quiz.step;
   const wrapper = page("Avsluttende quiz", "Svar når verten avslutter samtalene, eller etter salongen. Fem åpne spørsmål om psykedeliske og åndelige opplevelser. Du kan hoppe over spørsmål.", "Minner og mening");
@@ -284,9 +285,9 @@ function drawReview() {
     } catch (err) { message = err.message; }
     finally { quizBusy = false; }
     if (currentRoute() !== "quiz") return;
+    if (quiz.saved) { location.hash = "svar"; return; }
     drawQuiz();
-    if (quiz.saved) focusTitle();
-    else main.querySelector('[role="alert"]').textContent = message;
+    main.querySelector('[role="alert"]').textContent = message;
   });
 }
 function validResults(data) {
@@ -294,54 +295,126 @@ function validResults(data) {
   return ids.every(id => data.questions.some(q => q?.id === id && Array.isArray(q.answers) && q.answers.every(answer => typeof answer === "string")));
 }
 function drawResults() {
-  const wrapper = page("Quizsvarene", "Her kan alle med lenken lese svarene, samlet under hvert spørsmål.", "Minner og mening");
+  const wrapper = page("Quizsvarene", "Svarene er åpne for alle med lenken fram til " + deadlineLabel + ".", "Minner og mening");
+  if (quiz.saved) wrapper.append(el("p", "notice", "Takk! Quizsvarene dine er lagret."));
   const container = el("section", "surface");
-  const tools = el("div", "results-tools");
-  const status = el("p", "summary-meta");
+  const status = el("p", "summary-meta", "Henter svar …");
   status.setAttribute("role", "status");
-  const error = errorBox();
   const body = el("div");
-  const refresh = button("Oppdater svarene", "secondary", loadResults);
-  tools.append(status, refresh);
-  container.append(tools, error, body);
+  const groups = [];
+  container.append(status, body);
   wrapper.append(container);
   const actions = el("div", "actions");
-  actions.append(link("Gå til quizen", "#quiz", "btn secondary"));
+  actions.append(quiz.saved ? link("Gi tilbakemelding", "#tilbakemelding", "btn secondary") : link("Gå til quizen", "#quiz", "btn secondary"));
   wrapper.append(actions);
-  let lastCount = "";
-  async function loadResults() {
-    refresh.disabled = true;
-    status.textContent = "Henter svar …";
-    error.textContent = "";
-    try {
-      const data = await request("svar");
-      if (!validResults(data)) throw new Error("Vi fikk ikke lest svarene. Prøv å oppdatere.");
-      if (!container.isConnected) return;
-      lastCount = data.totalRespondents === 1 ? "1 deltaker har svart" : data.totalRespondents + " deltakere har svart";
-      status.textContent = lastCount;
-      body.replaceChildren();
-      if (data.totalRespondents === 0) body.append(el("p", "notice", "Ingen quizsvar ennå. Svarene vises her når noen har sendt inn."));
+
+  let pollTimer, deadlineTimer, activeRequest, closed = false;
+  let expires = Infinity, expiresAtDevice = wallDeadline;
+
+  function pause() {
+    clearTimeout(pollTimer);
+    activeRequest?.abort();
+    activeRequest = undefined;
+  }
+  function closeWall() {
+    closed = true;
+    pause();
+    clearTimeout(deadlineTimer);
+    body.replaceChildren();
+    groups.length = 0;
+    status.textContent = "Visningen ble avsluttet " + deadlineLabel + ". Svarene er lagret hos arrangøren.";
+  }
+  function armDeadline() {
+    clearTimeout(deadlineTimer);
+    const left = Math.min(expires - performance.now(), expiresAtDevice - Date.now());
+    if (left <= 0) { closeWall(); return; }
+    deadlineTimer = setTimeout(armDeadline, Math.min(left, 2147483647));
+  }
+  function updateGroups(data) {
+    if (!groups.length) {
       questions.forEach((q, i) => {
         const section = el("section", "result-question");
-        section.append(el("p", "review-meta", "Spørsmål " + (i + 1)), el("h2", "", q));
-        const answers = data.questions.find(row => row.id === ids[i]).answers;
-        if (answers.length) {
-          const list = el("ul");
-          answers.forEach(answer => list.append(el("li", "answer", answer)));
-          section.append(list);
-        } else if (data.totalRespondents) section.append(el("p", "muted", "Ingen svar på dette spørsmålet ennå."));
+        const list = el("ul");
+        const empty = el("p", "muted", "Ingen svar på dette spørsmålet ennå.");
+        section.append(el("p", "review-meta", "Spørsmål " + (i + 1)), el("h2", "", q), empty, list);
         body.append(section);
+        groups.push({ list, empty });
       });
-    } catch (err) {
-      if (!container.isConnected) return;
-      status.textContent = lastCount;
-      error.textContent = err.message;
-    } finally { refresh.disabled = false; }
+    }
+    groups.forEach(({ list, empty }, i) => {
+      const answers = data.questions.find(q => q.id === ids[i]).answers;
+      empty.hidden = answers.length > 0;
+      let next = list.firstElementChild;
+      for (const answer of answers) {
+        // The API keeps existing answers in stable order when a new answer arrives.
+        if (next?.textContent === answer) next = next.nextElementSibling;
+        else list.insertBefore(el("li", "answer", answer), next);
+      }
+      while (next) {
+        const unused = next;
+        next = next.nextElementSibling;
+        unused.remove();
+      }
+    });
   }
+  async function loadResults() {
+    if (closed || document.hidden || activeRequest) return;
+    const operation = new AbortController();
+    activeRequest = operation;
+    const started = performance.now(), deviceStart = Date.now();
+    try {
+      const data = await request("svar", undefined, operation);
+      if (operation.signal.aborted) return;
+      if (data?.closed === true) { closeWall(); return; }
+      if (!validResults(data) || data.closed !== false || !Number.isFinite(data.remainingMs) || data.remainingMs <= 0) {
+        throw new Error("Ugyldig svar fra tjenesten.");
+      }
+      // Use the server clock and subtract the whole request time conservatively.
+      expires = started + data.remainingMs;
+      expiresAtDevice = deviceStart + data.remainingMs;
+      armDeadline();
+      if (closed) return;
+      updateGroups(data);
+      body.hidden = false;
+      const count = data.totalRespondents === 1 ? "1 deltaker har svart" : data.totalRespondents + " deltakere har svart";
+      const message = count + " · Oppdateres automatisk";
+      if (status.textContent !== message) status.textContent = message;
+    } catch {
+      if (activeRequest !== operation) return;
+      armDeadline();
+      if (!closed) status.textContent = "Kunne ikke hente nye svar. Prøver igjen automatisk.";
+    } finally {
+      if (activeRequest === operation) {
+        activeRequest = undefined;
+        if (!closed && !document.hidden) pollTimer = setTimeout(loadResults, 2000);
+      }
+    }
+  }
+  function visibilityChanged() {
+    pause();
+    if (closed) return;
+    body.hidden = true;
+    if (!document.hidden) {
+      armDeadline();
+      loadResults();
+    }
+  }
+  document.addEventListener("visibilitychange", visibilityChanged);
+  stopWall = () => {
+    pause();
+    clearTimeout(deadlineTimer);
+    document.removeEventListener("visibilitychange", visibilityChanged);
+    body.replaceChildren();
+    groups.length = 0;
+  };
+  // The first API read supplies the authoritative time, including for a device with clock skew.
   loadResults();
+  if (Date.now() < wallDeadline) armDeadline();
 }
 function currentRoute() { return location.hash.slice(1); }
 function route(focus) {
+  stopWall?.();
+  stopWall = undefined;
   switch (currentRoute()) {
     case "tilbakemelding": drawFeedback(); break;
     case "quiz": drawQuiz(); break;
@@ -352,4 +425,6 @@ function route(focus) {
 }
 document.querySelector(".skip").addEventListener("click", event => { event.preventDefault(); main.focus(); });
 window.addEventListener("hashchange", () => route(true));
+window.addEventListener("pagehide", () => { stopWall?.(); stopWall = undefined; });
+window.addEventListener("pageshow", event => { if (event.persisted) route(false); });
 route(false);
