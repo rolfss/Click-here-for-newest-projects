@@ -8,7 +8,8 @@ const questions = [
   "Når en opplevelse kjennes «mer virkelig enn hverdagen», hva kan det fortelle oss om virkeligheten, og hva kan det ikke avgjøre?",
   "Hvis en numinøs eller åndelig opplevelse hjelper noen, hva tror du bidrar til virkningen? Hva kunne undersøke forklaringen din?",
   "Kan samme opplevelse gi personlig vekst både med en åndelig og en naturalistisk tolkning? Hvorfor eller hvorfor ikke?",
-  "Hva har du blitt mest usikker på eller endret mening om i kveld? Hva kunne få deg til å tenke annerledes videre?"
+  "Hva har du blitt mest usikker på eller endret mening om i kveld? Hva kunne få deg til å tenke annerledes videre?",
+  "Hvilke forfattere finner du spesielt fascinerende, og hvilke temaer ønsker du at vi tar opp i kommende salonger?"
 ];
 const ids = questions.map((_, i) => "q" + (i + 1));
 const wallDeadline = Date.parse("2026-11-22T18:00:00Z");
@@ -213,7 +214,7 @@ function drawQuiz() {
   if (quiz.saved) { drawResults(); return; }
   if (quiz.step === questions.length) { drawReview(); return; }
   const i = quiz.step;
-  const wrapper = page("Avsluttende quiz", "Svar når verten avslutter samtalene, eller etter salongen. Fem åpne spørsmål om psykedeliske og åndelige opplevelser. Du kan hoppe over spørsmål.", "Minner og mening");
+  const wrapper = page("Avsluttende quiz", "Svar når verten avslutter samtalene, eller etter salongen. Seks åpne spørsmål om kveldens temaer og ønsker for kommende salonger. Du kan hoppe over spørsmål.", "Minner og mening");
   wrapper.append(el("p", "notice", quizPrivacy));
   const box = el("section", "surface");
   const heading = el("h2", "question", questions[i]);
@@ -368,7 +369,7 @@ function drawResults() {
     activeRequest = operation;
     const started = performance.now(), deviceStart = Date.now();
     try {
-      const data = await request("svar", undefined, operation);
+      const data = await request("svar?v=2", undefined, operation);
       if (operation.signal.aborted) return;
       if (data?.closed === true) { closeWall(); return; }
       if (!validResults(data) || data.closed !== false || !Number.isFinite(data.remainingMs) || data.remainingMs <= 0) {
