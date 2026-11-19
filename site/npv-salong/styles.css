@@ -103,3 +103,5 @@ fieldset{border:0;min-width:0;margin:0;padding:0}
   .bar{min-height:3.8rem}
   .back{margin-bottom:.45rem}
 }
+.brand .brand-org { display: block; font-size: .77rem; font-weight: 550; line-height: 1.25; }
+.foot { flex-wrap: wrap; padding-block: .9rem; gap: .3rem 1rem; }

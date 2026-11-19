@@ -140,7 +140,7 @@ function formField(key, labelText, hint, max, isText = false) {
 }
 function drawFeedback() {
   if (feedbackSaved) { success("tilbakemelding"); return; }
-  const wrapper = page("Gi tilbakemelding", "Hva kan gjøre neste NPV-salong bedre?", "Minner og mening");
+  const wrapper = page("Gi tilbakemelding", "Hva kan vi gjøre bedre neste gang?", "Minner og mening");
   wrapper.append(el("p", "notice", "Bare arrangøren kan lese tilbakemeldingen. Lar du navnefeltet stå tomt, sendes den anonymt."));
   const form = el("form", "surface");
   const fields = el("fieldset");
