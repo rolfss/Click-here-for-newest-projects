@@ -31,3 +31,12 @@ summary::marker { font-size: .75em; }
 .sources li + li { margin-top: .75rem; }
 .discuss { margin-block: 1.6rem 1rem; padding: 1.2rem 1.3rem; border-radius: .6rem; background: var(--mint); }
 .discuss h2 { font-size: 1.55rem; margin-bottom: .45rem; }
+
+.intro-nav { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; margin-top: .75rem; }
+.intro-nav a { display: inline-flex; align-items: center; min-height: 44px; }
+.manus { padding-block: 1.75rem .75rem; }
+.manus h2 { scroll-margin-top: 1rem; font-size: clamp(2rem, 5vw, 2.75rem); }
+.manus-byline { color: var(--muted); margin-top: .35rem; }
+.manus-text { margin-block: 1.15rem 1.3rem; }
+.manus-text p + p, .manus .sources { margin-top: 1rem; }
+.manus .sources { font-size: 1rem; }

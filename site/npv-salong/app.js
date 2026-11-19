@@ -212,7 +212,7 @@ function drawQuiz() {
   if (quiz.saved) { success("quiz"); return; }
   if (quiz.step === questions.length) { drawReview(); return; }
   const i = quiz.step;
-  const wrapper = page("Salongquiz", "Fem åpne spørsmål om psykedeliske og åndelige opplevelser. Svar gjerne med én eller to setninger. Du kan hoppe over spørsmål.", "Minner og mening");
+  const wrapper = page("Avsluttende quiz", "Svar når verten avslutter samtalene, eller etter salongen. Fem åpne spørsmål om psykedeliske og åndelige opplevelser. Du kan hoppe over spørsmål.", "Minner og mening");
   wrapper.append(el("p", "notice", quizPrivacy));
   const box = el("section", "surface");
   const heading = el("h2", "question", questions[i]);
@@ -237,7 +237,7 @@ function drawQuiz() {
   wrapper.append(box);
 }
 function drawReview() {
-  const wrapper = page("Se gjennom svarene", "Les gjennom og endre det du vil før du sender.", "Salongquiz");
+  const wrapper = page("Se gjennom svarene", "Les gjennom og endre det du vil før du sender.", "Avsluttende quiz");
   wrapper.append(el("p", "notice", quizPrivacy));
   const form = el("form", "surface");
   const fields = el("fieldset");
