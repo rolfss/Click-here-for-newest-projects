@@ -1,0 +1,21 @@
+{
+  "note": "Syntetisk eksempel. example.org er en eksempeladresse, ikke en verifisert fagkilde.",
+  "sources": [
+    {
+      "id": "demo-guide",
+      "title": "Eksempelveileder for denne demonstrasjonen",
+      "url": "https://example.org/demo-guide"
+    }
+  ],
+  "questions": [
+    {
+      "id": "demo-1",
+      "category": "Eksempel",
+      "question": "Hvor mange svaralternativer har dette eksempelspørsmålet?",
+      "options": ["To", "Tre", "Fire"],
+      "correct": 1,
+      "explanation": "Spørsmålet har tre svaralternativer. Indeks 1 viser til det andre alternativet.",
+      "source": "demo-guide"
+    }
+  ]
+}
