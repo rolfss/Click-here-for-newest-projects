@@ -6,6 +6,17 @@ const verifiedAt = '2026-09-22';
 
 export const ARCHIVAL_MAINTENANCE_RECORDS = Object.freeze([
   record({
+    id: 'arkade-2-13-2-fagsystem',
+    source: 'arkade-2-13-2',
+    title: 'Arkade 2.13.2 retter SpecializedSystem til Fagsystem',
+    section: 'Arkivtypen Fagsystem i METS, testrapporter og brukergrensesnitt',
+    topic: 'Uttrekk', verifiedAt: '2026-11-24',
+    scope: 'Arkade 2.13.0 og 2.13.1; rettelsen i 2.13.2 for Fagsystem-pakker',
+    tags: ['Arkade', '2.13.0', '2.13.1', '2.13.2', 'Fagsystem', 'SpecializedSystem', 'METS', 'arkivtype', 'avleveringspakke', 'pakking', 'ompakking', 'innlesing', 'testrapport', 'brukergrensesnitt'],
+    summary: 'Arkade 2.13.2 retter en feil fra 2.13.0 som skrev arkivtypen Fagsystem som SpecializedSystem. Versjon 2.13.2 bruker igjen Fagsystem i METS, testrapporter og brukergrensesnitt.',
+    detail: 'Fagsystem-pakker laget i 2.13.0 og 2.13.1 kan leses inn i 2.13.2 med korrekt gjenkjent arkivtype. Ved produksjon av nye pakker fra dem skrives Fagsystem til METS. Rettelsen dokumenterer ikke en generell plikt til ompakking eller endelig godkjenning av avleveringen.',
+  }),
+  record({
     id: 'rules-journal-metadata',
     source: 'archive-regulation',
     title: 'Metadata som skal registreres løpende i journalen',

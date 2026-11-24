@@ -248,6 +248,20 @@ export const ARKADE_RELEASE_SOURCE = Object.freeze({
   status: "tool-documentation",
 });
 
+export const ARKADE_2_13_2_SOURCE = Object.freeze({
+  id: "arkade-2-13-2",
+  title: "Arkade 2.13.2 – utgivelsesnotat",
+  shortTitle: "Arkade 2.13.2",
+  publisher: "Nasjonalarkivet",
+  published: "19.11.2026",
+  type: "Offisiell verktøydokumentasjon",
+  url: "https://github.com/nasjonalarkivet/arkade5/releases/tag/v2.13.2",
+  note: "Retter arkivtypen SpecializedSystem til Fagsystem i METS, testrapporter og brukergrensesnitt.",
+  scope: "Arkade 2.13.0 og 2.13.1; rettelsen i 2.13.2 for Fagsystem-pakker",
+  verifiedAt: "2026-11-24",
+  status: "tool-documentation",
+});
+
 export const RAYVN_SOURCE = Object.freeze({
   id: 'na-rayvn',
   title: 'Arkivering og journalføring fra RAYVN',
@@ -263,7 +277,7 @@ export const RAYVN_SOURCE = Object.freeze({
   note: 'Praktiske eksempler krever konkrete vurderinger; ingen generell fritaksregel.',
 });
 
-const sourceIds = new Set([...SOURCES.map((source) => source.id), ARKADE_RELEASE_SOURCE.id, RAYVN_SOURCE.id]);
+const sourceIds = new Set([...SOURCES.map((source) => source.id), ARKADE_RELEASE_SOURCE.id, ARKADE_2_13_2_SOURCE.id, RAYVN_SOURCE.id]);
 
 export function record({
   id,
