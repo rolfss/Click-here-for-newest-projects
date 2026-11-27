@@ -20,3 +20,5 @@ At **Sykehuspartner HF**, I help manage Public 360 for approximately **11,000 us
 Other experiments include [Lumen Relay](https://rolfss.github.io/Click-here-for-newest-projects/lumen-relay/), [Brukerstøttejakten](https://rolfss.github.io/Click-here-for-newest-projects/brukerstottejakten/) and a [professional news feed](https://rolfss.github.io/Click-here-for-newest-projects/fagstrom/).
 
 *These are independent projects, not official products of my employer.*
+
+[Bachelor’s and Master’s Theses – Intellectual History and Christian Spirituality](./theses/README.md)
